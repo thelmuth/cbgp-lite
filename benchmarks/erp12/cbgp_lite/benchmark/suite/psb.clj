@@ -5,7 +5,9 @@
             [erp12.cbgp-lite.lang.lib :as lib]
             [erp12.cbgp-lite.search.individual :as i]
             [erp12.cbgp-lite.task :as task]
-            [psb2.core :as psb2]))
+            [psb2.core :as psb2]
+            
+            [erp12.ga-clj.toolbox :as tb]))
 
 (defn problems
   [{:keys [penalty]}]
@@ -786,10 +788,143 @@
 
           :else
           (println problem-name "passed in" duration "seconds."))))))
-
+  
+(defn test-hand-written-solution
+  [problem solution]
+  (let [data (map #(reshape-case % {}) (:train (psb2/fetch-examples "data/psb/" problem 2000 0)))
+        inputs (map :inputs data)
+        outputs (map :output data)
+        different-outputs (remove #(apply = %)
+                                  (map vector
+                                       (map #(apply solution %) inputs)
+                                       outputs))]
+    (if (empty? different-outputs)
+      (println "Correct on all cases tested")
+      (println "Incorrect on returned outputs (in form of [program-output correct-output])"))
+    different-outputs))
 
 (comment
 
   (validate-solutions {:data-dir "data/psb/" :num-cases 50})
+
+  ;;;;;;;; Hand-written solutions
+  
+  (defn fuel-cost-hand-written-solution
+    [input]
+    (reduce + (map (fn [x]
+                     (- (quot x 3)
+                        2))
+                   input)))
+
+  (test-hand-written-solution "fuel-cost" fuel-cost-hand-written-solution)
+  ;; => ()
+
+
+  (tb/tree-depth '(reduce + (map (fn [x]
+                                   (- (quot x 3)
+                                      2))
+                                 input)))
+
+  (tb/tree-size '(reduce + (map (fn [x]
+                                  (- (quot x 3)
+                                     2))
+                                input)))
+
+  (defn middle-character-hand-written-solution
+    [input]
+    (if (zero? (mod (count input) 2))
+      ; even
+      (let [middle (dec (quot (count input) 2))]
+        (subs input middle (min (+ middle 2)
+                                (count input))))
+      ; odd
+      (str (nth input (quot (count input) 2)))))
+
+  (test-hand-written-solution "middle-character" middle-character-hand-written-solution)
+  ;; => ()
+
+  (tb/tree-depth '(if (zero? (mod (count input) 2))
+                    (let [middle (dec (quot (count input) 2))]
+                      (subs input middle (min (+ middle 2)
+                                              (count input))))
+                    (str (nth input (quot (count input) 2)))))
+  ;; => 6
+
+  (tb/tree-size '(if (zero? (mod (count input) 2))
+                   (let [middle (dec (quot (count input) 2))]
+                     (subs input middle (min (+ middle 2)
+                                             (count input))))
+                   (str (nth input (quot (count input) 2)))))
+  ;; => 29
+
+  (defn substitution-cipher-hand-written-solution
+    [cipher-in cipher-out text]
+    (apply str
+           (map (fn [char]
+                  (nth cipher-out
+                       (str/index-of cipher-in char)))
+                text)))
+
+  (substitution-cipher-hand-written-solution "abcde" "vwxyz" "aabeeceedee")
+
+  (test-hand-written-solution "substitution-cipher" substitution-cipher-hand-written-solution)
+  ;; => ()
+
+  (tb/tree-depth '(apply str
+                         (map (fn [char]
+                                (nth cipher-out
+                                     (str/index-of cipher-in char)))
+                              text)))
+  ;; => 5
+  (tb/tree-size '(apply str
+                        (map (fn [char]
+                               (nth cipher-out
+                                    (str/index-of cipher-in char)))
+                             text)))
+  ;; => 11
+
+  (defn vector-average-hand-written-solution
+    [in-vector]
+    (/ (reduce + in-vector)
+       (count in-vector)))
+
+  (test-hand-written-solution "vector-average" vector-average-hand-written-solution)
+  ;; => ()
+
+  (tb/tree-depth '(/ (reduce + in-vector)
+                     (count in-vector)))
+  ;; => 2
+
+  (tb/tree-size '(/ (reduce + in-vector)
+                    (count in-vector)))
+  ;; => 6
+
+  (defn negative-to-zero-hand-written-solution
+    [in-vector]
+    (map (fn [x]
+           (if (< x 0)
+             0
+             x))
+         in-vector))
+
+  (test-hand-written-solution "negative-to-zero" negative-to-zero-hand-written-solution)
+  ;; => ()
+
+  (tb/tree-depth '(map (fn [x]
+                         (if (< x 0)
+                           0
+                           x))
+                       in-vector))
+  ;; => 4
+
+
+  (tb/tree-size '(map (fn [x]
+                        (if (< x 0)
+                          0
+                          x))
+                      in-vector))
+  ;; => 10
+
+
 
   )
