@@ -1,64 +1,64 @@
 import os
 
-name = "-CBGP2aBo" ## Initial benchmarking of Code Building GP on Hamilton's HPC
-run_type = "ast-biggest-out"
+name = "-CBGPv3" ## Initial benchmarking of Code Building GP on Hamilton's HPC
+run_type = "original"
 
-#cmd_line_params = """ """
+cmd_line_params = """ """
 #cmd_line_params = """--ast-strategy :newest-out"""
-cmd_line_params = """--ast-strategy :biggest-out """
+#cmd_line_params = """--ast-strategy :biggest-out """
 
 problems = [
             ### PSB1
-    # "checksum",
-    # "collatz-numbers",
-    # "compare-string-lengths",
-    # "count-odds",
-    # "digits",
-    # "double-letters",
-    # "even-squares",
-    # "for-loop-index",
+    "checksum",
+    "collatz-numbers",
+    "compare-string-lengths",
+    "count-odds",
+    "digits",
+    "double-letters",
+    "even-squares",
+    "for-loop-index",
     "grade",
-    # "last-index-of-zero",
-    # "median",
-    # "mirror-image",
-    # "negative-to-zero",
-    # "number-io",
-    # "pig-latin",
+    "last-index-of-zero",
+    "median",
+    "mirror-image",
+    "negative-to-zero",
+    "number-io",
+    "pig-latin",
     "replace-space-with-newline",
-    # "scrabble-score",
-    # "small-or-large",
-    # "smallest",
-    # "string-differences",
-    # "string-lengths-backwards",
-    # "sum-of-squares",
-    # "super-anagrams",
-    # "syllables",
-    # "vector-average",
+    "scrabble-score",
+    "small-or-large",
+    "smallest",
+    "string-differences",
+    "string-lengths-backwards",
+    "sum-of-squares",
+    "super-anagrams",
+    "syllables",
+    "vector-average",
     "vectors-summed",
-    # "x-word-lines",
+    "x-word-lines",
 
             ### PSB2
-    # "basement",
-    # "bouncing-balls",
-    # "bowling",
-    # "camel-case",
-    # "dice-game",
+    "basement",
+    "bouncing-balls",
+    "bowling",
+    "camel-case",
+    "dice-game",
     "fizz-buzz",
-    # "fuel-cost",
-    # "gcd",
+    "fuel-cost",
+    "gcd",
     "indices-of-substring",
     "leaders",
-    # "luhn",
+    "luhn",
     "middle-character",
-    # "paired-digits",
-    # "shopping-list",
-    # "snow-day",
-    # "solve-boolean",
-    # "spin-words",
-    # "square-digits",
-    # "substitution-cipher",
-    # "twitter",
-    # "vector-distance"
+    "paired-digits",
+    "shopping-list",
+    "snow-day",
+    "solve-boolean",
+    "spin-words",
+    "square-digits",
+    "substitution-cipher",
+    "twitter",
+    "vector-distance"
 ]
 
 with open('hpc_launcher.template', 'r') as hpc_template:
