@@ -21,6 +21,9 @@
   (vec (repeatedly (rand-float-range min-size max-size)
                    element-gen)))
 
+(def names-100 
+  ["Abel" "Margaret" "Kimber" "Kase" "Cecelia" "Katalina" "Alianna" "Bode" "Cody" "Charles" "Kinsley" "Kaliyah" "Jon" "Salem" "Nora" "Brodie" "Davis" "Ares" "Andres" "Adrian" "Michael" "Mara" "Azariah" "Eileen" "Russell" "Royal" "Ricardo" "Andi" "Hank" "Annika" "Oaklyn" "Shepherd" "Killian" "Oakleigh" "Garrett" "Forest" "Daleyza" "Deacon" "Eden" "Oscar" "Lillie" "Cole" "Emberly" "Nathan" "Indie" "Elise" "Andy" "Brayan" "Brylee" "Princess" "Julie" "Raelyn" "Clay" "Georgia" "Manuel" "Cataleya" "Lian" "Krew" "Marceline" "Ryder" "Asa" "Beckham" "Emmy" "Piper" "Cal" "Isabella" "Blaine" "Peyton" "Jasiah" "Elon" "Kai" "Mariam" "Ryan" "Jamie" "Zavier" "Lee" "Declan" "Adalynn" "Griffin" "Bristol" "Colt" "Eva" "Erin" "Landry" "Maeve" "Finley" "Spencer" "Luciano" "Trevor" "Adelynn" "Everlee" "Damon" "Alexis" "Renata" "Layne" "Emerson" "Khari" "Gracelynn" "Ozzy" "Eve"])
+
 (def int-predicates
   [zero?
    pos?
@@ -64,7 +67,7 @@
 
 (defn sum-2-vals-case-generator
   "Produce a map of inputs and outputs.
-   Works with any key generator functyion key-gen"
+   Works with any key generator function key-gen"
   [key-gen]
   (let [key1 (key-gen)
         key2 (key-gen)
@@ -121,21 +124,7 @@
                            penalty
                            (loss-fn program-output correct-output))))]
     (update-vals
-      {"add-them"
-       {:description    "simple problem to make sure this file is working"
-        :input->type    {'input1 {:type 'int?}
-                         'input2 {:type 'int?}}
-        :ret-type       {:type 'int?}
-        :other-types    [{:type 'boolean?}]
-        :extra-genes    [{:gene :lit, :val 0, :type {:type 'int?}}]
-        :case-generator (fn add-them-gen []
-                          (let [x (rand-int-range -1000 1000)
-                                y (rand-int-range -1000 1000)]
-                            {:inputs [x y]
-                             :output (+ x y)}))
-        :loss-fns       [bu/absolute-distance]}
-
-       "sum-2-vals"
+      {"sum-2-vals"
        {:description    "Given a map from strings to ints and two strings that are
                      keys of the map, look up the values associated with those keys
                      in the map and return their sum."
@@ -190,7 +179,6 @@
                              :output output}))
         :loss-fns       [bu/absolute-distance]}
 
-       ;; TODO: Rerun after figuring out error in some runs
        "centimeters-to-meters"
        {:description    "Given a length in centimeters, return a tuple of (meters, centimeters)
                      that corresponds to the same length."
@@ -208,7 +196,6 @@
         :loss-fns       [#(bu/absolute-distance (first %1) (first %2))
                          #(bu/absolute-distance (second %1) (second %2))]}
 
-       ;; TODO: Rerun after figuring out error in some runs
        "set-symmetric-difference"
        {:description    "Given two sets, find the symmetric difference
                      https://en.wikipedia.org/wiki/Symmetric_difference "
@@ -302,18 +289,17 @@
                                :output output})))
         :loss-fns       [bu/jaccard-similarity-loss]}
 
-       ;; TODO: Figure out loss-fns
        "filter-bounds"
-       {:description    "Given a vector of elements that are all of the same comparable
-                     type, T , and two instance of type T representing a lower and
-                     upper bound, filter the list to the elements that fall
-                     between two bounds (inclusively)."
-        :input->type    {'input1 {:type :vector :child {:type 'T}}
+       {:description    "Given a set of elements that are all of the same comparable
+                         type, T , and two instance of type T representing a lower and
+                         upper bound, filter the set to the elements that fall
+                         between two bounds (inclusively)."
+        :input->type    {'input1 {:type :set :child {:type 'T}}
                          'input2 {:type 'T}
                          'input3 {:type 'T}}
-        :ret-type       {:type :vector :child {:type 'T}}
-        :other-types    [{:type 'boolean?} {:type 'int?}]
-        :extra-genes    [{:gene :lit, :val [], :type {:type :vector :child {:type 'T}}}]
+        :ret-type       {:type :set :child {:type 'T}}
+        :other-types    [{:type 'boolean?}]
+        :extra-genes    []
         :case-generator (let [generators [(bu/string-generator 10)
                                           #(bu/rand-char)
                                           (bu/int-generator 1000)
@@ -321,16 +307,15 @@
                                           rand]]
                           (fn filter-bounds-gen []
                             (let [val-gen (rand-nth generators)
-                                  the-vector (rand-vector 20 50 val-gen)
+                                  the-set (set (rand-vector 20 50 val-gen))
                                   x (val-gen)
                                   y (val-gen)
                                   lower (lib/min' x y)
                                   upper (lib/max' x y)]
-                              {:inputs [the-vector lower upper]
-                               :output (filterv #(and (lib/<' lower %) (lib/<' % upper))
-                                                the-vector)})))
-        :loss-fns       [(fn [x y] (bu/absolute-distance (count x) (count y)))
-                         lev/distance]}
+                              {:inputs [the-set lower upper]
+                               :output (set (filter #(and (lib/<' lower %) (lib/<' % upper))
+                                                    the-set))})))
+        :loss-fns       [bu/jaccard-similarity-loss]}
 
        "area-of-rectangle"
        {:description    "Given two tuples of floats representing the upper-right and
@@ -355,7 +340,73 @@
                              :output output}))
         :loss-fns       [#(bu/round 4 (bu/absolute-distance %1 %2))]}
 
-       }
+       "sum-vector-vals"
+       {:description    "Given a map {string => int} and vector of strings that are
+                         keys of the map, look up the values associated with those
+                         keys in the map and return their sum."
+        :input->type    {'input1 {:type :map-of, :key {:type 'string?}, :value {:type 'int?}}
+                         'input2  {:type :vector :child {:type 'string?}}}
+        :ret-type       {:type 'int?}
+        :other-types    [{:type 'string?} {:type 'boolean?}]
+        :extra-genes    [{:gene :lit, :val 0, :type {:type 'int?}}]
+        :case-generator (fn sum-vector-vals-gen []
+                          (let [the-map (first (:inputs (sum-2-vals-case-generator (bu/string-generator 10))))
+                                prob (+ 0.1 (rand 0.8))
+                                the-vector (vec (random-sample prob (keys the-map)))]
+                            {:inputs [the-map the-vector]
+                             :output (apply + (map the-map the-vector))}))
+        :loss-fns       [bu/absolute-distance]}
+
+       "sets-with-element"
+       {:description    "Given a set of sets, filter to only contain sets that
+                         contain a certain element."
+        :input->type    {'input1 {:type :set :child {:type :set :child {:type 'int?}}}
+                         'input2  {:type 'int?}}
+        :ret-type       {:type :set :child {:type :set :child {:type 'int?}}}
+        :other-types    [{:type :set :child {:type 'int?}} {:type 'boolean?}]
+        :extra-genes    [{:gene :lit-generator, :fn (bu/int-generator 100), :type {:type 'int?}}
+                         {:gene :lit, :val true, :type {:type 'boolean?}}
+                         {:gene :lit, :val false, :type {:type 'boolean?}}
+                         {:gene :lit, :val #{}, :type {:type :set :child {:type 'int?}}}]
+        :case-generator (fn sets-with-element-gen []
+                          (let [max-int 100
+                                num-sets (rand-int 25)
+                                int-gen #(rand-int max-int)
+                                the-int (int-gen)
+                                prob (rand) ; prob of including the-int
+                                set-gen #(let [s (set (repeatedly (rand-int 25) int-gen))]
+                                           (if (< (rand) prob)
+                                             (conj s the-int)
+                                             (disj s the-int)))
+                                the-sets (set (repeatedly num-sets set-gen))
+                                output (set (filter #(contains? % the-int)
+                                                    the-sets))]
+                            {:inputs [the-sets the-int]
+                             :output output}))
+        :loss-fns       [bu/jaccard-similarity-loss]}
+
+       "timesheet"
+       {:description    "Given a list of tuples of the form: [(name, hours), ...],
+                         and a specific name, sum the hours associated with that name."
+        :input->type    {'input1 {:type :vector :child
+                                  {:type :tuple, :children [{:type 'string?} {:type 'int?}]}}
+                         'input2 {:type 'string?}}
+        :ret-type       {:type 'int?}
+        :other-types    [{:type :tuple, :children [{:type 'string?} {:type 'int?}]} {:type 'boolean?}]
+        :extra-genes    [{:gene :lit, :val true, :type {:type 'boolean?}}
+                         {:gene :lit, :val false, :type {:type 'boolean?}}]
+        :case-generator (fn timesheet-gen []
+                          (let [num-records (inc (rand-int 50))
+                                num-names (inc (rand-int 10))
+                                names (vec (take num-names (shuffle names-100)))
+                                records (vec (repeatedly num-records #(vector (rand-nth names)
+                                                                              (rand-int 50))))
+                                the-name (rand-nth names)
+                                output (apply + (map second (filter #(= the-name (first %))
+                                                                    records)))]
+                            {:inputs [records the-name]
+                             :output output}))
+        :loss-fns       [bu/absolute-distance]}}
 
       ;; This adds nil penalties to all loss functions
       (fn [problem-map]
@@ -370,7 +421,9 @@
 
 
 (comment
+  
+  ;; Current number of problems
+  (count (keys (problems {:penalty nil})))
 
-  (compare [false false] [true false false])
-
-  )
+  
+)
