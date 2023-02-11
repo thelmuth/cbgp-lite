@@ -493,9 +493,14 @@
        :loss-fns       [lev/distance]}}
 
 
-      ;; This adds nil penalties to all loss functions
+     ;; This adds nil penalties to all loss functions
+     ;; It now also makes sure every :other-types has all types included
      (fn [problem-map]
-       (update problem-map :loss-fns #(map penalize-nil %))))))
+       (-> problem-map
+           (update :loss-fns #(map penalize-nil %))
+           (assoc :other-types
+                  [{:type 'boolean?} {:type 'int?} {:type 'double?} {:type 'char?} {:type 'string?}]))))))
+
 
 (defn read-cases
   [{:keys [problem n-train n-test]}] [problem :case-generator]
@@ -518,6 +523,10 @@
   ;; Current number of problems
   (count (keys (problems {:penalty nil})))
 
-  (map :loss-fns (vals (problems {:penalty nil})))
+  (count
+   (lib/lib-for-types
+    (first (map :other-types (vals (problems {:penalty nil}))))))
+  
+  (count lib/type-env)
   
   )
