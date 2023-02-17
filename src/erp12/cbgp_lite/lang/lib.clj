@@ -812,7 +812,113 @@
 (defn lib-for-types
   [types]
   (->> type-env
-       (filter (fn [[_ typ]]
-                 (core/or (= (:type typ) :scheme)
-                          (some #(schema/occurs? % typ) types))))
+       (filter (partial schema/has-all-ground-types? types))
        (into {})))
+
+
+
+(comment
+
+  ;; (def a-scheme {:type   :scheme
+  ;;                :s-vars ['a]
+  ;;                :body   (fn-of [(fn-of [(s-var 'a)] BOOLEAN)
+  ;;                                (vector-of (s-var 'a))]
+  ;;                               (vector-of (s-var 'a)))})
+
+  ;; (def str-scheme (fn-of [(fn-of [CHAR] BOOLEAN) STRING] STRING))
+  ;; str-scheme
+
+  ;; (def another-str-scheme (fn-of [STRING CHAR] INT))
+
+  ;; (all-ground-types  {:schema :=> :child {:type 'int?}})
+  ;; ;; => #{{:type int?}}
+
+  ;; (all-ground-types a-scheme)
+  ;; ;; => #{{:type boolean?}}
+
+  ;; (all-ground-types str-scheme)
+  ;; ;; => #{{:type boolean?} {:type string?} {:type char?}}
+
+  ;; (all-ground-types another-str-scheme)
+  ;; ;; => #{{:type string?} {:type int?} {:type char?}}
+
+  ;; (has-all-ground-types? [{:type 'int?} {:type 'boolean?}]
+  ;;                        a-scheme)
+  ;; ;; => true
+
+  ;; (has-all-ground-types? [{:type 'int?} {:type 'boolean?}]
+  ;;                        str-scheme)
+  ;; ;; => false
+
+  ;; (has-all-ground-types? [{:type 'int?} {:type 'boolean?} {:type 'string?} {:type 'char?}]
+  ;;                        str-scheme)
+  ;; ;; => true
+
+  ;; (has-all-ground-types? [{:type 'int?} {:type 'boolean?} {:type 'string?} {:type 'char?}]
+  ;;                        another-str-scheme)
+  ;; ;; => true
+
+  ;; (has-all-ground-types? [{:type 'boolean?} {:type 'string?} {:type 'char?}]
+  ;;                        another-str-scheme)
+  ;; ;; => false
+
+  ;; (has-all-ground-types? [{:type 'string?}]
+  ;;                        (get type-env 'filterv))
+  ;; ;; => false
+
+  ;; (has-all-ground-types? [{:type 'string?} {:type 'boolean?}]
+  ;;                        (get type-env 'filterv))
+  ;; ;; => true
+
+  ;; (has-all-ground-types? [{:type 'boolean?}]
+  ;;                        (get type-env 'filterv))
+  ;; ;; => true
+
+
+
+
+  ;; (doseq [x (map all-ground-types (vals type-env))]
+  ;;   (println x))
+
+  ;; (apply set/union (map all-ground-types (vals type-env)))
+
+  ;; (all-ground-types type-env)
+
+
+
+
+
+
+  ;; (w/postwalk-demo a-scheme)
+
+  ;; (w/postwalk #(do (println % (type %)) %) a-scheme)
+
+
+
+  (keys
+   (lib-for-types #{}))
+
+  (lib-for-types #{{:type 'int?} {:type 'boolean?}})
+
+  (count (lib-for-types []))
+  
+  (count (lib-for-types [{:type 'int?} {:type 'boolean?}]))
+
+  (count (lib-for-types [{:type 'int?}
+                         {:type 'boolean?}
+                         {:type 'string?}
+                         {:type 'char?}
+                         {:type 'double?}
+                         {:type 'nil?}]))
+  ;; => 166
+  
+  ;; ASK EDDIE:
+  ;; - Are :other-types expected to only be ground types?
+  ;; - Does it work if they're not?
+  ;; 
+  
+  ;; TODO: Need to update Composite and PSB files so that
+  ;;       :other-types only includes ground types?
+
+
+  )

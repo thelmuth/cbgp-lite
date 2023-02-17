@@ -520,4 +520,11 @@
 
   (map :loss-fns (vals (problems {:penalty nil})))
   
+  (keys
+   (lib/lib-for-types #{}))
+  
+  (lib/lib-for-types #{{:type 'int?} {:type 'boolean?}})
+  
+  (count (lib/lib-for-types #{{:type 'int?} {:type 'boolean?}}))
+  
   )
