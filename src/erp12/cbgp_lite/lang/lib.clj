@@ -901,7 +901,7 @@
   (lib-for-types #{{:type 'int?} {:type 'boolean?}})
 
   (count (lib-for-types []))
-  
+
   (count (lib-for-types [{:type 'int?} {:type 'boolean?}]))
 
   (count (lib-for-types [{:type 'int?}
@@ -911,14 +911,35 @@
                          {:type 'double?}
                          {:type 'nil?}]))
   ;; => 166
-  
+
   ;; ASK EDDIE:
   ;; - Are :other-types expected to only be ground types?
   ;; - Does it work if they're not?
-  ;; 
-  
+
+
   ;; TODO: Need to update Composite and PSB files so that
   ;;       :other-types only includes ground types?
+
+  ;; TODO: check for ground types in PSB and composite problem defs - if not there, 
+  ;;   would some problems be hard to solve?
+
+
+  (comment
+
+
+    (count (lib-for-types []))
+
+    (count (lib-for-types [{:type :vector :child {:type 'int?}}]))
+    ;; => 104
+
+    (count (lib-for-types [{:type 'int?}]))
+    ;; => 125
+
+
+    (set/difference (set (keys (lib-for-types [{:type :vector :child {:type 'int?}}])))
+                    (set (keys (lib-for-types [])))))
+
+
 
 
   )
