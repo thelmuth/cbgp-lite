@@ -1,6 +1,7 @@
 (ns erp12.cbgp-lite.lang.schema
   (:require [erp12.schema-inference.impl.util :as su]
-            [clojure.walk :as w]))
+            [clojure.walk :as w]
+            [clojure.set :as set]))
 
 (defn occurs?
   [term form]
@@ -29,8 +30,8 @@
 (defn has-all-ground-types?
   "Checks if all ground types in form are contained in types"
   [types form]
-  (every? (set types)
-          (all-ground-types form)))
+  (set/subset? (all-ground-types form)
+               (set types)))
 
 (defn fn-arg-schemas
   [{:keys [type] :as schema}]
