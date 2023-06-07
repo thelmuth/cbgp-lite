@@ -1,10 +1,7 @@
 import os
 
-template_file = 'hpc_launcher.template'
-#template_file = 'hpc_launcher.psb2.template'
-
-#run_nums = "0-99"
-run_nums = "8,11,46,57,91"
+#template_file = 'hpc_launcher.template'
+template_file = 'hpc_launcher.psb2.template'
 
 name = "-CBGP-comp1" ## Initial benchmarking of Code Building GP on Hamilton's HPC
 basedir = "/usr/local/research/compsci/helmuth/thelmuth/Results/cbgp/composite-v1/"
@@ -49,8 +46,8 @@ problems = [
     # "bowling",
     # "camel-case",
     # "dice-game",
-    # "find-pair",
-    # "cut-vector",
+    "find-pair",
+    "cut-vector",
     # "fizz-buzz",
     # "fuel-cost",
     # "gcd",
@@ -74,18 +71,15 @@ problems = [
     # "count-true",
     # "filter-bounds",
     # "first-index-of-true",
-    # "get-vals-of-key",
-    # "min-key",
-    "max-applied-fn",
+    # "max-applied-fn",
     # "set-cartesian-product",
     # "set-symmetric-difference",
     # "sets-with-element",
-    # "simple-encryption",
     # "sum-2-vals",
     # "sum-2-vals-polymorphic",
     # "sum-2D",
     # "sum-vector-vals",
-    # "time-sheet"
+    # "timesheet",
 
 ]
 
@@ -98,7 +92,6 @@ for problem in problems:
     hpc_launcher = hpc_launcher_template.replace("#qsub-name#", problem + name)
     hpc_launcher = hpc_launcher.replace("#namespace#", problem)
     hpc_launcher = hpc_launcher.replace("#dir#", basedir)
-    hpc_launcher = hpc_launcher.replace("#run-nums#", run_nums)
     hpc_launcher = hpc_launcher.replace("#cmd-line-params#", cmd_line_params)
 
 

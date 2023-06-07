@@ -8,7 +8,7 @@ def run_cmd(opts: argparse.Namespace, run_id: int) -> str:
     log_dir = os.path.join(opts.out, opts.problem)
     log_file = os.path.join(log_dir, f"run{run_id}.txt")
     main_ns = "erp12.cbgp-lite.benchmark." + opts.search
-    suite_ns = "erp12.cbgp-lite.benchmark.suite.composite"
+    suite_ns = "erp12.cbgp-lite.benchmark.suite.psb"
     types_file = os.path.join(log_dir, f"run{run_id}_types.edn")
 
     clj_cmd = " ".join([

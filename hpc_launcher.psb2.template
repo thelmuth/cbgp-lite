@@ -8,7 +8,7 @@
 #PBS -l walltime=72:00:00
 #PBS -r y
 #PBS -o #dir#/#namespace#/HPC-logs/
-#PBS -t #run-nums#
+#PBS -t 0-99
 # This last line is the range of the number of jobs to start, inclusive
 
 # NOTE: Directions for use are at the bottom of this file.
@@ -27,7 +27,7 @@ PROBLEM="#namespace#"
 # your username (in my case, thelmuth).
 DIRECTORY="#dir#"
 
-PYTHONCMD="python3 scripts/single_run_runner.py --clj /home/thelmuth/bin/clojure/bin/clojure --search ga --problem $PROBLEM --run-number $PBS_ARRAYID --out $DIRECTORY #cmd-line-params# --log-types "
+PYTHONCMD="python3 scripts/single_run_runner_psb2.py --clj /home/thelmuth/bin/clojure/bin/clojure --search ga --problem $PROBLEM --run-number $PBS_ARRAYID --data-dir /home/thelmuth/PSB-DATA/ --out $DIRECTORY #cmd-line-params# --log-types "
 
 
 echo "Running on node(s):"
