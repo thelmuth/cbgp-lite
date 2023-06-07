@@ -10,7 +10,7 @@
 (def types-seen (atom {}))
 
 ;Here is the type of application
-(def app-type (atom :dna))
+(def app-type (atom :original))
 
 ;; @todo Move to schema-inference
 (defn tap-nodes
