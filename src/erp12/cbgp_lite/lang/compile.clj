@@ -4,13 +4,15 @@
             [erp12.cbgp-lite.lang.ast :as a]
             [erp12.cbgp-lite.lang.lib :as lib]
             [erp12.cbgp-lite.lang.schema :as schema]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log]
+            [clojure.pprint]))
 
 (def collect-types? (atom false))
 (def types-seen (atom {}))
 
 ;Here is the type of application
 (def app-type (atom :original))
+(def baked-in-apply-probability (atom 0.5))
 
 ;; @todo Move to schema-inference
 (defn tap-nodes
@@ -119,45 +121,52 @@
     ;;   ;(fn [{:keys [push-unit]}] (:gene push-unit))
     ;;   (println list-of-maps)
     ;;   )
+    
+    (cond
+      (= @app-type :all)
+      (compile-step {:push-unit {:gene :apply}
+                     :state (assoc state
+                                   :asts (conj (:asts state) ast)
+                                   :biggest biggest-out-ast
+                                   :newest newest-out-ast)})
+      
+      (= @app-type :original)
+      (assoc state
+             :asts (conj (:asts state) ast)
+             :biggest biggest-out-ast
+             :newest newest-out-ast)
 
-    (let [apptype @app-type]
-      (cond
-        (= apptype :all)
-        (compile-step {:push-unit {:gene :apply}
-                       :state (assoc state
-                                     :asts (conj (:asts state) ast)
-                                     :biggest biggest-out-ast
-                                     :newest newest-out-ast
-                                     :dna 0)})
-        (= apptype :original)
-        (assoc state
-               :asts (conj (:asts state) ast)
-               :biggest biggest-out-ast
-               :newest newest-out-ast
-               :dna 0)
-        
-        (= apptype :dna)
-        (if (= (:op (::ast ast)) :var)
-          (if (= (:dna state) 0)
-            (compile-step {:push-unit {:gene :apply}
-                           :state (assoc state
-                                         :asts (conj (:asts state) ast)
-                                         :biggest biggest-out-ast
-                                         :newest newest-out-ast
-                                         :dna 0)})
-            (assoc state
-                   :asts (conj (:asts state) ast)
-                   :biggest biggest-out-ast
-                   :newest newest-out-ast
-                   :dna (dec dna))
-            
-            )
+      (= @app-type :dna)
+      (if (= (:op (::ast ast)) :var)
+        (if (= (:dna state) 0)
+          (compile-step {:push-unit {:gene :apply}
+                         :state (assoc state
+                                       :asts (conj (:asts state) ast)
+                                       :biggest biggest-out-ast
+                                       :newest newest-out-ast
+                                       :dna 0)})
           (assoc state
                  :asts (conj (:asts state) ast)
                  :biggest biggest-out-ast
                  :newest newest-out-ast
-                 :dna dna))
-        ))
+                 :dna (dec dna)))
+        (assoc state
+               :asts (conj (:asts state) ast)
+               :biggest biggest-out-ast
+               :newest newest-out-ast
+               :dna dna))
+
+      (= @app-type :baked-in)
+      (if (:apply-it state)
+        (compile-step {:push-unit {:gene :apply}
+                       :state (assoc (dissoc state :apply-it)
+                                     :asts (conj (:asts state) ast)
+                                     :biggest biggest-out-ast
+                                     :newest newest-out-ast)})
+        (assoc (dissoc state :apply-it)
+               :asts (conj (:asts state) ast)
+               :biggest biggest-out-ast
+               :newest newest-out-ast)))
     
     ; (let [{found-DNA :ast updated-state :state} (pop-unifiable-ast :fn state)]
     ;   (if (not= found-DNA :none)
@@ -171,7 +180,7 @@
     ;;        :asts (conj (:asts state) ast)
     ;;        :biggest biggest-out-ast
     ;;        :newest newest-out-ast))
-
+    
 
     
     ; (if (is-fn? ast
@@ -186,9 +195,9 @@
     ; The `ast` map passed to `push-ast` extra info on to use DNA or not.
     ;`compile-step` method for `:var` genes
     ; ^ as an extra key of `:push-unit`
-
+    
     ;New kind of gene for vars which DNA. `default-gene-distribution `in task.clj. Also changes in `make-genetic-source `function of plushy.clj
-
+    
 
     ; Idea for DNA. Search stack for DNA with pop unifiable AST. If none returned, compile-step... Otherwise, don't.
     ))
@@ -507,24 +516,25 @@
                   (record-asts! state))
               ast (w/postwalk-replace dealiases (state-output-fn state))]
           (log/trace "EMIT:" ast)
+          ;; (clojure.pprint/pprint state) ;; TMH remove later
           ast)
         ;Call compile step on the next element of the genome/push code. Pop the top one off of the push code. Then pass that unit to be compiled.
         (let [{:keys [push-unit state]} (pop-push-unit state)]
           (log/trace "Current:" push-unit (state->log state))
           (recur (compile-step {:push-unit push-unit
                                 :type-env  type-env
-                                :state     state})))))))
+                                :state     (assoc state :apply-it (:applied push-unit))})))))))
 
 (comment
   (push->ast {;; The sequence of genes to compile.
               :push     (list {:gene :lit, :val 3, :type {:type 'int?}}
                               {:gene :lit, :val 5, :type {:type 'int?}}
-                              {:gene :var, :name '+}
-                              {:gene :dna}
-                              {:gene :dna}
-                              {:gene :var, :name 'inc}
-                              {:gene :var, :name 'dec}
-                              {:gene :var, :name 'inc})
+                              {:gene :var, :name '+, :applied false}
+                              ;; {:gene :dna}
+                              ;; {:gene :dna}
+                              {:gene :var, :name 'inc, :applied true}
+                              {:gene :var, :name 'dec, :applied true}
+                              {:gene :var, :name 'inc, :applied true})
             ;; Local variables. In this case every variable (+, inc, dec) are all globals
             ;; this is empty.
               :locals   []

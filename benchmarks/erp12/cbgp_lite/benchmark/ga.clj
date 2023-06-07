@@ -57,7 +57,8 @@
   ;opts is parameters
   (when (:app-type opts)
     (reset! c/app-type (:app-type opts)))
-
+  (when (:baked-in-apply-probability opts)
+    (reset! c/baked-in-apply-probability (:baked-in-apply-probability opts)))
 
   (when type-counts-file
     (log/warn "Type counting enabled. This is slow!")
