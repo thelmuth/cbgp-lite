@@ -35,6 +35,7 @@
                     :original 0.2
                     :dna 0.025
                     :all 0
+                    :baked-in 0.025
                     (throw (Exception. (str "Unrecognized Application Type of " @compile/app-type))))
    :fn            0.025
    :let           0.025
@@ -42,7 +43,8 @@
    :dna           (case @compile/app-type
                     :original 0
                     :dna 0.1
-                    :all 0)})
+                    :all 0
+                    :baked-in 0)})
 
 (defn default-genetic-source
   [{:keys [types vars extra-genes]}]
