@@ -129,7 +129,7 @@
                                    :asts (conj (:asts state) ast)
                                    :biggest biggest-out-ast
                                    :newest newest-out-ast)})
-      
+
       (= @app-type :original)
       (assoc state
              :asts (conj (:asts state) ast)
@@ -166,7 +166,10 @@
         (assoc (dissoc state :apply-it)
                :asts (conj (:asts state) ast)
                :biggest biggest-out-ast
-               :newest newest-out-ast)))
+               :newest newest-out-ast))
+      
+      :else
+      (throw (Exception. (str "Unrecognized Application Type of " app-type))))))
     
     ; (let [{found-DNA :ast updated-state :state} (pop-unifiable-ast :fn state)]
     ;   (if (not= found-DNA :none)
@@ -200,7 +203,7 @@
     
 
     ; Idea for DNA. Search stack for DNA with pop unifiable AST. If none returned, compile-step... Otherwise, don't.
-    ))
+    
 
 (defn nth-local
   "Get the nth variable from the state using modulo to ensure `n` always selects a
