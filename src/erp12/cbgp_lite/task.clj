@@ -27,7 +27,6 @@
 (defn default-gene-distribution
   []
   ;; @todo Calibrate by analyzing real code.
-  (println "IN TASK APP TYPE: " @compile/app-type)
   {:var           0.2
    :local         0.2
    :lit           0.2
@@ -36,7 +35,7 @@
                     :original 0.2
                     :dna 0.025
                     :all 0
-                    )
+                    (throw (Exception. (str "Unrecognized Application Type of " @compile/app-type))))
    :fn            0.025
    :let           0.025
    :close         0.05

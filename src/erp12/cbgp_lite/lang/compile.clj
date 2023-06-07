@@ -157,6 +157,9 @@
                  :biggest biggest-out-ast
                  :newest newest-out-ast
                  :dna dna))
+        
+        :else
+        (throw (Exception. (str "Unrecognized Application Type of " app-type)))
         ))
     
     ; (let [{found-DNA :ast updated-state :state} (pop-unifiable-ast :fn state)]
