@@ -2,7 +2,8 @@
   (:require [clojure.set :as set]
             [erp12.cbgp-lite.lang.lib :as lib]
             [erp12.cbgp-lite.search.pluhsy :as pl]
-            [erp12.cbgp-lite.utils :as u]))
+            [erp12.cbgp-lite.utils :as u]
+            [erp12.cbgp-lite.lang.compile :as compile]))
 
 (defn arg-symbols
   [{:keys [input->type]}]
@@ -30,14 +31,23 @@
    :local         0.2
    :lit           0.2
    :lit-generator 0.1
-   :apply         0.2
+   :apply         (case @compile/app-type
+                    :original 0.2
+                    :dna 0.025
+                    :all 0
+                    )
    :fn            0.025
    :let           0.025
-   :close         0.05})
+   :close         0.05
+   :dna           (case @compile/app-type
+                    :original 0
+                    :dna 0.1
+                    :all 0)})
 
 (defn default-genetic-source
   [{:keys [types vars extra-genes]}]
   (pl/make-genetic-source
+   ;printing this thing below for info
     (pl/prob-by-gene-kind (concat (map (fn [v] {:gene :var :name v}) vars)
                                   ;; Task-specific genes
                                   extra-genes
@@ -52,6 +62,7 @@
                                   ;; Always used genes
                                   [{:gene :local}
                                    {:gene :apply}
+                                   {:gene :dna}
                                    {:gene :let}
                                    {:gene :close}])
                           default-gene-distribution)))

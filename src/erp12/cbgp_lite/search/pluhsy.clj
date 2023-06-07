@@ -32,6 +32,7 @@
                   :local {:gene :local :idx (rand-int Integer/MAX_VALUE)}
                   el))
               (recur more))))))))
+;getting probability
 
 
 (defn random-plushy-genome

@@ -53,6 +53,12 @@
                  (map (fn [[k v]] (str (pr-str k) "\t" (pr-str v))))
                  (str/join "\n")
                  (str "\n")))
+  
+  ;opts is parameters
+  (when (:app-type opts)
+    (reset! c/app-type (:app-type opts)))
+
+
   (when type-counts-file
     (log/warn "Type counting enabled. This is slow!")
     (reset! c/collect-types? true)
@@ -98,6 +104,7 @@
                                        :stop-fn         (let [{:keys [max-generations cases]} opts]
                                                           (fn [{:keys [step step-start best new-best?]}]
                                                             (log/info :best-individual-errors (:errors best))
+                                                            (log/info :best-genome (:genome best))
                                                             (log/info "REPORT"
                                                                       {:step       step
                                                                        :duration   (- (System/currentTimeMillis) step-start)

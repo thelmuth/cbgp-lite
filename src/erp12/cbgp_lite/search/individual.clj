@@ -23,7 +23,9 @@
     (with-out-and-stdout (apply func args))
     (catch Exception e
       {:output e :std-out nil})))
+;
 
+;
 (defn errors-for-case
   "Compute errors on a single case given a program's output.
 
@@ -77,6 +79,8 @@
                    (inc cases-used))))))))
 
 (defn evaluate-full-behavior
+  ;Passes the actual function created. and compute everything about the function. Behavior is how it acted. Errors is how far off it is.
+  ; Total-error sum of all errors. Solution is if the func is correct. Cases used isnt too important. Exception is a list of the exceptions thrown.
   [{:keys [func cases loss-fns penalty]}]
   (if (nil? func)
     ;; If the compilation process did not produce any code
@@ -110,6 +114,8 @@
        :cases-used  (count cases)
        :exception   (:output (first (filter #(instance? Exception (:output %)) behavior)))})))
 
+
+;Makes AST, then turns it into an AST, and then turns that into a clojure function that gets passed to the func above to test its correctness.
 (defn make-evaluator
   [{:keys [evaluate-fn cases arg-symbols] :as opts}]
   (fn [gn context]
@@ -121,6 +127,7 @@
           _ (log/debug "Push" push)
           ;; Compile the Push into a Clojure form that accepts and returns the
           ;; correct types.
+          ;Creates a push abstract syntax tree. Type safe. Put in the push code, and out comes the corresponding clojure AST.
           ast (::c/ast (c/push->ast (assoc opts
                                       :push push
                                       :locals arg-symbols
@@ -128,9 +135,12 @@
                                       ;; Disabled to reduce concurrent compilation coordination.
                                       :record-sketch? false)))
           _ (log/debug "AST" ast)
+          ; Translates the AST into form. Turns it into the lists seen in clojure that are code.
           form (when ast
                  (a/ast->form ast))
           _ (log/debug "Form" form)
+          ; Passes the code to clojure itself, and gives back a clojure function. Creates a function that much faster than PushGP.
+          ; Then we can call this func on some data to see if it is correct.
           func (when form
                  (a/form->fn (vec arg-symbols) form))
           _ (log/debug "Function compiled" func)
@@ -144,6 +154,8 @@
               :code form
               :func func}
              evaluation))))
+
+;Individual is one gigantic map that contains all the information necessary. 
 
 (defn simplify
   [{:keys [individual simplification-steps evaluator context]}]
