@@ -24,9 +24,10 @@
   (->> lib/type-env
        (filter (fn [[symb _]] (contains? vars symb)))
        (merge input->type)))
-
-(def default-gene-distribution
+(defn default-gene-distribution
+  []
   ;; @todo Calibrate by analyzing real code.
+  (println "IN TASK APP TYPE: " @compile/app-type)
   {:var           0.2
    :local         0.2
    :lit           0.2
@@ -65,7 +66,7 @@
                                    {:gene :dna}
                                    {:gene :let}
                                    {:gene :close}])
-                          default-gene-distribution)))
+                          (default-gene-distribution))))
 
 (defn enhance-task
   [opts]
