@@ -10,9 +10,9 @@
 (def collect-types? (atom false))
 (def types-seen (atom {}))
 
-;Here is the type of application
-(def app-type (atom :original))
-(def baked-in-apply-probability (atom 0.5))
+;; Here is the type of function application being used. By default, it is :baked-in
+(def app-type (atom :baked-in))
+(def baked-in-apply-probability (atom 0.3))
 
 ;; @todo Move to schema-inference
 (defn tap-nodes
@@ -62,7 +62,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; State Manipulation
 
-;Empty state. Starting point
+;; This is the empty state. It serves to be a starting point.
 (def empty-state
   {:asts    (list)
    :push    []
@@ -70,7 +70,10 @@
    ;; @todo Experimental
    :biggest :none
    :newest  :none
-   :dna 0})
+   :dna 0
+   :fn-applied 0
+   :fn-not-applied 0
+   :total-apply-attempts 0})
 
 (defn macro?
   [{:keys [op] :as ast}]
@@ -91,20 +94,24 @@
 
 (declare compile-step)
 
-;Push (verb) to the stack. State, everything involved in compilation. The stack and rest of the genome that isn't compiled.
+;; Push (verb) to the stack. The state, everything involved in compilation.
+;; The stack and the rest of the genome that isn't compiled.
 (defn push-ast
   "Push the `ast` to the AST stack in the `state`."
   [ast {:keys [biggest newest ret-type dna] :as state}]
-  ;ast is what is pushed onto the stack. State holds onto the stack. 
-
- ;collect-types is an atom. False by default. If set true. start recording into atom "types-seen". Keeps track of how much every single data type was used.
+  ;; ast is what is pushed onto the stack. State contains the stack. 
+  ;; collect-types is an atom that isalse by default.
+  ;; If set to true. start recording into atom "types-seen".
+  ;; Keeps track of how much every single data type was used.
   (when @collect-types?
     (swap! types-seen
            (fn [m t] (assoc m t (inc (get m t 0))))
            (canonical-type (::type ast))))
   
- ;output-able? checks if the output type of the tree youre checking has the same output type as the problem. If so, it is a candidate. But can result in many small candidates
-  ; biggest-out-ast is the largest ast. If there is no asts checked, is set to biggest. Then, the largest ast will be added to the state at the end in the map.
+  ;; output-able? checks if the output type of the tree youre checking has the same output type as the problem.
+  ;; If so, it is a candidate. But can result in many small candidates
+  ;; biggest-out-ast is the largest ast. If there is no asts checked, is set to biggest.
+  ;; Then, the largest ast will be added to the state at the end in the map.
   (let [output-able? (and (unifiable? ret-type (::type ast))
                           (not (macro? (::ast ast))))
         newest-out-ast (if output-able? ast newest)
@@ -115,13 +122,7 @@
                           ast
                           biggest)]
     
-    ;(println (map #(keys %) (:asts state)))
-    ;; (let [astvals (:asts state)
-    ;;       list-of-maps (map #(:erp12.cbgp-lite.lang.compile/type %) astvals)]
-    ;;   ;(fn [{:keys [push-unit]}] (:gene push-unit))
-    ;;   (println list-of-maps)
-    ;;   )
-    
+    ;; Below checks the app-type to see what kind of function-application to use.
     (cond
       (= @app-type :all)
       (compile-step {:push-unit {:gene :apply}
@@ -183,26 +184,6 @@
     ;;        :asts (conj (:asts state) ast)
     ;;        :biggest biggest-out-ast
     ;;        :newest newest-out-ast))
-    
-
-    
-    ; (if (is-fn? ast
-    ;      if (:DNA is on the ast.
-    ;       push
-    ;       (apply push)
-    ;       push
-    ;    ))
-    ; find a way to save on the genome or stack if there is DNA. True / false. if that key is in the map, dontapply. otherwise, do.
-    
- ; can do this in multiple places.
-    ; The `ast` map passed to `push-ast` extra info on to use DNA or not.
-    ;`compile-step` method for `:var` genes
-    ; ^ as an extra key of `:push-unit`
-    
-    ;New kind of gene for vars which DNA. `default-gene-distribution `in task.clj. Also changes in `make-genetic-source `function of plushy.clj
-    
-
-    ; Idea for DNA. Search stack for DNA with pop unifiable AST. If none returned, compile-step... Otherwise, don't.
     
 
 (defn nth-local
@@ -329,37 +310,53 @@
                  ::type (schema/instantiate (get type-env local-symbol))}
                 state))))
 
-;apply: calling the function. We need an AST of a function, and ASTs for each argument of that function. Find right num of args and make sure the args work together.
+
+;; (let [m {:a 1 :b 2}
+;;       a (:a m)]
+;; = to
+;; (let [{my-number :a} {:a 1 :b 2}]) Destructuring. Unpack and assign variables to the parts of the map. the symbol.
+;; the let with the boxed ast is = to
+;; m (pop-function-ast state)
+;; boxed-ast (:ast m)
+;; state-fn-popped (:state m)
+;; https://clojure.org/guides/destructuring#_associative_destructuring for destructuring
+
+;; :: is syntactic sugar. ::ast means in reference to this file.
+;; :ast is keyword. type and ast were all over the place. :: means in reference to this place.
+
+
+;; apply attempts to call and apply a function.
+;; We need an AST of a function, and then ASTs for each argument of that function.
+;; Find right num of args and make sure the args work together.
 (defmethod compile-step :apply
   [{:keys [state]}]
+  (println "")
+  (println "")
+  (println "")
+  (println (str "applied: "(:fn-applied state)))
+  (println (str "not applied: " (:fn-not-applied state)))
+  (println (str "all attempts: " (:total-apply-attempts state)))
+  (println "")
+  (println "")
+  (println "")
   ;; Function applications search for the first AST that returns a function.
   ;; If none found, return state.
   ;; If found, proceed to search for ASTs for each argument to the function.
   ;; If one or more arguments have :s-var types, incrementally bind them.
 
-  ; pop function off of state. Finds first function.
-  ; (let [m {:a 1 :b 2}
-  ;       a (:a m)]
-  ; = to
-  
-  ; (let [{my-number :a} {:a 1 :b 2}]) Destructuring. Unpack and assign variables to the parts of the map. the symbol.
-  ; the let with the boxed ast is = to
-  ; m (pop-function-ast state)
-  ; boxed-ast (:ast m)
-  ; state-fn-popped (:state m)
-  ; https://clojure.org/guides/destructuring#_associative_destructuring for destructuring
+  ;; pop function off of state. Finds first function.
   (let [{boxed-ast :ast state-fn-popped :state} (pop-function-ast state)]
     (log/trace "Applying function:" boxed-ast)
 
-    ;if the boxed ast is not found. just return the input state. do nothing. a function wasn't found.
+    ;; if the boxed ast is not found. just return the input state.
+    ;; Do nothing. A function wasn't found.
     (if (= :none boxed-ast)
       state
-      ; :: is syntactic sugar. ::ast means in reference to this file. :ast is keyword. type and ast were all over the place. :: means in reference to this place.
-      ; functin ast: clojure code that returns function. the data type of that function to find the right asts.
+      ;; function ast: clojure code that returns function. the data type of that function to find the right asts.
       (let [{fn-ast ::ast fn-type ::type} boxed-ast]
         
-        ;empty map of bindings. don't have anything yet, but when we find out what "type A" is, we know what type A is.
-        ;there are no args yet. Slowly loop through and find the bindings. Once you know the info, you know the 
+        ;; empty map of bindings. don't have anything yet, but when we find out what "type A" is, we know what type A is.
+        ;; there are no args yet. Slowly loop through and find the bindings. Once you know the info, you know the 
         (loop [remaining-arg-types (schema/fn-arg-schemas fn-type)
                bindings {}
                args []
@@ -374,33 +371,38 @@
                                              :children (mapv ::type args)}
                                     :output ret-s-var})]
               (if (schema/mgu-failure? subs)
-                state
+                ;; If it fails here, then just return the state. Have a key in state :fn-not-applied and inc it.
+                (update (update new-state :fn-not-applied inc) :total-apply-attempts inc)
+
+                ;; push the ast to the stack. Update the state to inc :fn applied.
                 (push-ast {::ast  {:op   :invoke
                                    :fn   fn-ast
                                    :args (mapv ::ast args)}
                            ::type (schema/substitute subs ret-s-var)}
-                          new-state)))
+                          (update (update new-state :fn-applied inc) :total-apply-attempts inc))))
             
-            ;grab next arg we need to find. If we know what the bindings are, we need to substitute those in.
+            ;; Grab next arg we need to find. If we know what the bindings are, we need to substitute those in.
             (let [arg-type (first remaining-arg-types)
                   _ (log/trace "Searching for arg of type:" arg-type)
                   ;; If arg-type is a t-var that we have seen before,
                   ;; bind it to the actual same type as before.
                   arg-type (schema/substitute bindings arg-type)
                   _ (log/trace "In-context arg type:" arg-type)
-                  ;is-s-var (= (:type arg-type) :s-var)
+                  ;; is-s-var (= (:type arg-type) :s-var)
                   ;; If arg-type is still a t-var, pop an ast of any type.
                   ;; Otherwise, pop the AST of the expected type.
-                  ;The ARG ast. :bindings may contain the new bindings for things like type A, B etc.
+                  ;; The ARG ast. :bindings may contain the new bindings for things like type A, B etc.
                   {arg :ast state-arg-popped :state new-subs :bindings}
                   (pop-unifiable-ast arg-type new-state)]
               (log/trace "Found arg:" arg)
               (if (= :none arg)
-                state
+                ;; if arg is :none, not anything at all, just return the state. Also update that a func wasn't applied
+                  (update (update new-state :fn-not-applied inc) :total-apply-attempts inc)
+                
                 (recur (rest remaining-arg-types)
                        ;; If arg-type is has unbound t-vars that were bound during unification,
                        ;; add them to the set of bindings.
-                       ;merge these two together.
+                       ;; merge these two together.
                        (schema/compose-substitutions new-subs bindings)
                        (conj args arg)
                        state-arg-popped)))))))))
@@ -519,7 +521,7 @@
                   (record-asts! state))
               ast (w/postwalk-replace dealiases (state-output-fn state))]
           (log/trace "EMIT:" ast)
-          ;; (clojure.pprint/pprint state) ;; TMH remove later
+          ;(clojure.pprint/pprint state) ;; TMH remove later
           ast)
         ;Call compile step on the next element of the genome/push code. Pop the top one off of the push code. Then pass that unit to be compiled.
         (let [{:keys [push-unit state]} (pop-push-unit state)]
@@ -530,9 +532,12 @@
 
 (comment
   (push->ast {;; The sequence of genes to compile.
-              :push     (list {:gene :lit, :val 3, :type {:type 'int?}}
+              :push     (list 
+                         {:gene :var, :name 'inc, :applied true}
+                         {:gene :var, :name 'dec, :applied true}
+                         {:gene :lit, :val 3, :type {:type 'int?}}
                               {:gene :lit, :val 5, :type {:type 'int?}}
-                              {:gene :var, :name '+, :applied false}
+                              {:gene :var, :name '+, :applied true}
                               ;; {:gene :dna}
                               ;; {:gene :dna}
                               {:gene :var, :name 'inc, :applied true}

@@ -105,6 +105,9 @@
 (def total-error-stat
   (make-distribution-stat :total-error))
 
+(def applied-functions
+  (make-distribution-stat :fn-applied))
+
 (def genome-size-stat
   (make-distribution-stat #(count (:genome %))))
 
@@ -117,6 +120,8 @@
 (def code-depth-over-size-stat
   (make-distribution-stat #(/ (tb/tree-depth (:code %))
                               (tb/tree-size (:code %)))))
+
+
 
 (defn make-num-penalty-stat
   [penalty]

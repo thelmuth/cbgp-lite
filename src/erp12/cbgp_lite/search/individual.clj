@@ -128,6 +128,7 @@
           ;; Compile the Push into a Clojure form that accepts and returns the
           ;; correct types.
           ;Creates a push abstract syntax tree. Type safe. Put in the push code, and out comes the corresponding clojure AST.
+
           ast (::c/ast (c/push->ast (assoc opts
                                       :push push
                                       :locals arg-symbols
