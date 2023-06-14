@@ -86,7 +86,9 @@
                                        :post-eval       (fn [{:keys [individuals]}]
                                                           (doseq [[stat-name stat-val]
                                                                   (sort-by key
-                                                                           (bu/aggregate-stats {:code-depth            bu/code-depth-stat
+                                                                           (bu/aggregate-stats {:ast-final-stack-size  bu/ast-stack-size-stat
+                                                                                                :ast-stack-max-tree-size bu/ast-stack-max-tree-size
+                                                                                                :code-depth            bu/code-depth-stat
                                                                                                 :code-depth-over-size  bu/code-depth-over-size-stat
                                                                                                 :code-size             bu/code-size-stat
                                                                                                 :exceptions            bu/exception-messages-stat

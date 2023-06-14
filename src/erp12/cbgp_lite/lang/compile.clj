@@ -433,10 +433,10 @@
             ;; Compile a chunk where the arguments are "in-scope" and can appear in ASTs.
             ;; This is the function's body.
             fn-body-env (into type-env (map #(vector %1 %2) arg-vars arg-types))
-            body (push->ast {:push     (first (:push state))
-                             :locals   (vec (concat (:locals state) arg-vars))
-                             :ret-type ret-type
-                             :type-env fn-body-env})
+            body (:ast (push->ast {:push     (first (:push state))
+                                   :locals   (vec (concat (:locals state) arg-vars))
+                                   :ret-type ret-type
+                                   :type-env fn-body-env}))
             state-no-body-chunk (update state :push rest)
             ;; Filter out unused args
             args+types (mapcat (fn [a t]
@@ -470,10 +470,10 @@
       (let [;; Generate a unique symbol for the new variable.
             local-var-symb (gensym "v-")
             ;; Compile a chunk where the local variable is "in-scope" and can appear in ASTs.
-            body (push->ast {:push     (first (:push new-state))
-                             :locals   (vec (conj (:locals state) local-var-symb))
-                             :ret-type {:type :s-var :sym (gensym "S")}
-                             :type-env (conj type-env [local-var-symb (::type var-def)])})]
+            body (:ast (push->ast {:push     (first (:push new-state))
+                                   :locals   (vec (conj (:locals state) local-var-symb))
+                                   :ret-type {:type :s-var :sym (gensym "S")}
+                                   :type-env (conj type-env [local-var-symb (::type var-def)])}))]
         (if (= :none body)
           noop-state
           ;; Compose the new `let` AST from the local variable symbol, def, and body.
@@ -521,8 +521,9 @@
                   (record-asts! state))
               ast (w/postwalk-replace dealiases (state-output-fn state))]
           (log/trace "EMIT:" ast)
-          ;(clojure.pprint/pprint state) ;; TMH remove later
-          ast)
+          ;; (clojure.pprint/pprint state) ;; TMH remove later
+          {:ast ast
+           :state state})
         ;Call compile step on the next element of the genome/push code. Pop the top one off of the push code. Then pass that unit to be compiled.
         (let [{:keys [push-unit state]} (pop-push-unit state)]
           (log/trace "Current:" push-unit (state->log state))
@@ -540,27 +541,26 @@
                               {:gene :var, :name '+, :applied true}
                               ;; {:gene :dna}
                               ;; {:gene :dna}
-                              {:gene :var, :name 'inc, :applied true}
-                              {:gene :var, :name 'dec, :applied true}
-                              {:gene :var, :name 'inc, :applied true})
+                                      {:gene :var, :name 'inc, :applied true}
+                                      {:gene :var, :name 'dec, :applied true}
+                                      {:gene :var, :name 'inc, :applied true})
             ;; Local variables. In this case every variable (+, inc, dec) are all globals
             ;; this is empty.
-              :locals   []
+                      :locals   []
             ;; The return type of the AST we want to output at the end. 
             ;; I'm assuming integers based on the input sequence you gave.
-              :ret-type {:type 'int?}
+                      :ret-type {:type 'int?}
             ;; The type environment telling the type systems what every variable's data
             ;; type is. In this case I wrote out the 3 variables present in the sequence.
-              :type-env {;; + is as function of (int, int) -> int
-                         '+   {:type   :=>
-                               :input  {:type :cat :children [{:type 'int?} {:type 'int?}]}
-                               :output {:type 'int?}}
+                      :type-env {;; + is as function of (int, int) -> int
+                                 '+   {:type   :=>
+                                       :input  {:type :cat :children [{:type 'int?} {:type 'int?}]}
+                                       :output {:type 'int?}}
                        ;; inc is a function of int -> int
-                         'inc {:type   :=>
-                               :input  {:type :cat :children [{:type 'int?}]}
-                               :output {:type 'int?}}
+                                 'inc {:type   :=>
+                                       :input  {:type :cat :children [{:type 'int?}]}
+                                       :output {:type 'int?}}
                        ;; dec is a function of int -> int
-                         'dec {:type   :=>
-                               :input  {:type :cat :children [{:type 'int?}]}
-                               :output {:type 'int?}}}})
-  )
+                                 'dec {:type   :=>
+                                       :input  {:type :cat :children [{:type 'int?}]}
+                                       :output {:type 'int?}}}}))

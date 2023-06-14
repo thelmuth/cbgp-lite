@@ -128,13 +128,13 @@
           ;; Compile the Push into a Clojure form that accepts and returns the
           ;; correct types.
           ;Creates a push abstract syntax tree. Type safe. Put in the push code, and out comes the corresponding clojure AST.
-
-          ast (::c/ast (c/push->ast (assoc opts
-                                      :push push
-                                      :locals arg-symbols
-                                      ;; @todo Experimental - record final stack AST sizes and types.
-                                      ;; Disabled to reduce concurrent compilation coordination.
-                                      :record-sketch? false)))
+          {:keys [ast state]} (c/push->ast (assoc opts
+                                                  :push push
+                                                  :locals arg-symbols
+                                                  ;; @todo Experimental - record final stack AST sizes and types.
+                                                  ;; Disabled to reduce concurrent compilation coordination.
+                                                  :record-sketch? false))
+          ast (::c/ast ast) ;; un-namespace-qualify final ast for program
           _ (log/debug "AST" ast)
           ; Translates the AST into form. Turns it into the lists seen in clojure that are code.
           form (when ast
@@ -153,7 +153,8 @@
                                          e))))]
       (merge {:push push
               :code form
-              :func func}
+              :func func
+              :state state}
              evaluation))))
 
 ;Individual is one gigantic map that contains all the information necessary. 

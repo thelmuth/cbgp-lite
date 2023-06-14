@@ -1,6 +1,7 @@
 (ns erp12.cbgp-lite.benchmark.utils
   (:require [clojure.set :as st]
             [clojure.walk :as w]
+            [erp12.cbgp-lite.lang.ast :as a]
             [erp12.ga-clj.toolbox :as tb]))
 
 (defn read-problem
@@ -84,7 +85,9 @@
     ([] {})
     ;; Finalize
     ([x->freq]
-     (let [cfh (->> x->freq
+     (let [dont-include (get x->freq :dont-include-in-stats 0)
+           x->freq (dissoc x->freq :dont-include-in-stats) ;; TMH: I changed this to ignore :dont-include-in-stats keys, so that we can have the stat functions return :dont-include-in-stats if we don't want that ind counted
+           cfh (->> x->freq
                     (sort-by key)
                     (reductions (fn [[_ acc] [x freq]]
                                   [x (+ acc freq)])
@@ -97,7 +100,8 @@
         :25%  (some (fn [[x c-freq]] (when (> c-freq quart) x)) cfh)
         :50%  (some (fn [[x c-freq]] (when (> c-freq (* quart 2)) x)) cfh)
         :75%  (some (fn [[x c-freq]] (when (> c-freq (* quart 3)) x)) cfh)
-        :max  (reduce max (keys x->freq))}))
+        :max  (reduce max (keys x->freq))
+        :dont-include-in-stats dont-include}))
     ;; Reduce
     ([acc el]
      (update acc (by el) (fn [i] (inc (or i 0)))))))
@@ -121,7 +125,20 @@
   (make-distribution-stat #(/ (tb/tree-depth (:code %))
                               (tb/tree-size (:code %)))))
 
+(def ast-stack-size-stat
+  (make-distribution-stat #(count (:asts (:state %)))))
 
+;; Returns the max tree size of any tree on the :asts stack, and if stack is
+;; empty returns :dont-include-in-stats
+(def ast-stack-max-tree-size
+  (make-distribution-stat (fn [ind]
+                            (if (empty? (:asts (:state ind)))
+                              :dont-include-in-stats ;; this :dont-include-in-stats is necessary because some individuals produce empty stacks, so we can use :dont-include-in-stats to mean "don't include this one in the stats"
+                              (apply max
+                                     (map (fn [ast]
+                                            (tb/tree-size
+                                             (a/ast->form (:erp12.cbgp-lite.lang.compile/ast ast))))
+                                          (:asts (:state ind))))))))
 
 (defn make-num-penalty-stat
   [penalty]
