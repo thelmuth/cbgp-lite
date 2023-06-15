@@ -115,6 +115,15 @@
 (def genome-size-stat
   (make-distribution-stat #(count (:genome %))))
 
+(def applied-stat
+  (make-distribution-stat #(:fn-applied (:state %))))
+
+(def not-applied-stat
+  (make-distribution-stat #(:fn-not-applied (:state %))))
+
+(def not-func-so-not-apply-stat
+  (make-distribution-stat #(:fn-not-applied-because-no-functions (:state %))))
+
 (def code-size-stat
   (make-distribution-stat #(tb/tree-size (:code %))))
 
@@ -124,6 +133,9 @@
 (def code-depth-over-size-stat
   (make-distribution-stat #(/ (tb/tree-depth (:code %))
                               (tb/tree-size (:code %)))))
+
+(def dna-counter-stat
+  (make-distribution-stat #(:dna (:state %))))
 
 (def ast-stack-size-stat
   (make-distribution-stat #(count (:asts (:state %)))))
@@ -139,6 +151,53 @@
                                             (tb/tree-size
                                              (a/ast->form (:erp12.cbgp-lite.lang.compile/ast ast))))
                                           (:asts (:state ind))))))))
+
+(def ast-stack-median-tree-size
+  (make-distribution-stat (fn [ind]
+                            ;; JF TODO: make this a let statement for better efficiency.
+                            ;; use 
+                            (if (empty? (:asts (:state ind)))
+                              :dont-include-in-stats ;; this :dont-include-in-stats is necessary because some individuals produce empty stacks, so we can use :dont-include-in-stats to mean "don't include this one in the stats"
+                              
+                                (tb/median (map (fn [ast]
+                                       (tb/tree-size
+                                        (a/ast->form (:erp12.cbgp-lite.lang.compile/ast ast))))
+                                     (:asts (:state ind))))
+                               ))))
+
+
+(def ast-stack-max-tree-size-for-right-type
+  (make-distribution-stat (fn [ind]
+                            (let [filtered-by-same-type (filter #(= (:ret-type ind) (:erp12.cbgp-lite.lang.compile/type %)) (:asts (:state ind)))]
+                              (if (empty? filtered-by-same-type)
+                                :dont-include-in-stats ;; this :dont-include-in-stats is necessary because some individuals produce empty stacks, so we can use :dont-include-in-stats to mean "don't include this one in the stats"
+                                (apply max
+                                       (map (fn [ast]
+                                              (tb/tree-size
+                                               (a/ast->form (:erp12.cbgp-lite.lang.compile/ast ast))))
+                                            filtered-by-same-type)))))))
+
+(def ast-stack-max-tree-depth
+  (make-distribution-stat (fn [ind]
+                            (if (empty? (:asts (:state ind)))
+                              :dont-include-in-stats ;; this :dont-include-in-stats is necessary because some individuals produce empty stacks, so we can use :dont-include-in-stats to mean "don't include this one in the stats"
+                              (apply max
+                                     (map (fn [ast]
+                                            (tb/tree-depth
+                                             (a/ast->form (:erp12.cbgp-lite.lang.compile/ast ast))))
+                                          (:asts (:state ind))))))))
+
+
+(def ast-stack-max-tree-depth-for-right-type
+  (make-distribution-stat (fn [ind]
+                            (let [filtered-by-same-type (filter #(= (:ret-type ind) (:erp12.cbgp-lite.lang.compile/type %)) (:asts (:state ind)))]
+                              (if (empty? filtered-by-same-type)
+                                :dont-include-in-stats ;; this :dont-include-in-stats is necessary because some individuals produce empty stacks, so we can use :dont-include-in-stats to mean "don't include this one in the stats"
+                                (apply max
+                                       (map (fn [ast]
+                                              (tb/tree-depth
+                                               (a/ast->form (:erp12.cbgp-lite.lang.compile/ast ast))))
+                                            filtered-by-same-type)))))))
 
 (defn make-num-penalty-stat
   [penalty]

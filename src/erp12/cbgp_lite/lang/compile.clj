@@ -11,8 +11,8 @@
 (def types-seen (atom {}))
 
 ;; Here is the type of function application being used. By default, it is :baked-in
-(def app-type (atom :baked-in))
-(def baked-in-apply-probability (atom 0.3))
+(def app-type (atom :dna))
+(def baked-in-apply-probability (atom 0.5))
 
 ;; @todo Move to schema-inference
 (defn tap-nodes
@@ -73,7 +73,8 @@
    :dna 0
    :fn-applied 0
    :fn-not-applied 0
-   :total-apply-attempts 0})
+   :total-apply-attempts 0
+   :fn-not-applied-because-no-functions 0})
 
 (defn macro?
   [{:keys [op] :as ast}]
@@ -328,17 +329,18 @@
 ;; apply attempts to call and apply a function.
 ;; We need an AST of a function, and then ASTs for each argument of that function.
 ;; Find right num of args and make sure the args work together.
+
 (defmethod compile-step :apply
   [{:keys [state]}]
-  (println "")
-  (println "")
-  (println "")
-  (println (str "applied: "(:fn-applied state)))
-  (println (str "not applied: " (:fn-not-applied state)))
-  (println (str "all attempts: " (:total-apply-attempts state)))
-  (println "")
-  (println "")
-  (println "")
+  ;; (println "")
+  ;; (println "")
+  ;; (println "")
+  ;; (println (str "applied: "(:fn-applied state)))
+  ;; (println (str "not applied: " (:fn-not-applied state)))
+  ;; (println (str "all attempts: " (:total-apply-attempts state)))
+  ;; (println "")
+  ;; (println "")
+  ;; (println "")
   ;; Function applications search for the first AST that returns a function.
   ;; If none found, return state.
   ;; If found, proceed to search for ASTs for each argument to the function.
@@ -351,7 +353,7 @@
     ;; if the boxed ast is not found. just return the input state.
     ;; Do nothing. A function wasn't found.
     (if (= :none boxed-ast)
-      state
+      (update (update state :fn-not-applied-because-no-functions inc) :total-apply-attempts inc)
       ;; function ast: clojure code that returns function. the data type of that function to find the right asts.
       (let [{fn-ast ::ast fn-type ::type} boxed-ast]
         

@@ -154,7 +154,8 @@
       (merge {:push push
               :code form
               :func func
-              :state state}
+              :state state
+              :ret-type (:ret-type opts)}
              evaluation))))
 
 ;Individual is one gigantic map that contains all the information necessary. 

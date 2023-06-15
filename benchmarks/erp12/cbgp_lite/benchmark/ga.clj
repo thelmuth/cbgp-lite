@@ -88,15 +88,23 @@
                                                                   (sort-by key
                                                                            (bu/aggregate-stats {:ast-final-stack-size  bu/ast-stack-size-stat
                                                                                                 :ast-stack-max-tree-size bu/ast-stack-max-tree-size
+                                                                                                :ast-stack-max-tree-size-right-type bu/ast-stack-max-tree-size-for-right-type
+                                                                                                :ast-stack-median-tree-size bu/ast-stack-median-tree-size
+                                                                                                :ast-stack-max-tree-depth bu/ast-stack-max-tree-depth
+                                                                                                :ast-stack-max-tree-depth-right-type bu/ast-stack-max-tree-depth-for-right-type
                                                                                                 :code-depth            bu/code-depth-stat
                                                                                                 :code-depth-over-size  bu/code-depth-over-size-stat
                                                                                                 :code-size             bu/code-size-stat
                                                                                                 :exceptions            bu/exception-messages-stat
                                                                                                 :genome-size           bu/genome-size-stat
                                                                                                 :lowest-error-per-case bu/lowest-error-per-case
+                                                                                                :applied-amount        bu/applied-stat
+                                                                                                :not-applied-amount    bu/not-applied-stat
+                                                                                                :not-func-not-apply    bu/not-func-so-not-apply-stat
                                                                                                 :num-no-ast            bu/num-no-ast-stat
                                                                                                 :num-penalties         (bu/make-num-penalty-stat (:penalty opts))
                                                                                                 :num-throwing          bu/num-throwing-stat
+                                                                                                :final-dna-counter     bu/dna-counter-stat
                                                                                                 :total-error           bu/total-error-stat
                                                                                                 :unique-behaviors      bu/unique-behaviors-stat}
                                                                                                individuals))]
