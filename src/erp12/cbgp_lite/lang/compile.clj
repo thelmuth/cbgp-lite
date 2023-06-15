@@ -11,7 +11,7 @@
 (def types-seen (atom {}))
 
 ;; Here is the type of function application being used. By default, it is :baked-in
-(def app-type (atom :dna))
+(def app-type (atom :original))
 (def baked-in-apply-probability (atom 0.5))
 
 ;; @todo Move to schema-inference
