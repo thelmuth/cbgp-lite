@@ -332,15 +332,6 @@
 
 (defmethod compile-step :apply
   [{:keys [state]}]
-  ;; (println "")
-  ;; (println "")
-  ;; (println "")
-  ;; (println (str "applied: "(:fn-applied state)))
-  ;; (println (str "not applied: " (:fn-not-applied state)))
-  ;; (println (str "all attempts: " (:total-apply-attempts state)))
-  ;; (println "")
-  ;; (println "")
-  ;; (println "")
   ;; Function applications search for the first AST that returns a function.
   ;; If none found, return state.
   ;; If found, proceed to search for ASTs for each argument to the function.
