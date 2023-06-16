@@ -527,16 +527,14 @@
 (comment
   (push->ast {;; The sequence of genes to compile.
               :push     (list 
-                         {:gene :var, :name 'inc, :applied true}
-                         {:gene :var, :name 'dec, :applied true}
                          {:gene :lit, :val 3, :type {:type 'int?}}
                               {:gene :lit, :val 5, :type {:type 'int?}}
-                              {:gene :var, :name '+, :applied true}
+                              {:gene :var, :name '+}
                               ;; {:gene :dna}
                               ;; {:gene :dna}
-                                      {:gene :var, :name 'inc, :applied true}
-                                      {:gene :var, :name 'dec, :applied true}
-                                      {:gene :var, :name 'inc, :applied true})
+                                      {:gene :var, :name 'inc}
+                                      {:gene :var, :name 'dec}
+                                      {:gene :var, :name 'inc})
             ;; Local variables. In this case every variable (+, inc, dec) are all globals
             ;; this is empty.
                       :locals   []
