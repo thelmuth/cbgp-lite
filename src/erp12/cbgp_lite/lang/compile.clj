@@ -5,6 +5,7 @@
             [erp12.cbgp-lite.lang.lib :as lib]
             [erp12.cbgp-lite.lang.schema :as schema]
             [taoensso.timbre :as log]
+            [taoensso.timbre.appenders.core :as log-app]
             [clojure.pprint]))
 
 (def collect-types? (atom false))
@@ -531,35 +532,95 @@
 
 (comment
   
-  (a/ast->form
-   (::ast
-    (:ast (push->ast {;; The sequence of genes to compile.
-                      :push     (list {:gene :lit, :val 3, :type {:type 'int?}}
-                                      {:gene :lit, :val 5, :type {:type 'int?}}
-                                      {:gene :var, :name '+, :applied false}
+  (def the-type-env
+    {;; + is as function of (int, int) -> int
+     '+   {:type   :=>
+           :input  {:type :cat :children [{:type 'int?} {:type 'int?}]}
+           :output {:type 'int?}}
+     ;; - is as function of (int, int) -> int
+     '-   {:type   :=>
+           :input  {:type :cat :children [{:type 'int?} {:type 'int?}]}
+           :output {:type 'int?}}
+     ;; inc is a function of int -> int
+     'inc {:type   :=>
+           :input  {:type :cat :children [{:type 'int?}]}
+           :output {:type 'int?}}
+     ;; dec is a function of int -> int
+     'dec {:type   :=>
+           :input  {:type :cat :children [{:type 'int?}]}
+           :output {:type 'int?}}
+     ;; index-of-char is a function of (string, char) -> int
+     'index-of-char {:type  :=>
+                     :input {:type :cat :children [{:type 'string?} {:type 'char?}]}
+                     :output {:type 'int?}}})
+
+  (def an-ast
+    (push->ast {;; The sequence of genes to compile.
+                :push     (list {:gene :lit, :val 3, :type {:type 'int?}}
+                                {:gene :lit, :val 5, :type {:type 'int?}}
+                                {:gene :var, :name '-, :applied false}
                               ;; {:gene :dna}
                               ;; {:gene :dna}
-                                      {:gene :var, :name 'inc, :applied true}
-                                      {:gene :var, :name 'dec, :applied true}
-                                      {:gene :var, :name 'inc, :applied true})
+                                {:gene :apply}
+                                {:gene :var, :name '+, :applied true}
+                                {:gene :apply}
+                                {:gene :apply}
+                                {:gene :lit, :val 100, :type {:type 'int?}}
+                                {:gene :apply}
+                                {:gene :apply}
+                                )
             ;; Local variables. In this case every variable (+, inc, dec) are all globals
             ;; this is empty.
-                      :locals   []
+                :locals   []
             ;; The return type of the AST we want to output at the end. 
             ;; I'm assuming integers based on the input sequence you gave.
-                      :ret-type {:type 'int?}
+                :ret-type {:type 'int?}
             ;; The type environment telling the type systems what every variable's data
             ;; type is. In this case I wrote out the 3 variables present in the sequence.
-                      :type-env {;; + is as function of (int, int) -> int
-                                 '+   {:type   :=>
-                                       :input  {:type :cat :children [{:type 'int?} {:type 'int?}]}
-                                       :output {:type 'int?}}
-                       ;; inc is a function of int -> int
-                                 'inc {:type   :=>
-                                       :input  {:type :cat :children [{:type 'int?}]}
-                                       :output {:type 'int?}}
-                       ;; dec is a function of int -> int
-                                 'dec {:type   :=>
-                                       :input  {:type :cat :children [{:type 'int?}]}
-                                       :output {:type 'int?}}}}))))
+                :type-env the-type-env}))
+
+  ;; Get the form from the ast
+  (a/ast->form
+   (::ast
+    (:ast an-ast)))
+
+  an-ast
+
+  ;; Changes tracking level for seeing traces (first one) or not (second one)
+  (log/set-min-level! :trace)
+  ;; (log/set-min-level! :info)
+
+  
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Testing backtracking on first example
+  
+  (def backtracking-ex1-ast
+    (push->ast {;; The sequence of genes to compile.
+                :push     (list {:gene :lit, :val 3, :type {:type 'int?}}
+                                {:gene :lit, :val 5, :type {:type 'int?}}
+                                {:gene :var, :name '+}
+                                {:gene :lit, :val "hi" :type {:type 'string?}}
+                                {:gene :var, :name 'index-of-char}
+                                {:gene :lit, :val true, :type {:type 'boolean?}}
+                                {:gene :apply})
+            ;; Local variables. In this case every variable (+, inc, dec) are all globals
+            ;; this is empty.
+                :locals   []
+            ;; The return type of the AST we want to output at the end. 
+            ;; I'm assuming integers based on the input sequence you gave.
+                :ret-type {:type 'int?}
+            ;; The type environment telling the type systems what every variable's data
+            ;; type is. In this case I wrote out the 3 variables present in the sequence.
+                :type-env the-type-env}))
+
+  (def start-state-ex1
+    {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val true}, :type {:type boolean?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var index-of-char}, :type {:type :=>, :input {:type :cat, :children [{:type string?} {:type char?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val "hi"}, :type {:type string?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var +}, :type {:type :=>, :input {:type :cat, :children [{:type int?} {:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 5}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 3}, :type {:type int?}})
+     :push ()
+     :locals []
+     :ret-type {:type int?}})
+
+  ;; Runs apply on the above state
+  (compile-step {:push-unit {:gene :apply}
+                 :type-env  the-type-env
+                 :state     start-state-ex1})
   )
