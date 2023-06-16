@@ -405,7 +405,7 @@
                                     :output ret-s-var})]
               (if (schema/mgu-failure? subs)
                 ;; If it fails here, then just return the state. Have a key in state :fn-not-applied and inc it.
-                (update (update new-state :fn-not-applied inc) :total-apply-attempts inc)
+                (update (update state :fn-not-applied inc) :total-apply-attempts inc)
 
                 ;; push the ast to the stack. Update the state to inc :fn applied.
                 (push-ast {::ast  {:op   :invoke
@@ -430,8 +430,8 @@
               (log/trace "Found arg:" arg)
               (if (= :none arg)
                 ;; if arg is :none, not anything at all, just return the state. Also update that a func wasn't applied
-                (update (update new-state :fn-not-applied inc) :total-apply-attempts inc)
-
+                (update (update state :fn-not-applied inc) :total-apply-attempts inc)
+                
                 (recur (rest remaining-arg-types)
                        ;; If arg-type is has unbound t-vars that were bound during unification,
                        ;; add them to the set of bindings.
