@@ -371,14 +371,14 @@
   ;; If one or more arguments have :s-var types, incrementally bind them.
 
   ;; pop function off of state. Finds first function.
-  (clojure.pprint/pprint (map #(:ast %) (all-pop-function-ast state)))
-  (println "next")
-  (println "next")
-  (println "next")
-  (println "next")
-  (clojure.pprint/pprint (pop-function-ast state))
- (let [{boxed-ast :ast state-fn-popped :state} (first (all-pop-function-ast state))]
-  ;(let [{boxed-ast :ast state-fn-popped :state} (pop-function-ast state)]
+  ;; (clojure.pprint/pprint (map #(:ast %) (all-pop-function-ast state)))
+  ;; (println "next")
+  ;; (println "next")
+  ;; (println "next")
+  ;; (println "next")
+  ;; (clojure.pprint/pprint (pop-function-ast state))
+;;  (let [{boxed-ast :ast state-fn-popped :state} (first (all-pop-function-ast state))]
+  (let [{boxed-ast :ast state-fn-popped :state} (pop-function-ast state)]
     (log/trace "Applying function:" boxed-ast)
 
     ;; if the boxed ast is not found. just return the input state.
@@ -387,7 +387,7 @@
       (update (update state :fn-not-applied-because-no-functions inc) :total-apply-attempts inc)
       ;; function ast: clojure code that returns function. the data type of that function to find the right asts.
       (let [{fn-ast ::ast fn-type ::type} boxed-ast]
-        
+
         ;; empty map of bindings. don't have anything yet, but when we find out what "type A" is, we know what type A is.
         ;; there are no args yet. Slowly loop through and find the bindings. Once you know the info, you know the 
         (loop [remaining-arg-types (schema/fn-arg-schemas fn-type)
@@ -413,7 +413,7 @@
                                    :args (mapv ::ast args)}
                            ::type (schema/substitute subs ret-s-var)}
                           (update (update new-state :fn-applied inc) :total-apply-attempts inc))))
-            
+
             ;; Grab next arg we need to find. If we know what the bindings are, we need to substitute those in.
             (let [arg-type (first remaining-arg-types)
                   _ (log/trace "Searching for arg of type:" arg-type)
@@ -430,8 +430,8 @@
               (log/trace "Found arg:" arg)
               (if (= :none arg)
                 ;; if arg is :none, not anything at all, just return the state. Also update that a func wasn't applied
-                  (update (update new-state :fn-not-applied inc) :total-apply-attempts inc)
-                
+                (update (update new-state :fn-not-applied inc) :total-apply-attempts inc)
+
                 (recur (rest remaining-arg-types)
                        ;; If arg-type is has unbound t-vars that were bound during unification,
                        ;; add them to the set of bindings.
@@ -544,14 +544,14 @@
                         :push (reverse (into '() push))
                         :locals locals
                         :ret-type ret-type)]
-
-       (let [megalist (all-pop-function-ast state)
-             ultralist (map #(:ast %) megalist)]
-         (println "")
-        (println "start")
-        (clojure.pprint/pprint ultralist)
-        (println "end"))
       
+      ;;  (let [megalist (all-pop-function-ast state)
+      ;;        ultralist (map #(:ast %) megalist)]
+      ;;    (println "")
+      ;;   (println "start")
+      ;;   (clojure.pprint/pprint ultralist)
+      ;;   (println "end"))
+
 
       ;put pop func ast here to test on state.
       ;Get through whole genome.
@@ -666,5 +666,9 @@
   ;; Runs apply on the above state
   (compile-step {:push-unit {:gene :apply}
                  :type-env  the-type-env
-                 :state     start-state-ex1})
+                 :state     start-state-ex1
+                 :fn-applied 0
+                 :fn-not-applied 0
+                 :total-apply-attempts 0
+                 :fn-not-applied-because-no-functions 0})
   )
