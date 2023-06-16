@@ -253,6 +253,7 @@
   "Pops the top function AST regardless of argument/return types.
   See `pop-ast` for return structure."
   [state]
+  ;; Add a list as param. if remaining is empty, return the list. add if statement in recur for the list.
   (loop [remaining (:asts state)
          acc []]
     (if (empty? remaining)
@@ -268,6 +269,37 @@
            :state (assoc state :asts (concat acc (rest remaining)))}
           (recur (rest remaining)
                  (conj acc ast)))))))
+
+(defn all-pop-function-ast
+  "Pops all function ASTs regardless of argument/return types.
+  Returns a list of all of the functions."
+  [state]
+  ;; Add a list as param. if remaining is empty, return the list. add if statement in recur for the list.
+  (loop [remaining (:asts state)
+         acc []
+         funclist (list)]
+    (if (empty? remaining)
+      (reverse funclist)
+      (let [ast (first remaining)
+            schema-type (get-in ast [::type :type])
+            schema-type (if (= schema-type :scheme)
+                          (get-in ast [::type :body :type])
+                          schema-type)]
+          (recur (rest remaining)
+                 (conj acc ast)
+                 (if (= schema-type :=>)
+                   (conj funclist {:ast   ast
+                                   :state (assoc state :asts (concat acc (rest remaining)))})
+                   funclist))))))
+
+;; (defn find-scope-of-func
+;;   "Finds the scope of a function. Returns a list of all of the possible functions it can backtrack to")
+
+;; (defn backtrack
+;;   "The backtracking process. Takes state as input. Inside state, is backtrack index, which is the index of the value in the list where the backtracking begins.
+;;    Find the scope of this function, and keep track of the functions it has access to. Then, move the func to the front of the stack and recall apply. If fails, go back to old state."
+;;   [state]
+;;   (let [list-of-funcs (all-pop-function-ast state)]))
 
 (defn pop-push-unit
   [state]
@@ -338,7 +370,14 @@
   ;; If one or more arguments have :s-var types, incrementally bind them.
 
   ;; pop function off of state. Finds first function.
-  (let [{boxed-ast :ast state-fn-popped :state} (pop-function-ast state)]
+  (clojure.pprint/pprint (map #(:ast %) (all-pop-function-ast state)))
+  (println "next")
+  (println "next")
+  (println "next")
+  (println "next")
+  (clojure.pprint/pprint (pop-function-ast state))
+ (let [{boxed-ast :ast state-fn-popped :state} (first (all-pop-function-ast state))]
+  ;(let [{boxed-ast :ast state-fn-popped :state} (pop-function-ast state)]
     (log/trace "Applying function:" boxed-ast)
 
     ;; if the boxed ast is not found. just return the input state.
@@ -501,12 +540,22 @@
     (loop [state (assoc empty-state
                    ;; Ensure a list
                         ;list of push code trying to compile. Loading some of these into empty state.
-                   :push (reverse (into '() push))
-                   :locals locals
-                   :ret-type ret-type)]
+                        :push (reverse (into '() push))
+                        :locals locals
+                        :ret-type ret-type)]
+
+       (let [megalist (all-pop-function-ast state)
+             ultralist (map #(:ast %) megalist)]
+         (println "")
+        (println "start")
+        (clojure.pprint/pprint ultralist)
+        (println "end"))
+      
+
+      ;put pop func ast here to test on state.
       ;Get through whole genome.
       (if (empty? (:push state))
-        
+
         ;This is logging, side effects, and bookkeeping.
         (let [_ (log/trace "Final:" (state->log state))
               ;; @todo Experimental - record final stack AST sizes and types.
@@ -528,7 +577,7 @@
   (push->ast {;; The sequence of genes to compile.
               :push     (list 
                          {:gene :var, :name 'inc, :applied true}
-                         {:gene :var, :name 'dec, :applied true}
+                         ;{:gene :var, :name 'dec, :applied true}
                          {:gene :lit, :val 3, :type {:type 'int?}}
                               {:gene :lit, :val 5, :type {:type 'int?}}
                               {:gene :var, :name '+, :applied true}
@@ -536,7 +585,8 @@
                               ;; {:gene :dna}
                                       {:gene :var, :name 'inc, :applied true}
                                       {:gene :var, :name 'dec, :applied true}
-                                      {:gene :var, :name 'inc, :applied true})
+                                     ; {:gene :var, :name 'inc, :applied true}
+                         )
             ;; Local variables. In this case every variable (+, inc, dec) are all globals
             ;; this is empty.
                       :locals   []
@@ -557,3 +607,4 @@
                                  'dec {:type   :=>
                                        :input  {:type :cat :children [{:type 'int?}]}
                                        :output {:type 'int?}}}}))
+
