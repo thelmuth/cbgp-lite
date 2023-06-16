@@ -576,6 +576,11 @@
 
 (comment
   
+  ;; Changes tracking level for seeing traces (first one) or not (second one)
+  (log/set-min-level! :trace)
+  ;; (log/set-min-level! :info)
+
+  
   (def the-type-env
     {;; + is as function of (int, int) -> int
      '+   {:type   :=>
@@ -630,10 +635,6 @@
 
   an-ast
 
-  ;; Changes tracking level for seeing traces (first one) or not (second one)
-  (log/set-min-level! :trace)
-  ;; (log/set-min-level! :info)
-
   
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Testing backtracking on first example
@@ -661,14 +662,16 @@
     {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val true}, :type {:type boolean?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var index-of-char}, :type {:type :=>, :input {:type :cat, :children [{:type string?} {:type char?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val "hi"}, :type {:type string?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var +}, :type {:type :=>, :input {:type :cat, :children [{:type int?} {:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 5}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 3}, :type {:type int?}})
      :push ()
      :locals []
-     :ret-type {:type int?}})
+     :ret-type {:type int?}
+     :fn-applied 0
+     :fn-not-applied 0
+     :total-apply-attempts 0
+     :fn-not-applied-because-no-functions 0})
+
+  start-state-ex1
 
   ;; Runs apply on the above state
   (compile-step {:push-unit {:gene :apply}
                  :type-env  the-type-env
-                 :state     start-state-ex1
-                 :fn-applied 0
-                 :fn-not-applied 0
-                 :total-apply-attempts 0
-                 :fn-not-applied-because-no-functions 0})
+                 :state     start-state-ex1})
   )
