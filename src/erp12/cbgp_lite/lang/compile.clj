@@ -387,6 +387,67 @@
 
 
 
+(defn try-arguments
+  "tries arguments (todo: better docstring)"
+  [remaining-arg-types bindings args new-state fn-ast fn-type]
+
+  (if (empty? remaining-arg-types)
+            ;; Push an AST which calls the function to the arguments and
+            ;; box the AST with the return type of the function.
+    (let [ret-s-var {:type :s-var :sym (gensym "s-")}
+          subs (schema/mgu (schema/substitute bindings fn-type)
+                           {:type   :=>
+                            :input  {:type     :cat
+                                     :children (mapv ::type args)}
+                            :output ret-s-var})]
+      (if (schema/mgu-failure? subs)
+                ;; If it fails here, then just return the state. Have a key in state :fn-not-applied and inc it.
+                  ;(update (update state :fn-not-applied inc) :total-apply-attempts inc)
+            ;;Here is where we would want to check if the function is polymorphic. If so, then backtrack the params.
+        nil
+
+                ;; push the ast to the stack. Update the state to inc :fn applied.
+        (push-ast {::ast  {:op   :invoke
+                           :fn   fn-ast
+                           :args (mapv ::ast args)}
+                   ::type (schema/substitute subs ret-s-var)}
+                  new-state)))
+
+            ;; Grab next arg we need to find. If we know what the bindings are, we need to substitute those in.
+    (let [arg-type (first remaining-arg-types)
+          _ (log/trace "Searching for arg of type:" arg-type)
+                  ;; If arg-type is a t-var that we have seen before,
+                  ;; bind it to the actual same type as before.
+          arg-type (schema/substitute bindings arg-type)
+          _ (log/trace "In-context arg type:" arg-type)
+                  ;; is-s-var (= (:type arg-type) :s-var)
+                  ;; If arg-type is still a t-var, pop an ast of any type.
+                  ;; Otherwise, pop the AST of the expected type.
+                  ;; The ARG ast. :bindings may contain the new bindings for things like type A, B etc.
+          all-unifiable (pop-all-unifiable-asts arg-type new-state bindings)
+          _ (log/trace "ALL UNIFIABLE: " all-unifiable)]
+
+      (loop [all-unifiable all-unifiable]
+        (if (empty? all-unifiable)
+          nil ;; didn't find an argument that works
+
+          (let [{arg :ast state-arg-popped :state new-subs :bindings} (first all-unifiable)
+                _ (log/trace "Trying arg:" arg)
+                _ (log/trace "With bindings:" new-subs)
+                result (try-arguments (rest remaining-arg-types)
+                       ;; If arg-type is has unbound t-vars that were bound during unification,
+                       ;; add them to the set of bindings.
+                       ;; merge these two together.
+                                      (schema/compose-substitutions new-subs bindings)
+                                      (conj args arg)
+                                      state-arg-popped
+                                      fn-ast
+                                      fn-type)]
+            (if (some? result)
+              result
+              (recur (rest all-unifiable)))))))))
+
+
 ;To do: 
 (defn try-apply
   "Tries to apply a function to the state. If fails, returns the original state."
@@ -394,77 +455,17 @@
   
   (log/trace "Applying function:" boxed-ast)
 
- 
-      ;; function ast: clojure code that returns function. the data type of that function to find the right asts.
-  (let [{fn-ast ::ast fn-type ::type} boxed-ast]
-
-        ;; empty map of bindings. don't have anything yet, but when we find out what "type A" is, we know what type A is.
-        ;; there are no args yet. Slowly loop through and find the bindings. Once you know the info, you know the 
-    (loop [remaining-arg-types (schema/fn-arg-schemas fn-type)
-           bindings {}
-           args []
-           new-state state-fn-popped]
-      (if (empty? remaining-arg-types)
-            ;; Push an AST which calls the function to the arguments and
-            ;; box the AST with the return type of the function.
-        (let [ret-s-var {:type :s-var :sym (gensym "s-")}
-              subs (schema/mgu (schema/substitute bindings fn-type)
-                               {:type   :=>
-                                :input  {:type     :cat
-                                         :children (mapv ::type args)}
-                                :output ret-s-var})]
-          (if (schema/mgu-failure? subs)
-                ;; If it fails here, then just return the state. Have a key in state :fn-not-applied and inc it.
-                  ;(update (update state :fn-not-applied inc) :total-apply-attempts inc)
-            ;;Here is where we would want to check if the function is polymorphic. If so, then backtrack the params.
-            nil
-
-                ;; push the ast to the stack. Update the state to inc :fn applied.
-            (push-ast {::ast  {:op   :invoke
-                               :fn   fn-ast
-                               :args (mapv ::ast args)}
-                       ::type (schema/substitute subs ret-s-var)}
-                      new-state
-                      )))
-
-            ;; Grab next arg we need to find. If we know what the bindings are, we need to substitute those in.
-        (let [arg-type (first remaining-arg-types)
-              _ (log/trace "Searching for arg of type:" arg-type)
-                  ;; If arg-type is a t-var that we have seen before,
-                  ;; bind it to the actual same type as before.
-              arg-type (schema/substitute bindings arg-type)
-              _ (log/trace "In-context arg type:" arg-type)
-                  ;; is-s-var (= (:type arg-type) :s-var)
-                  ;; If arg-type is still a t-var, pop an ast of any type.
-                  ;; Otherwise, pop the AST of the expected type.
-                  ;; The ARG ast. :bindings may contain the new bindings for things like type A, B etc.
-              all-unifiable (pop-all-unifiable-asts arg-type new-state bindings)
-              
-              {arg :ast state-arg-popped :state new-subs :bindings} (first all-unifiable)
-              ;(pop-unifiable-ast arg-type new-state) 
-              ]
-          (log/trace "ALL UNIFIABLE: " all-unifiable)
-          (log/trace "Found arg:" arg)
-          (log/trace "NEW-SUBS:" new-subs)
-          (if (= :none arg)
-                ;; if arg is :none, not anything at all, just return the state. Also update that a func wasn't applied
-                  ;(update (update state :fn-not-applied inc) :total-apply-attempts inc)
-            nil
-
-            (recur (rest remaining-arg-types)
-                       ;; If arg-type is has unbound t-vars that were bound during unification,
-                       ;; add them to the set of bindings.
-                       ;; merge these two together.
-                   (schema/compose-substitutions new-subs bindings)
-                   (conj args arg)
-                   state-arg-popped)))))))
+  ;; function ast: clojure code that returns function. the data type of that function to find the right asts.
+  (let [{fn-ast ::ast fn-type ::type} boxed-ast
+        remaining-arg-types (schema/fn-arg-schemas fn-type)] 
+    (try-arguments remaining-arg-types {} [] state-fn-popped fn-ast fn-type)))
 
 (defmethod compile-step :apply
   [{:keys [state]}]
 
   (let [allfuncs (all-pop-function-ast state)
         allfuncsinfo (map try-apply allfuncs)
-        able-to-be-applied (filter identity allfuncsinfo)
+        able-to-be-applied (filter some? allfuncsinfo)
         firstapplied (first able-to-be-applied)]
 
 
@@ -859,7 +860,7 @@
                                 {:gene :lit, :val [3 4], :type {:type :vector :child {:type 'int?}}}
                                 {:gene :lit, :val ["hi" "there"], :type {:type :vector :child {:type 'string?}}}
                                 {:gene :var, :name 'concatv}
-                                {:gene :var, :name 'remove-char}
+                                ;; {:gene :var, :name 'remove-char}
 
 
                                 ;{:gene :apply}
@@ -876,7 +877,7 @@
 
 
   (def start-state-ex3a
-    {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var remove-char}, :type {:type :=>, :input {:type :cat, :children [{:type string?} {:type char?}]}, :output {:type string?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var concatv}, :type {:type :=>, :input {:type :cat, :children [{:type :vector, :child {:type :s-var, :sym s-17897}} {:type :vector, :child {:type :s-var, :sym s-17897}}]}, :output {:type :vector, :child {:type :s-var, :sym s-17897}}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val ["hi" "there"]}, :type {:type :vector, :child {:type string?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [3 4]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val \h}, :type {:type char?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val "hi"}, :type {:type string?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var +}, :type {:type :=>, :input {:type :cat, :children [{:type int?} {:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 5}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 4}, :type {:type int?}})
+    {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var concatv}, :type {:type :=>, :input {:type :cat, :children [{:type :vector, :child {:type :s-var, :sym s-17897}} {:type :vector, :child {:type :s-var, :sym s-17897}}]}, :output {:type :vector, :child {:type :s-var, :sym s-17897}}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val ["hi" "there"]}, :type {:type :vector, :child {:type string?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [3 4]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val \h}, :type {:type char?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val "hi"}, :type {:type string?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var +}, :type {:type :=>, :input {:type :cat, :children [{:type int?} {:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 5}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 4}, :type {:type int?}})
      :push ()
      :locals []
      :ret-type {:type int?}
@@ -884,8 +885,6 @@
      :fn-not-applied 0
      :total-apply-attempts 0
      :fn-not-applied-because-no-functions 0})
-
-
 
   ;; has ["hi" "there"]
   (def start-state-ex2a
