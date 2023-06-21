@@ -309,7 +309,7 @@
        (let [ast (first remaining)
              subs (schema/mgu unify-with (::type ast))]
          ;; If the bindings doesn't change, we don't need to try backtracking, and we only need to return the first unified AST.
-         (if (or (= subs bindings) (not (empty? unifiable-list)))
+         (if (and (= subs bindings) (empty? unifiable-list))
            (list {:ast      ast
                   :state    (assoc state :asts (concat acc (rest remaining)))
                   :bindings subs})
@@ -384,68 +384,7 @@
 ;; Backtrack functions. Recursion. Search entire stack. Find 1st legal param. Then for next params, go through the 
 ;; entire stack again. If a param fails, back up and try the next option. Continue doing this until you find the first solution that works fully.
 
-(defn arg-backtracking
-  "Finds the first set of fully legal arguments "
-  [{boxed-ast :ast state-fn-popped :state}]
-  ; Currently contains the part where argument finding takes place
-  (let [{fn-ast ::ast fn-type ::type} boxed-ast]
 
-        ;; empty map of bindings. don't have anything yet, but when we find out what "type A" is, we know what type A is.
-        ;; there are no args yet. Slowly loop through and find the bindings. Once you know the info, you know the 
-    (loop [remaining-arg-types (schema/fn-arg-schemas fn-type)
-           bindings {}
-           args []
-           new-state state-fn-popped] 
-      (if (empty? remaining-arg-types)
-            ;; Push an AST which calls the function to the arguments and
-            ;; box the AST with the return type of the function.
-        (let [ret-s-var {:type :s-var :sym (gensym "s-")}
-              subs (schema/mgu (schema/substitute bindings fn-type)
-                               {:type   :=>
-                                :input  {:type     :cat
-                                         :children (mapv ::type args)}
-                                :output ret-s-var})]
-          (if (schema/mgu-failure? subs)
-                ;; If it fails here, then just return the state. Have a key in state :fn-not-applied and inc it.
-            ;; Here is where we would want to check if the function is polymorphic.
-            ;; If so, recur with a different parameter. But, how will we do multiple layers of recursion
-            ;; with every parameter. 
-            nil
-
-                ;; push the ast to the stack. Update the state to inc :fn applied.
-            (push-ast {::ast  {:op   :invoke
-                               :fn   fn-ast
-                               :args (mapv ::ast args)}
-                       ::type (schema/substitute subs ret-s-var)}
-                      new-state)))
-
-            ;; Grab next arg we need to find. If we know what the bindings are, we need to substitute those in.
-        (let [arg-type (first remaining-arg-types)
-              _ (log/trace "Searching for arg of type:" arg-type)
-                  ;; If arg-type is a t-var that we have seen before,
-                  ;; bind it to the actual same type as before.
-              arg-type (schema/substitute bindings arg-type)
-              _ (log/trace "In-context arg type:" arg-type)
-                  ;; is-s-var (= (:type arg-type) :s-var)
-                  ;; If arg-type is still a t-var, pop an ast of any type.
-                  ;; Otherwise, pop the AST of the expected type.
-                  ;; The ARG ast. :bindings may contain the new bindings for things like type A, B etc.
-              {arg :ast state-arg-popped :state new-subs :bindings}
-              (pop-all-unifiable-asts arg-type new-state bindings)]
-          (log/trace "Found arg:" arg)
-          (if (= :none arg)
-                ;; if arg is :none, not anything at all, just return the state. Also update that a func wasn't applied
-                  ;(update (update state :fn-not-applied inc) :total-apply-attempts inc)
-            nil
-
-            (recur (rest remaining-arg-types)
-                       ;; If arg-type is has unbound t-vars that were bound during unification,
-                       ;; add them to the set of bindings.
-                       ;; merge these two together.
-                   (schema/compose-substitutions new-subs bindings)
-                   (conj args arg)
-                   state-arg-popped))))))
-  )
 
 
 ;To do: 
@@ -499,8 +438,12 @@
                   ;; If arg-type is still a t-var, pop an ast of any type.
                   ;; Otherwise, pop the AST of the expected type.
                   ;; The ARG ast. :bindings may contain the new bindings for things like type A, B etc.
-              {arg :ast state-arg-popped :state new-subs :bindings}
-              (pop-unifiable-ast arg-type new-state)]
+              all-unifiable (pop-all-unifiable-asts arg-type new-state bindings)
+              
+              {arg :ast state-arg-popped :state new-subs :bindings} (first all-unifiable)
+              ;(pop-unifiable-ast arg-type new-state) 
+              ]
+          (log/trace "ALL UNIFIABLE: " all-unifiable)
           (log/trace "Found arg:" arg)
           (if (= :none arg)
                 ;; if arg is :none, not anything at all, just return the state. Also update that a func wasn't applied
