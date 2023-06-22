@@ -744,7 +744,13 @@
                                      (lib/s-var 'a))}
      'ignore-second-arg {:type :scheme
                          :s-vars ['a]
-                         :body (lib/binary-transform (lib/s-var 'a))}})
+                         :body (lib/binary-transform (lib/s-var 'a))}
+     
+     `remove-element     {:type   :scheme
+                          :s-vars ['a]
+                          :body   (lib/fn-of [(lib/vector-of (lib/s-var 'a)) (lib/s-var 'a)]
+                                         (lib/vector-of (lib/s-var 'a)))}
+    })
 
   (def an-ast
     (push->ast {;; The sequence of genes to compile.
@@ -781,6 +787,7 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Testing backtracking on first example
 
+  ;; Should have + 5 3 on top of stack
   (def backtracking-ex1-ast
     (push->ast {;; The sequence of genes to compile.
                 :push     (list {:gene :lit, :val 3, :type {:type 'int?}}
@@ -802,119 +809,6 @@
                 :type-env the-type-env}))
 
 
-  (def backtracking-ex2-astb
-    (push->ast {;; The sequence of genes to compile.
-                :push     (list {:gene :lit, :val 3, :type {:type 'int?}}
-                                {:gene :lit, :val 5, :type {:type 'int?}}
-                                {:gene :var, :name '+}
-                                {:gene :lit, :val [1 2], :type {:type :vector :child {:type 'int?}}}
-                                {:gene :lit, :val [3 4], :type {:type :vector :child {:type 'int?}}}
-                                ;{:gene :lit, :val ["hi" "there"], :type {:type :vector :child {:type 'string?}}}
-                                {:gene :var, :name 'concatv}
-
-                                ;{:gene :apply}
-                                )
-            ;; Local variables. In this case every variable (+, inc, dec) are all globals
-            ;; this is empty.
-                :locals   []
-            ;; The return type of the AST we want to output at the end. 
-            ;; I'm assuming integers based on the input sequence you gave.
-                :ret-type {:type 'int?}
-            ;; The type environment telling the type systems what every variable's data
-            ;; type is. In this case I wrote out the 3 variables present in the sequence.
-                :type-env the-type-env}))
-
-
-  (def backtracking-ex2-asta
-    (push->ast {;; The sequence of genes to compile.
-                :push     (list {:gene :lit, :val 3, :type {:type 'int?}}
-                                {:gene :lit, :val 5, :type {:type 'int?}}
-                                {:gene :var, :name '+}
-                                {:gene :lit, :val [1 2], :type {:type :vector :child {:type 'int?}}}
-                                {:gene :lit, :val [3 4], :type {:type :vector :child {:type 'int?}}}
-                                {:gene :lit, :val ["hi" "there"], :type {:type :vector :child {:type 'string?}}}
-                                {:gene :var, :name 'concatv}
-
-                                ;{:gene :apply}
-                                )
-            ;; Local variables. In this case every variable (+, inc, dec) are all globals
-            ;; this is empty.
-                :locals   []
-            ;; The return type of the AST we want to output at the end. 
-            ;; I'm assuming integers based on the input sequence you gave.
-                :ret-type {:type 'int?}
-            ;; The type environment telling the type systems what every variable's data
-            ;; type is. In this case I wrote out the 3 variables present in the sequence.
-                :type-env the-type-env}))
-
-
-
-
-  (def backtracking-ex3-ast1
-    (push->ast {;; The sequence of genes to compile.
-                :push     (list {:gene :lit, :val 4, :type {:type 'int?}}
-                                {:gene :lit, :val 5, :type {:type 'int?}}
-                                {:gene :var, :name '+}
-                                {:gene :lit, :val "hi" :type {:type 'string?}}
-                                {:gene :lit, :val \h :type {:type 'char?}}
-                                {:gene :lit, :val [3 4], :type {:type :vector :child {:type 'int?}}}
-                                {:gene :lit, :val ["hi" "there"], :type {:type :vector :child {:type 'string?}}}
-                                {:gene :var, :name 'concatv}
-                                ;; {:gene :var, :name 'remove-char}
-
-
-                                ;{:gene :apply}
-                                )
-            ;; Local variables. In this case every variable (+, inc, dec) are all globals
-            ;; this is empty.
-                :locals   []
-            ;; The return type of the AST we want to output at the end. 
-            ;; I'm assuming integers based on the input sequence you gave.
-                :ret-type {:type 'int?}
-            ;; The type environment telling the type systems what every variable's data
-            ;; type is. In this case I wrote out the 3 variables present in the sequence.
-                :type-env the-type-env}))
-
-
-  (def start-state-ex3a
-    {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var concatv}, :type {:type :=>, :input {:type :cat, :children [{:type :vector, :child {:type :s-var, :sym s-17897}} {:type :vector, :child {:type :s-var, :sym s-17897}}]}, :output {:type :vector, :child {:type :s-var, :sym s-17897}}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val ["hi" "there"]}, :type {:type :vector, :child {:type string?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [3 4]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val \h}, :type {:type char?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val "hi"}, :type {:type string?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var +}, :type {:type :=>, :input {:type :cat, :children [{:type int?} {:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 5}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 4}, :type {:type int?}})
-     :push ()
-     :locals []
-     :ret-type {:type int?}
-     :fn-applied 0
-     :fn-not-applied 0
-     :total-apply-attempts 0
-     :fn-not-applied-because-no-functions 0})
-
-  ;; has ["hi" "there"]
-  (def start-state-ex2a
-    {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var concatv}, :type {:type :=>, :input {:type :cat, :children [{:type :vector, :child {:type :s-var, :sym s-17707}} {:type :vector, :child {:type :s-var, :sym s-17707}}]}, :output {:type :vector, :child {:type :s-var, :sym s-17707}}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val ["hi" "there"]}, :type {:type :vector, :child {:type string?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [3 4]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [1 2]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var +}, :type {:type :=>, :input {:type :cat, :children [{:type int?} {:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 5}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 3}, :type {:type int?}})
-     :push ()
-     :locals []
-     :ret-type {:type int?}
-     :fn-applied 0
-     :fn-not-applied 0
-     :total-apply-attempts 0
-     :fn-not-applied-because-no-functions 0})
-
-
-  ;; does not have ["hi" "there"]
-  (def start-state-ex2b
-    {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var concatv}, :type {:type :=>, :input {:type :cat, :children [{:type :vector, :child {:type :s-var, :sym s-17538}} {:type :vector, :child {:type :s-var, :sym s-17538}}]}, :output {:type :vector, :child {:type :s-var, :sym s-17538}}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [3 4]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [1 2]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var +}, :type {:type :=>, :input {:type :cat, :children [{:type int?} {:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 5}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 3}, :type {:type int?}})
-     :push ()
-     :locals []
-     :ret-type {:type int?}
-     :fn-applied 0
-     :fn-not-applied 0
-     :total-apply-attempts 0
-     :fn-not-applied-because-no-functions 0})
-
-
-
-
-
-  ;;Run this, then grab asts and put there, then make the rest identical. 
-
   (def start-state-ex1
     {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val true}, :type {:type boolean?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var index-of-char}, :type {:type :=>, :input {:type :cat, :children [{:type string?} {:type char?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val "hi"}, :type {:type string?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var +}, :type {:type :=>, :input {:type :cat, :children [{:type int?} {:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 5}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 3}, :type {:type int?}})
      :push ()
@@ -925,27 +819,15 @@
      :total-apply-attempts 0
      :fn-not-applied-because-no-functions 0})
 
-  start-state-ex1
-
-  ;; Runs apply on the above state
   (compile-step {:push-unit {:gene :apply}
                  :type-env  the-type-env
                  :state     start-state-ex1})
 
-  (compile-step {:push-unit {:gene :apply}
-                 :type-env  the-type-env
-                 :state     start-state-ex2a})
 
-  (compile-step {:push-unit {:gene :apply}
-                 :type-env  the-type-env
-                 :state     start-state-ex2b})
 
-  (compile-step {:push-unit {:gene :apply}
-                 :type-env  the-type-env
-                 :state     start-state-ex3a})
-
+  ;; Shouldn't apply anything.
   (def backtracking-ex1-ast-fail
-    (push->ast {;; The sequence of genes to compile.
+    (push->ast {
                 :push     (list
                            {:gene :lit, :val true, :type {:type 'boolean}}
                            {:gene :var, :name '+}
@@ -954,14 +836,8 @@
                            {:gene :lit, :val true, :type {:type 'boolean?}}
                                 ;{:gene :apply}
                            )
-            ;; Local variables. In this case every variable (+, inc, dec) are all globals
-            ;; this is empty.
                 :locals   []
-            ;; The return type of the AST we want to output at the end. 
-            ;; I'm assuming integers based on the input sequence you gave.
                 :ret-type {:type 'int?}
-            ;; The type environment telling the type systems what every variable's data
-            ;; type is. In this case I wrote out the 3 variables present in the sequence.
                 :type-env the-type-env}))
 
   (def start-state-ex1-fail
@@ -979,6 +855,136 @@
                  :state     start-state-ex1-fail})
 
 
+;; Shouldn't apply anything as there are no functions
+  (def backtracking-ex1-empty
+    (push->ast {;; The sequence of genes to compile.
+                :push     (list
+                           {:gene :lit, :val true, :type {:type 'boolean}}
+                           {:gene :lit, :val "hi" :type {:type 'string?}}
+                           {:gene :lit, :val true, :type {:type 'boolean?}}
+                                ;{:gene :apply}
+                           )
+                :locals   []
+                :ret-type {:type 'int?}
+                :type-env the-type-env}))
+
+  (def start-state-ex1-empty
+    {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val true}, :type {:type boolean?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val "hi"}, :type {:type string?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val true}, :type {:type boolean}})
+     :push ()
+     :locals []
+     :ret-type {:type int?}
+     :fn-applied 0
+     :fn-not-applied 0
+     :total-apply-attempts 0
+     :fn-not-applied-because-no-functions 0})
+
+  (compile-step {:push-unit {:gene :apply}
+                 :type-env  the-type-env
+                 :state     start-state-ex1-empty})
+
+
+  ;;Should apply concatv [1 2] [2 4]
+  (def backtracking-ex2-asta
+    (push->ast {;; The sequence of genes to compile.
+                :push     (list {:gene :lit, :val 3, :type {:type 'int?}}
+                                {:gene :lit, :val 5, :type {:type 'int?}}
+                                {:gene :var, :name '+}
+                                {:gene :lit, :val [1 2], :type {:type :vector :child {:type 'int?}}}
+                                {:gene :lit, :val [3 4], :type {:type :vector :child {:type 'int?}}}
+                                {:gene :lit, :val ["hi" "there"], :type {:type :vector :child {:type 'string?}}}
+                                {:gene :var, :name 'concatv}
+                                ;{:gene :apply}
+                                )
+                :locals   []
+                :ret-type {:type 'int?}
+                :type-env the-type-env}))
+
+   ;; has ["hi" "there"]
+  (def start-state-ex2a
+    {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var concatv}, :type {:type :=>, :input {:type :cat, :children [{:type :vector, :child {:type :s-var, :sym s-17707}} {:type :vector, :child {:type :s-var, :sym s-17707}}]}, :output {:type :vector, :child {:type :s-var, :sym s-17707}}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val ["hi" "there"]}, :type {:type :vector, :child {:type string?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [3 4]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [1 2]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var +}, :type {:type :=>, :input {:type :cat, :children [{:type int?} {:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 5}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 3}, :type {:type int?}})
+     :push ()
+     :locals []
+     :ret-type {:type int?}
+     :fn-applied 0
+     :fn-not-applied 0
+     :total-apply-attempts 0
+     :fn-not-applied-because-no-functions 0})
+
+  (compile-step {:push-unit {:gene :apply}
+                 :type-env  the-type-env
+                 :state     start-state-ex2a})
+
+
+
+
+;; Should apply concatv with [1 2] [3 4]
+  (def backtracking-ex2-astb
+    (push->ast {;; The sequence of genes to compile.
+                :push     (list {:gene :lit, :val 3, :type {:type 'int?}}
+                                {:gene :lit, :val 5, :type {:type 'int?}}
+                                {:gene :var, :name '+}
+                                {:gene :lit, :val [1 2], :type {:type :vector :child {:type 'int?}}}
+                                {:gene :lit, :val [3 4], :type {:type :vector :child {:type 'int?}}}
+                                ;{:gene :lit, :val ["hi" "there"], :type {:type :vector :child {:type 'string?}}}
+                                {:gene :var, :name 'concatv}
+                                ;{:gene :apply}
+                                )
+                :locals   []
+                :ret-type {:type 'int?}
+                :type-env the-type-env}))
+
+;; does not have ["hi" "there"]
+  (def start-state-ex2b
+    {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var concatv}, :type {:type :=>, :input {:type :cat, :children [{:type :vector, :child {:type :s-var, :sym s-17538}} {:type :vector, :child {:type :s-var, :sym s-17538}}]}, :output {:type :vector, :child {:type :s-var, :sym s-17538}}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [3 4]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [1 2]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var +}, :type {:type :=>, :input {:type :cat, :children [{:type int?} {:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 5}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 3}, :type {:type int?}})
+     :push ()
+     :locals []
+     :ret-type {:type int?}
+     :fn-applied 0
+     :fn-not-applied 0
+     :total-apply-attempts 0
+     :fn-not-applied-because-no-functions 0})
+
+
+  (compile-step {:push-unit {:gene :apply}
+                 :type-env  the-type-env
+                 :state     start-state-ex2b})
+
+
+
+;; Should apply + to 5 and 4
+  (def backtracking-ex3-ast1
+    (push->ast {;; The sequence of genes to compile.
+                :push     (list {:gene :lit, :val 4, :type {:type 'int?}}
+                                {:gene :lit, :val 5, :type {:type 'int?}}
+                                {:gene :var, :name '+}
+                                {:gene :lit, :val "hi" :type {:type 'string?}}
+                                {:gene :lit, :val \h :type {:type 'char?}}
+                                {:gene :lit, :val [3 4], :type {:type :vector :child {:type 'int?}}}
+                                {:gene :lit, :val ["hi" "there"], :type {:type :vector :child {:type 'string?}}}
+                                {:gene :var, :name 'concatv}
+                                ;; {:gene :var, :name 'remove-char}
+                                ;{:gene :apply}
+                                )
+                :locals   []
+                :ret-type {:type 'int?}
+                :type-env the-type-env}))
+
+
+  (def start-state-ex3a
+    {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var concatv}, :type {:type :=>, :input {:type :cat, :children [{:type :vector, :child {:type :s-var, :sym s-17897}} {:type :vector, :child {:type :s-var, :sym s-17897}}]}, :output {:type :vector, :child {:type :s-var, :sym s-17897}}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val ["hi" "there"]}, :type {:type :vector, :child {:type string?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [3 4]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val \h}, :type {:type char?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val "hi"}, :type {:type string?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var +}, :type {:type :=>, :input {:type :cat, :children [{:type int?} {:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 5}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 4}, :type {:type int?}})
+     :push ()
+     :locals []
+     :ret-type {:type int?}
+     :fn-applied 0
+     :fn-not-applied 0
+     :total-apply-attempts 0
+     :fn-not-applied-because-no-functions 0})
+
+  (compile-step {:push-unit {:gene :apply}
+                 :type-env  the-type-env
+                 :state     start-state-ex3a})
+
+  ;; Should apply removechar to "hi" and \h
   (def backtracking-ex3-astb
     (push->ast {;; The sequence of genes to compile.
                 :push     (list {:gene :lit, :val 4, :type {:type 'int?}}
@@ -991,18 +997,10 @@
                                 {:gene :lit, :val [5 6], :type {:type :vector :child {:type 'int?}}}
                                 {:gene :var, :name 'concatv}
                                 {:gene :var, :name 'remove-char}
-
-
                                 ;{:gene :apply}
                                 )
-            ;; Local variables. In this case every variable (+, inc, dec) are all globals
-            ;; this is empty.
                 :locals   []
-            ;; The return type of the AST we want to output at the end. 
-            ;; I'm assuming integers based on the input sequence you gave.
                 :ret-type {:type 'int?}
-            ;; The type environment telling the type systems what every variable's data
-            ;; type is. In this case I wrote out the 3 variables present in the sequence.
                 :type-env the-type-env}))
 
   (def start-state-ex3b
@@ -1021,7 +1019,7 @@
 
 
 
-
+;; should apply concatv to [5 6] and [3 4]
   (def backtracking-ex3-astc
     (push->ast {;; The sequence of genes to compile.
                 :push     (list {:gene :lit, :val 4, :type {:type 'int?}}
@@ -1034,18 +1032,10 @@
                                 {:gene :lit, :val [5 6], :type {:type :vector :child {:type 'int?}}}
                                 {:gene :var, :name 'concatv}
                                 {:gene :var, :name 'remove-char}
-
-
                                 ;{:gene :apply}
                                 )
-            ;; Local variables. In this case every variable (+, inc, dec) are all globals
-            ;; this is empty.
                 :locals   []
-            ;; The return type of the AST we want to output at the end. 
-            ;; I'm assuming integers based on the input sequence you gave.
                 :ret-type {:type 'int?}
-            ;; The type environment telling the type systems what every variable's data
-            ;; type is. In this case I wrote out the 3 variables present in the sequence.
                 :type-env the-type-env}))
 
   (def start-state-ex3c
@@ -1062,6 +1052,8 @@
                  :type-env  the-type-env
                  :state     start-state-ex3c})
 
+  
+  ;; Should apply apply concatv to [5 6] [3 4]
   (def backtracking-ex3-astd
     (push->ast {;; The sequence of genes to compile.
                 :push     (list {:gene :lit, :val 4, :type {:type 'int?}}
@@ -1075,18 +1067,10 @@
                                 {:gene :var, :name 'remove-char}
                                 {:gene :var, :name 'concatv}
 
-
-
                                 ;{:gene :apply}
                                 )
-            ;; Local variables. In this case every variable (+, inc, dec) are all globals
-            ;; this is empty.
                 :locals   []
-            ;; The return type of the AST we want to output at the end. 
-            ;; I'm assuming integers based on the input sequence you gave.
                 :ret-type {:type 'int?}
-            ;; The type environment telling the type systems what every variable's data
-            ;; type is. In this case I wrote out the 3 variables present in the sequence.
                 :type-env the-type-env}))
 
   (def start-state-ex3d
@@ -1103,56 +1087,18 @@
                  :type-env  the-type-env
                  :state     start-state-ex3d})
 
-  (def backtracking-ex1-empty
-    (push->ast {;; The sequence of genes to compile.
-                :push     (list
-                           {:gene :lit, :val true, :type {:type 'boolean}}
-                           {:gene :lit, :val "hi" :type {:type 'string?}}
-                           {:gene :lit, :val true, :type {:type 'boolean?}}
-                                ;{:gene :apply}
-                           )
-            ;; Local variables. In this case every variable (+, inc, dec) are all globals
-            ;; this is empty.
-                :locals   []
-            ;; The return type of the AST we want to output at the end. 
-            ;; I'm assuming integers based on the input sequence you gave.
-                :ret-type {:type 'int?}
-            ;; The type environment telling the type systems what every variable's data
-            ;; type is. In this case I wrote out the 3 variables present in the sequence.
-                :type-env the-type-env}))
-
-  (def start-state-ex1-empty
-    {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val true}, :type {:type boolean?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val "hi"}, :type {:type string?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val true}, :type {:type boolean}})
-     :push ()
-     :locals []
-     :ret-type {:type int?}
-     :fn-applied 0
-     :fn-not-applied 0
-     :total-apply-attempts 0
-     :fn-not-applied-because-no-functions 0})
-
-  (compile-step {:push-unit {:gene :apply}
-                 :type-env  the-type-env
-                 :state     start-state-ex1-empty})
-
-
+  
+  ;; Should do reduce-vec with concatv on [[1] [2 3] [4 5]]
   (def backtracking-ex4-ast
     (push->ast {;; The sequence of genes to compile.
                 :push     (list {:gene :lit, :val [[1] [2 3] [4 5]], :type {:type :vector
                                                                             :child {:type :vector :child {:type 'int?}}}}
                                 {:gene :var, :name 'concatv}
                                 {:gene :var, :name 'reduce-vec}
-
                                 ;{:gene :apply}
                                 )
-            ;; Local variables. In this case every variable (+, inc, dec) are all globals
-            ;; this is empty.
                 :locals   []
-            ;; The return type of the AST we want to output at the end. 
-            ;; I'm assuming integers based on the input sequence you gave.
                 :ret-type {:type 'int?}
-            ;; The type environment telling the type systems what every variable's data
-            ;; type is. In this case I wrote out the 3 variables present in the sequence.
                 :type-env the-type-env}))
 
   (def start-state-ex4
@@ -1201,5 +1147,74 @@
   (compile-step {:push-unit {:gene :apply}
                  :type-env  the-type-env
                  :state     start-state-ex5})
+  
+;; Ask why remove-element is acting weird
+    (def backtracking-ex6-ast
+      (push->ast {;; The sequence of genes to compile.
+                  :push     (list {:gene :lit, :val 3, :type {:type 'int?}}
+                                  {:gene :lit, :val 5, :type {:type 'int?}}
+                                  {:gene :var, :name '+}
+                                  {:gene :lit, :val [1 2], :type {:type :vector :child {:type 'int?}}}
+                                  {:gene :lit, :val [3 4], :type {:type :vector :child {:type 'int?}}}
+                                  {:gene :lit, :val \h :type {:type 'char?}}
+                                  {:gene :lit, :val ["hi" "there"], :type {:type :vector :child {:type 'string?}}}
+                                  ;{:gene :var, :name 'concatv}
+                                  {:gene :var, :name 'remove-element}
+                                ;{:gene :apply}
+                                  )
+                  :locals   []
+                  :ret-type {:type 'int?}
+                  :type-env the-type-env}))
+
+   ;; has ["hi" "there"]
+(def start-state-ex6
+  {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var remove-element}, :type nil} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var concatv}, :type {:type :=>, :input {:type :cat, :children [{:type :vector, :child {:type :s-var, :sym s-12695}} {:type :vector, :child {:type :s-var, :sym s-12695}}]}, :output {:type :vector, :child {:type :s-var, :sym s-12695}}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val ["hi" "there"]}, :type {:type :vector, :child {:type string?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [3 4]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [1 2]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var +}, :type {:type :=>, :input {:type :cat, :children [{:type int?} {:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 5}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 3}, :type {:type int?}})
+   :push ()
+   :locals []
+   :ret-type {:type int?}
+   :fn-applied 0
+   :fn-not-applied 0
+   :total-apply-attempts 0
+   :fn-not-applied-because-no-functions 0})
+
+(compile-step {:push-unit {:gene :apply}
+               :type-env  the-type-env
+               :state     start-state-ex6})
+
+
+(def backtracking-ex7-ast
+  (push->ast {;; The sequence of genes to compile.
+              :push     (list {:gene :lit, :val 3, :type {:type 'int?}}
+                              {:gene :lit, :val 5, :type {:type 'int?}}
+                              {:gene :var, :name '+}
+                              {:gene :lit, :val [1 2], :type {:type :vector :child {:type 'int?}}}
+                              {:gene :lit, :val [\i \u \o], :type {:type :vector :child {:type 'char?}}}
+                              {:gene :lit, :val [3 4], :type {:type :vector :child {:type 'int?}}}
+                              {:gene :lit, :val \h :type {:type 'char?}}
+                              {:gene :lit, :val [\h \y \m], :type {:type :vector :child {:type 'char?}}}
+                              {:gene :lit, :val ["hi" "there"], :type {:type :vector :child {:type 'string?}}}
+                              {:gene :var, :name 'concatv}
+                                ;{:gene :apply}
+                              )
+              :locals   []
+              :ret-type {:type 'int?}
+              :type-env the-type-env}))
+
+   ;; has ["hi" "there"]
+(def start-state-ex7
+  {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var concatv}, :type {:type :=>, :input {:type :cat, :children [{:type :vector, :child {:type :s-var, :sym s-12704}} {:type :vector, :child {:type :s-var, :sym s-12704}}]}, :output {:type :vector, :child {:type :s-var, :sym s-12704}}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val ["hi" "there"]}, :type {:type :vector, :child {:type string?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [\h \y \m]}, :type {:type :vector, :child {:type char?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val \h}, :type {:type char?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [3 4]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [\i \u \o]}, :type {:type :vector, :child {:type char?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [1 2]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var +}, :type {:type :=>, :input {:type :cat, :children [{:type int?} {:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 5}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 3}, :type {:type int?}})
+   :push ()
+   :locals []
+   :ret-type {:type int?}
+   :fn-applied 0
+   :fn-not-applied 0
+   :total-apply-attempts 0
+   :fn-not-applied-because-no-functions 0})
+
+(compile-step {:push-unit {:gene :apply}
+               :type-env  the-type-env
+               :state     start-state-ex7})
+  
+
 
   )
