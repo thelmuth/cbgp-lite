@@ -94,14 +94,18 @@
                                 [nil 0]))
            total-freq (second (last cfh))
            quart (int (/ (inc total-freq) 4))]
-       {:mean (float (/ (reduce + (map (fn [[x freq]] (* x freq)) x->freq))
-                        total-freq))
-        :min  (reduce min (keys x->freq))
-        :25%  (some (fn [[x c-freq]] (when (> c-freq quart) x)) cfh)
-        :50%  (some (fn [[x c-freq]] (when (> c-freq (* quart 2)) x)) cfh)
-        :75%  (some (fn [[x c-freq]] (when (> c-freq (* quart 3)) x)) cfh)
-        :max  (reduce max (keys x->freq))
-        :dont-include-in-stats dont-include}))
+
+       (if (zero? total-freq)
+         {:mean nil
+          :dont-include-in-stats dont-include}
+         {:mean (float (/ (reduce + (map (fn [[x freq]] (* x freq)) x->freq))
+                          total-freq))
+          :min  (reduce min (keys x->freq))
+          :25%  (some (fn [[x c-freq]] (when (> c-freq quart) x)) cfh)
+          :50%  (some (fn [[x c-freq]] (when (> c-freq (* quart 2)) x)) cfh)
+          :75%  (some (fn [[x c-freq]] (when (> c-freq (* quart 3)) x)) cfh)
+          :max  (reduce max (keys x->freq))
+          :dont-include-in-stats dont-include})))
     ;; Reduce
     ([acc el]
      (update acc (by el) (fn [i] (inc (or i 0)))))))
