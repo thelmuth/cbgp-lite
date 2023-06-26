@@ -746,10 +746,22 @@
                          :s-vars ['a]
                          :body (lib/binary-transform (lib/s-var 'a))}
      
-     `remove-element     {:type   :scheme
+     'remove-element     {:type   :scheme
                           :s-vars ['a]
                           :body   (lib/fn-of [(lib/vector-of (lib/s-var 'a)) (lib/s-var 'a)]
                                          (lib/vector-of (lib/s-var 'a)))}
+     
+     'comp2-fn1          (lib/scheme (lib/fn-of [(lib/fn-of [(lib/s-var 'b)] (lib/s-var 'c))
+                                         (lib/fn-of [(lib/s-var 'a)] (lib/s-var 'b))]
+                                        (lib/fn-of [(lib/s-var 'a)] (lib/s-var 'c))))
+     'str                {:type   :scheme
+                          :s-vars ['t]
+                          :body   (lib/fn-of [(lib/s-var 't)] lib/STRING)}
+     
+     'occurrences-of     {:type   :scheme
+                          :s-vars ['a]
+                          :body   (lib/fn-of [(lib/vector-of (lib/s-var 'a)) (lib/s-var 'a)] lib/INT)}
+
     })
 
   (def an-ast
@@ -1168,7 +1180,7 @@
 
    ;; has ["hi" "there"]
 (def start-state-ex6
-  {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var remove-element}, :type nil} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var concatv}, :type {:type :=>, :input {:type :cat, :children [{:type :vector, :child {:type :s-var, :sym s-12695}} {:type :vector, :child {:type :s-var, :sym s-12695}}]}, :output {:type :vector, :child {:type :s-var, :sym s-12695}}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val ["hi" "there"]}, :type {:type :vector, :child {:type string?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [3 4]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [1 2]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var +}, :type {:type :=>, :input {:type :cat, :children [{:type int?} {:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 5}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 3}, :type {:type int?}})
+  {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var remove-element}, :type {:type :=>, :input {:type :cat, :children [{:type :vector, :child {:type :s-var, :sym s-12623}} {:type :s-var, :sym s-12623}]}, :output {:type :vector, :child {:type :s-var, :sym s-12623}}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val ["hi" "there"]}, :type {:type :vector, :child {:type string?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val \h}, :type {:type char?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [3 4]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [1 2]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var +}, :type {:type :=>, :input {:type :cat, :children [{:type int?} {:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 5}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 3}, :type {:type int?}})
    :push ()
    :locals []
    :ret-type {:type int?}
@@ -1214,6 +1226,131 @@
 (compile-step {:push-unit {:gene :apply}
                :type-env  the-type-env
                :state     start-state-ex7})
+
+
+
+(def backtracking-ex8-ast
+  (push->ast {;; The sequence of genes to compile.
+              :push     (list {:gene :lit, :val 3, :type {:type 'int?}}
+                              {:gene :lit, :val 5, :type {:type 'int?}}
+                              {:gene :var, :name '+}
+                              {:gene :lit, :val [1 2], :type {:type :vector :child {:type 'int?}}}
+                              {:gene :lit, :val [\i \u \o], :type {:type :vector :child {:type 'char?}}}
+                              {:gene :lit, :val [3 4], :type {:type :vector :child {:type 'int?}}}
+                              {:gene :lit, :val \h :type {:type 'char?}}
+                              {:gene :lit, :val [\h \y \m], :type {:type :vector :child {:type 'char?}}}
+                              {:gene :lit, :val ["hi" "there"], :type {:type :vector :child {:type 'string?}}}
+                              {:gene :var, :name 'concatv}
+                              {:gene :var, :name 'dec}
+                              {:gene :var, :name 'inc}
+                              {:gene :lit, :val 2, :type {:type 'int?}}
+                              {:gene :lit, :val 3, :type {:type 'int?}}
+                              {:gene :lit, :val 8, :type {:type 'int?}}
+                              {:gene :lit, :val \h :type {:type 'char?}}
+                              {:gene :var, :name 'comp2-fn1}
+                                ;{:gene :apply}
+                              )
+              :locals   []
+              :ret-type {:type 'int?}
+              :type-env the-type-env}))
+
+   ;; has ["hi" "there"]
+(def start-state-ex8
+  {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var comp2-fn1}, :type {:type :=>, :input {:type :cat, :children [{:type :=>, :input {:type :cat, :children [{:type :s-var, :sym s-12629}]}, :output {:type :s-var, :sym s-12630}} {:type :=>, :input {:type :cat, :children [{:type :s-var, :sym s-12628}]}, :output {:type :s-var, :sym s-12629}}]}, :output {:type :=>, :input {:type :cat, :children [{:type :s-var, :sym s-12628}]}, :output {:type :s-var, :sym s-12630}}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val \h}, :type {:type char?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 8}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 3}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 2}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var inc}, :type {:type :=>, :input {:type :cat, :children [{:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var dec}, :type {:type :=>, :input {:type :cat, :children [{:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var concatv}, :type {:type :=>, :input {:type :cat, :children [{:type :vector, :child {:type :s-var, :sym s-12627}} {:type :vector, :child {:type :s-var, :sym s-12627}}]}, :output {:type :vector, :child {:type :s-var, :sym s-12627}}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val ["hi" "there"]}, :type {:type :vector, :child {:type string?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [\h \y \m]}, :type {:type :vector, :child {:type char?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val \h}, :type {:type char?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [3 4]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [\i \u \o]}, :type {:type :vector, :child {:type char?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [1 2]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var +}, :type {:type :=>, :input {:type :cat, :children [{:type int?} {:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 5}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 3}, :type {:type int?}})
+   :push ()
+   :locals []
+   :ret-type {:type int?}
+   :fn-applied 0
+   :fn-not-applied 0
+   :total-apply-attempts 0
+   :fn-not-applied-because-no-functions 0})
+
+(compile-step {:push-unit {:gene :apply}
+               :type-env  the-type-env
+               :state     start-state-ex8})
+
+(def backtracking-ex8-astb
+  (push->ast {;; The sequence of genes to compile.
+              :push     (list {:gene :lit, :val 3, :type {:type 'int?}}
+                              {:gene :lit, :val 5, :type {:type 'int?}}
+                              {:gene :var, :name '+}
+                              {:gene :lit, :val [1 2], :type {:type :vector :child {:type 'int?}}}
+                              {:gene :lit, :val [\i \u \o], :type {:type :vector :child {:type 'char?}}}
+                              {:gene :lit, :val [3 4], :type {:type :vector :child {:type 'int?}}}
+                              {:gene :lit, :val \h :type {:type 'char?}}
+                              {:gene :lit, :val [\h \y \m], :type {:type :vector :child {:type 'char?}}}
+                              {:gene :lit, :val ["hi" "there"], :type {:type :vector :child {:type 'string?}}}
+                              {:gene :var, :name 'concatv}
+                              {:gene :var, :name 'dec}
+                              {:gene :var, :name 'str}
+                              {:gene :var, :name 'inc}
+                              {:gene :lit, :val 2, :type {:type 'int?}}
+                              {:gene :lit, :val 3, :type {:type 'int?}}
+                              {:gene :lit, :val 8, :type {:type 'int?}}
+                              {:gene :lit, :val \h :type {:type 'char?}}
+                              {:gene :var, :name 'comp2-fn1}
+                                ;{:gene :apply}
+                              )
+              :locals   []
+              :ret-type {:type 'int?}
+              :type-env the-type-env}))
+
+   ;; has ["hi" "there"]
+(def start-state-ex8b
+  {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var comp2-fn1}, :type {:type :=>, :input {:type :cat, :children [{:type :=>, :input {:type :cat, :children [{:type :s-var, :sym s-12645}]}, :output {:type :s-var, :sym s-12646}} {:type :=>, :input {:type :cat, :children [{:type :s-var, :sym s-12644}]}, :output {:type :s-var, :sym s-12645}}]}, :output {:type :=>, :input {:type :cat, :children [{:type :s-var, :sym s-12644}]}, :output {:type :s-var, :sym s-12646}}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val \h}, :type {:type char?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 8}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 3}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 2}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var inc}, :type {:type :=>, :input {:type :cat, :children [{:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var str}, :type {:type :=>, :input {:type :cat, :children [{:type :s-var, :sym s-12643}]}, :output {:type string?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var dec}, :type {:type :=>, :input {:type :cat, :children [{:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var concatv}, :type {:type :=>, :input {:type :cat, :children [{:type :vector, :child {:type :s-var, :sym s-12642}} {:type :vector, :child {:type :s-var, :sym s-12642}}]}, :output {:type :vector, :child {:type :s-var, :sym s-12642}}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val ["hi" "there"]}, :type {:type :vector, :child {:type string?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [\h \y \m]}, :type {:type :vector, :child {:type char?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val \h}, :type {:type char?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [3 4]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [\i \u \o]}, :type {:type :vector, :child {:type char?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [1 2]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var +}, :type {:type :=>, :input {:type :cat, :children [{:type int?} {:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 5}, :type {:type int?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val 3}, :type {:type int?}})
+   :push ()
+   :locals []
+   :ret-type {:type int?}
+   :fn-applied 0
+   :fn-not-applied 0
+   :total-apply-attempts 0
+   :fn-not-applied-because-no-functions 0})
+
+(compile-step {:push-unit {:gene :apply}
+               :type-env  the-type-env
+               :state     start-state-ex8b})
+
+
+(def backtracking-ex9-ast
+  (push->ast {;; The sequence of genes to compile.
+              :push     (list ;{:gene :lit, :val 3, :type {:type 'int?}}
+                              ;{:gene :lit, :val 5, :type {:type 'int?}}
+                         {:gene :var, :name '+}
+                         ;{:gene :lit, :val [\i \u \o], :type {:type :vector :child {:type 'char?}}}
+                              ;{:gene :lit, :val [3 4], :type {:type :vector :child {:type 'int?}}}
+                         {:gene :lit, :val \h :type {:type 'char?}}
+                         {:gene :var, :name 'occurrences-of}
+                         {:gene :lit, :val [\h \y \m], :type {:type :vector :child {:type 'char?}}}
+                         {:gene :lit, :val ["hi" "there"], :type {:type :vector :child {:type 'string?}}}
+                         {:gene :var, :name 'concatv}
+                         {:gene :var, :name 'dec}
+                         ;{:gene :var, :name 'str}
+                         {:gene :lit, :val [1 2], :type {:type :vector :child {:type 'int?}}}
+                         {:gene :var, :name 'inc}
+                         {:gene :lit, :val \h :type {:type 'char?}}
+                              ;{:gene :var, :name 'comp2-fn1}
+                                ;{:gene :apply}
+                         )
+              :locals   []
+              :ret-type {:type 'int?}
+              :type-env the-type-env}))
+
+   ;; has ["hi" "there"]
+(def start-state-ex9
+  {:asts '(#:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val \h}, :type {:type char?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var inc}, :type {:type :=>, :input {:type :cat, :children [{:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [1 2]}, :type {:type :vector, :child {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var dec}, :type {:type :=>, :input {:type :cat, :children [{:type int?}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var concatv}, :type {:type :=>, :input {:type :cat, :children [{:type :vector, :child {:type :s-var, :sym s-12668}} {:type :vector, :child {:type :s-var, :sym s-12668}}]}, :output {:type :vector, :child {:type :s-var, :sym s-12668}}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val ["hi" "there"]}, :type {:type :vector, :child {:type string?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val [\h \y \m]}, :type {:type :vector, :child {:type char?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var occurrences-of}, :type {:type :=>, :input {:type :cat, :children [{:type :vector, :child {:type :s-var, :sym s-12667}} {:type :s-var, :sym s-12667}]}, :output {:type int?}}} #:erp12.cbgp-lite.lang.compile{:ast {:op :const, :val \h}, :type {:type char?}} #:erp12.cbgp-lite.lang.compile{:ast {:op :var, :var +}, :type {:type :=>, :input {:type :cat, :children [{:type int?} {:type int?}]}, :output {:type int?}}})
+   :push ()
+   :locals []
+   :ret-type {:type int?}
+   :fn-applied 0
+   :fn-not-applied 0
+   :total-apply-attempts 0
+   :fn-not-applied-because-no-functions 0})
+
+(compile-step {:push-unit {:gene :apply}
+               :type-env  the-type-env
+               :state     start-state-ex9})
+
+
   
 
 
