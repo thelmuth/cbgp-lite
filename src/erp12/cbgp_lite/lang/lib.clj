@@ -3,6 +3,8 @@
   (:require [clojure.core :as core]
             [clojure.set :as set]
             [clojure.string :as str]
+            [clojure.math.combinatorics :as combo]
+            [clojure.walk :as w]
             [erp12.cbgp-lite.lang.schema :as schema]))
 
 ;; @todo What do do about nil?
@@ -723,8 +725,8 @@
                         :body   (fn-of [(s-var 'a)] NIL)}
    'println            {:type   :scheme
                         :s-vars ['a]
-                        :body   (fn-of [(s-var 'a)] NIL)}
-   })
+                        :body   (fn-of [(s-var 'a)] NIL)}})
+   
 
 (def dealiases
   '{->map1            hash-map
@@ -806,8 +808,8 @@
     vec->set          set
     vec-mapv          mapv
     zero-double?      zero?
-    zero-int?         zero?
-    })
+    zero-int?         zero?})
+    
 
 (def macros
   #{'if 'do2 'do3})
@@ -817,3 +819,74 @@
   (->> type-env
        (filter (partial schema/has-all-ground-types? types))
        (into {})))
+
+(defn create-monomorphic-fn-name
+  [fn-name types]
+  (symbol (str (str/join "-" (map #(butlast-str (name %)) types)) "-" (name fn-name))))
+  
+
+(defn monomorphize-type-env
+  "Given a type environment and a list of ground types, detect all polymorphic functions
+   and monomorphize them."
+  [type-env ground-types]
+  (into {}
+        (mapcat (fn [[fn-name fn-type]]
+                  (if (not= :scheme (:type fn-type))
+                    (list [fn-name fn-type])
+                    (map (fn [ground]
+                           (vector (create-monomorphic-fn-name fn-name ground)
+                                   (let [replacement-map (zipmap (:s-vars fn-type) ground)]
+                                     (w/postwalk (fn [form]
+                                                   (if (and (map? form)
+                                                            (= :s-var (:type form)))
+                                                     {:type (get replacement-map (:sym form))}
+                                                     form))
+                                                 (:body fn-type)))))
+                         (combo/selections ground-types (count (:s-vars fn-type))))))
+                type-env)))
+  
+
+(defn monomorphize-dealiases
+  "Map all functions in monomorphic type environment to either the original function or
+   the dealised name found from the dealiases map (depending on whether the original
+   function needs to be dealised)."
+  [type-env ground-types dealiases]
+  (into {}
+        (mapcat (fn [[fn-name fn-type]]
+                  (let [dealiased-name (if (contains? dealiases fn-name)
+                                        (get dealiases fn-name)
+                                        fn-name)]
+                    (if (not= :scheme (:type fn-type))
+                      (list [fn-name dealiased-name])
+                      (map (fn [ground]
+                             (vector (create-monomorphic-fn-name fn-name ground)
+                                     dealiased-name))
+                           (combo/selections ground-types (count (:s-vars fn-type)))))))
+                type-env)))
+  
+(monomorphize-type-env type-env ['int? 'boolean? 'char? 'string?])
+
+(monomorphize-dealiases type-env ['int? 'double? 'boolean? 'char? 'boolean?] dealiases)
+
+
+(comment
+  "Test monomorphization on smaller type environment and ground type set"
+  (def tiny-type-env
+    {'int-add (binary-transform INT)
+     'str {:type   :scheme
+           :s-vars ['t]
+           :body   (fn-of [(s-var 't)] STRING)}
+     `conj-vec           {:type   :scheme
+                          :s-vars ['a]
+                          :body   (fn-of [(vector-of (s-var 'a)) (s-var 'a)] (vector-of (s-var 'a)))}
+     'map-vec            {:type   :scheme
+                          :s-vars ['a 'b]
+                          :body   (fn-of [(fn-of [(s-var 'a)] (s-var 'b))
+                                          (vector-of (s-var 'a))]
+                                         (vector-of (s-var 'b)))}})
+
+  (monomorphize-type-env tiny-type-env ['int? 'double? 'boolean?])
+
+  (monomorphize-dealiases tiny-type-env ['int? 'boolean? 'string?] dealiases)
+ )
+  
