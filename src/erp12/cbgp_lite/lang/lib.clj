@@ -3,6 +3,7 @@
   (:require [clojure.core :as core]
             [clojure.set :as set]
             [clojure.string :as str]
+            [clojure.walk :as w]
             [erp12.cbgp-lite.lang.schema :as schema]))
 
 ;; @todo What do do about nil?
@@ -814,3 +815,88 @@
   (->> type-env
        (filter (partial schema/has-all-ground-types? types))
        (into {})))
+
+"TODO
+x - Figure out which ground types will be included
+  - (def BOOLEAN {:type 'boolean?})
+  - (def INT {:type 'int?})
+  - (def DOUBLE {:type 'double?})
+  - (def CHAR {:type 'char?})
+  - (def STRING {:type 'string?})
+x - Figure out which functions to cut entirely
+- Write code that automatically monomorphizes existing instructions
+  x - monomorphizing type-env
+  - make sure dealiasing works
+- Figure out what to do about collections
+- See if there are any new-ish Clojush functions that we should add
+ "
+
+
+(comment
+
+  `conj-vec
+  ;; => erp12.cbgp-lite.lang.lib/conj-vec
+
+  (name `conj-vec)
+  ;; => "conj-vec"
+
+  (apply hash-map '([1 2] [3 4]))
+  ;; => {[1 2] [3 4]}
+
+
+  {:type   :scheme
+   :s-vars ['a 'b]
+   :body   (fn-of [(fn-of [(s-var 'b) (s-var 'a)] (s-var 'b))
+                   (s-var 'b)
+                   (vector-of (s-var 'a))]
+                  (s-var 'b))}
+;; => {:type :scheme,
+;;     :s-vars [a b],
+;;     :body
+;;     {:type :=>,
+;;      :input
+;;      {:type :cat,
+;;       :children
+;;       [{:type :=>,
+;;         :input {:type :cat, :children [{:type :s-var, :sym b} {:type :s-var, :sym a}]},
+;;         :output {:type :s-var, :sym b}}
+;;        {:type :s-var, :sym b}
+;;        {:type :vector, :child {:type :s-var, :sym a}}]},
+;;      :output {:type :s-var, :sym b}}}
+
+  (binary-transform INT)
+  ;; => {:type :=>, :input {:type :cat, :children [{:type int?} {:type int?}]},
+  ;;                :output {:type int?}}
+
+  (def thing '{:type :=>,
+              :input
+              {:type :cat,
+               :children
+               [{:type :=>,
+                 :input {:type :cat, :children [{:type :s-var, :sym b} {:type :s-var, :sym a}]},
+                 :output {:type :s-var, :sym b}}
+                {:type :s-var, :sym b}
+                {:type :vector, :child {:type :s-var, :sym a}}]},
+              :output {:type :s-var, :sym b}})
+
+  thing
+
+  (w/postwalk #(if (and (map? %)
+                        (= :s-var (:type %)))
+                 (if (= (:sym %) 'a)
+                   {:type 'int?}
+                   {:type 'bool?})
+                 %)
+              thing)
+  ;; => {:type :=>,
+  ;;     :input
+  ;;     {:type :cat,
+  ;;      :children
+  ;;      [{:type :=>, :input {:type :cat, :children [{:type bool?} {:type int?}]}, :output {:type bool?}}
+  ;;       {:type bool?}
+  ;;       {:type :vector, :child {:type int?}}]},
+  ;;     :output {:type bool?}}
+
+  (into {:a 5 :b 2} '([:c 6] [:b 999]))
+
+  )

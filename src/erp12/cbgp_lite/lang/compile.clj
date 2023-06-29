@@ -384,3 +384,70 @@
           (recur (compile-step {:push-unit push-unit
                                 :type-env  type-env
                                 :state     state})))))))
+
+
+(comment
+  
+  (map inc [1 2 3])
+  ;; => (2 3 4)
+  
+  (map + [1 2 3] [4 5 6])
+  ;; => (5 7 9)
+  
+  (= 5 5.0)
+  ;; => false
+  
+  (= 5 5)
+  ;; => true
+  
+  (<= 5 6.3)
+  ;; => true
+  
+  (< 5 "hi")
+  ;; => Execution error (ClassCastException) at erp12.cbgp-lite.lang.compile/eval10792 (REPL:406).
+  ;;    class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')
+  
+
+  (< "hi" "tthere")
+  ;; => Execution error (ClassCastException) at erp12.cbgp-lite.lang.compile/eval10794 (REPL:411).
+  ;;    class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')
+  
+  (= 5 "hi")
+  ;; => false
+  
+  (max "hi" "asd")
+  ;; => Execution error (ClassCastException) at erp12.cbgp-lite.lang.compile/eval10798 (REPL:418).
+  ;;    class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')
+  
+  (< true false)
+  ;; => Execution error (ClassCastException) at erp12.cbgp-lite.lang.compile/eval10800 (REPL:422).
+  ;;    class java.lang.Boolean cannot be cast to class java.lang.Number (java.lang.Boolean and java.lang.Number are in module java.base of loader 'bootstrap')
+  
+  (type 5)
+  ;; => java.lang.Long
+  
+  (type 5.3)
+  ;; => java.lang.Double
+  
+  (compare \z "asd")
+
+  
+  
+  (mapcat (fn [[k v]] (if (= :scheme (:type v))
+                        (map #(vector (symbol (str (name %) "-" (name k)))
+                                      v)
+                             (list 'int 'double 'bool))
+                        (list [k v])))
+          {'int-add {:type :=>}
+           'thing-to-monomorphize {:type :scheme}})
+  ;; => ([int-add {:type :=>}]
+  ;;     [int-thing-to-monomorphize {:type :scheme}]
+  ;;     [double-thing-to-monomorphize {:type :scheme}]
+  ;;     [bool-thing-to-monomorphize {:type :scheme}])
+
+
+
+
+
+
+  )
