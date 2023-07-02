@@ -824,10 +824,11 @@ x - Figure out which ground types will be included
   - (def CHAR {:type 'char?})
   - (def STRING {:type 'string?})
 x - Figure out which functions to cut entirely
-- Write code that automatically monomorphizes existing instructions
+x - Write code that automatically monomorphizes existing instructions
   x - monomorphizing type-env
-  - make sure dealiasing works
+  x - make sure dealiasing works
 - Figure out what to do about collections
+  - If there's a problem that, for example, uses ints but not vectors of ints, will vector of int instructions be used?
 - See if there are any new-ish Clojush functions that we should add
  "
 
