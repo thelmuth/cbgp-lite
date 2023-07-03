@@ -880,35 +880,4 @@
   (->> type-env
        (filter (partial schema/has-all-ground-types? types))
        (into {})))
-
-(comment
-  "Test monomorphization on smaller type environment and ground type set"
-  (def tiny-type-env
-    {'int-add (binary-transform INT)
-     'str {:type   :scheme
-           :s-vars ['t]
-           :body   (fn-of [(s-var 't)] STRING)}
-     `conj-vec           {:type   :scheme
-                          :s-vars ['a]
-                          :body   (fn-of [(vector-of (s-var 'a)) (s-var 'a)] (vector-of (s-var 'a)))}
-     'map-vec            {:type   :scheme
-                          :s-vars ['a 'b]
-                          :body   (fn-of [(fn-of [(s-var 'a)] (s-var 'b))
-                                          (vector-of (s-var 'a))]
-                                         (vector-of (s-var 'b)))}})
-  
-  (monomorphize-dealiases type-env ['int? 'double? 'boolean? 'char? 'boolean?] dealiases)
-  type-env
-
-  (monomorphize-type-env tiny-type-env ['int? 'double? 'boolean?])
-
-  (monomorphize-dealiases tiny-type-env ['int? 'boolean? 'string?] dealiases)
-
-  (into #{} (mapcat (fn 
-                      [macro-name]
-                      (map
-                       #(create-monomorphic-fn-name macro-name [%])
-                       ground-types))
-                    original-macros))
- )
   
