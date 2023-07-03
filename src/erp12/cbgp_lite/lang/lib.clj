@@ -873,7 +873,7 @@
 
 (def type-env (monomorphize-type-env original-type-env ground-types))
 
-(def macros (monomorphize-macros macros ground-types))
+(def macros (monomorphize-macros original-macros ground-types))
 
 (defn lib-for-types
   [types]
