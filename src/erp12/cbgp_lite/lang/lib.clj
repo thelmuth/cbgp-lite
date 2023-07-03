@@ -322,7 +322,7 @@
 
 (defn scheme [schema] (schema/generalize {} schema))
 
-(def type-env
+(def original-type-env
   {;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; FP
   ;;  'comp2-fn1          (scheme (fn-of [(fn-of [(s-var 'b)] (s-var 'c))
@@ -728,7 +728,7 @@
                         :body   (fn-of [(s-var 'a)] NIL)}})
    
 
-(def dealiases
+(def original-dealiases
   '{->map1            hash-map
     ->map2            hash-map
     ->map3            hash-map
@@ -811,14 +811,8 @@
     zero-int?         zero?})
     
 
-(def macros
+(def original-macros
   #{'if 'do2 'do3})
-
-(defn lib-for-types
-  [types]
-  (->> type-env
-       (filter (partial schema/has-all-ground-types? types))
-       (into {})))
 
 (defn create-monomorphic-fn-name
   [fn-name types]
@@ -849,25 +843,43 @@
 (defn monomorphize-dealiases
   "Map all functions in monomorphic type environment to either the original function or
    the dealised name found from the dealiases map (depending on whether the original
-   function needs to be dealised)."
+   function needs to be dealiased)."
   [type-env ground-types dealiases]
-  (into {}
+  (into dealiases
         (mapcat (fn [[fn-name fn-type]]
                   (let [dealiased-name (if (contains? dealiases fn-name)
                                         (get dealiases fn-name)
                                         fn-name)]
                     (if (not= :scheme (:type fn-type))
-                      (list [fn-name dealiased-name])
+                      '()
                       (map (fn [ground]
                              (vector (create-monomorphic-fn-name fn-name ground)
                                      dealiased-name))
                            (combo/selections ground-types (count (:s-vars fn-type)))))))
                 type-env)))
-  
-(monomorphize-type-env type-env ['int? 'boolean? 'char? 'string?])
 
-(monomorphize-dealiases type-env ['int? 'double? 'boolean? 'char? 'boolean?] dealiases)
+(defn monomorphize-macros
+  [macros ground-types]
+  (into #{} (mapcat (fn
+                      [macro-name]
+                      (map
+                       #(create-monomorphic-fn-name macro-name [%])
+                       ground-types))
+                    original-macros)))
 
+(def ground-types ['int? 'double? 'string? 'char? 'boolean?])
+
+(def dealiases (monomorphize-dealiases original-type-env ground-types original-dealiases))
+
+(def type-env (monomorphize-type-env original-type-env ground-types))
+
+(def macros (monomorphize-macros macros ground-types))
+
+(defn lib-for-types
+  [types]
+  (->> type-env
+       (filter (partial schema/has-all-ground-types? types))
+       (into {})))
 
 (comment
   "Test monomorphization on smaller type environment and ground type set"
@@ -884,9 +896,19 @@
                           :body   (fn-of [(fn-of [(s-var 'a)] (s-var 'b))
                                           (vector-of (s-var 'a))]
                                          (vector-of (s-var 'b)))}})
+  
+  (monomorphize-dealiases type-env ['int? 'double? 'boolean? 'char? 'boolean?] dealiases)
+  type-env
 
   (monomorphize-type-env tiny-type-env ['int? 'double? 'boolean?])
 
   (monomorphize-dealiases tiny-type-env ['int? 'boolean? 'string?] dealiases)
+
+  (into #{} (mapcat (fn 
+                      [macro-name]
+                      (map
+                       #(create-monomorphic-fn-name macro-name [%])
+                       ground-types))
+                    original-macros))
  )
   
