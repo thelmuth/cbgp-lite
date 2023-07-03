@@ -3,7 +3,9 @@
   (:require [clojure.core :as core]
             [clojure.set :as set]
             [clojure.string :as str]
+            [clojure.math.combinatorics :as combo]
             [clojure.walk :as w]
+            [erp12.cbgp-lite.utils :as u]
             [erp12.cbgp-lite.lang.schema :as schema]))
 
 ;; @todo What do do about nil?
@@ -321,33 +323,33 @@
 
 (defn scheme [schema] (schema/generalize {} schema))
 
-(def type-env
+(def original-type-env
   {;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; FP
-   'comp2-fn1          (scheme (fn-of [(fn-of [(s-var 'b)] (s-var 'c))
-                                       (fn-of [(s-var 'a)] (s-var 'b))]
-                                      (fn-of [(s-var 'a)] (s-var 'c))))
-   'comp3-fn1          (scheme (fn-of [(fn-of [(s-var 'c)] (s-var 'd))
-                                       (fn-of [(s-var 'b)] (s-var 'c))
-                                       (fn-of [(s-var 'a)] (s-var 'b))]
-                                      (fn-of [(s-var 'a)] (s-var 'd))))
-   'comp2-fn2          (scheme (fn-of [(fn-of [(s-var 'c)] (s-var 'd))
-                                       (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
-                                      (fn-of [(s-var 'a) (s-var 'b)] (s-var 'd))))
-   'comp3-fn2          (scheme (fn-of [(fn-of [(s-var 'd)] (s-var 'e))
-                                       (fn-of [(s-var 'c)] (s-var 'd))
-                                       (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
-                                      (fn-of [(s-var 'a) (s-var 'b)] (s-var 'e))))
-   'partial1-fn2       (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))
-                                       (s-var 'a)]
-                                      (fn-of [(s-var 'b)] (s-var 'c))))
-   'partial1-fn3       (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'b) (s-var 'c)] (s-var 'd))
-                                       (s-var 'a)]
-                                      (fn-of [(s-var 'b) (s-var 'c)] (s-var 'd))))
-   'partial2-fn3       (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'b) (s-var 'c)] (s-var 'd))
-                                       (s-var 'a)
-                                       (s-var 'b)]
-                                      (fn-of [(s-var 'c)] (s-var 'd))))
+  ;;  'comp2-fn1          (scheme (fn-of [(fn-of [(s-var 'b)] (s-var 'c))
+  ;;                                      (fn-of [(s-var 'a)] (s-var 'b))]
+  ;;                                     (fn-of [(s-var 'a)] (s-var 'c))))
+  ;;  'comp3-fn1          (scheme (fn-of [(fn-of [(s-var 'c)] (s-var 'd))
+  ;;                                      (fn-of [(s-var 'b)] (s-var 'c))
+  ;;                                      (fn-of [(s-var 'a)] (s-var 'b))]
+  ;;                                     (fn-of [(s-var 'a)] (s-var 'd))))
+  ;;  'comp2-fn2          (scheme (fn-of [(fn-of [(s-var 'c)] (s-var 'd))
+  ;;                                      (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
+  ;;                                     (fn-of [(s-var 'a) (s-var 'b)] (s-var 'd))))
+  ;;  'comp3-fn2          (scheme (fn-of [(fn-of [(s-var 'd)] (s-var 'e))
+  ;;                                      (fn-of [(s-var 'c)] (s-var 'd))
+  ;;                                      (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
+  ;;                                     (fn-of [(s-var 'a) (s-var 'b)] (s-var 'e))))
+  ;;  'partial1-fn2       (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))
+  ;;                                      (s-var 'a)]
+  ;;                                     (fn-of [(s-var 'b)] (s-var 'c))))
+  ;;  'partial1-fn3       (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'b) (s-var 'c)] (s-var 'd))
+  ;;                                      (s-var 'a)]
+  ;;                                     (fn-of [(s-var 'b) (s-var 'c)] (s-var 'd))))
+  ;;  'partial2-fn3       (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'b) (s-var 'c)] (s-var 'd))
+  ;;                                      (s-var 'a)
+  ;;                                      (s-var 'b)]
+  ;;                                     (fn-of [(s-var 'c)] (s-var 'd))))
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Conditional Control Flow
    'if                 {:type   :scheme
@@ -465,9 +467,9 @@
                                       (vector-of (s-var 'a))))
    '->vector3          (scheme (fn-of [(s-var 'a) (s-var 'a) (s-var 'a)]
                                       (vector-of (s-var 'a))))
-   'map->vec           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
-                                      (vector-of (tuple-of (s-var 'k) (s-var 'v)))))
-   'set->vec           (scheme (fn-of [(set-of (s-var 'e))] (vector-of (s-var 'e))))
+  ;;  'map->vec           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
+  ;;                                     (vector-of (tuple-of (s-var 'k) (s-var 'v)))))
+  ;;  'set->vec           (scheme (fn-of [(set-of (s-var 'e))] (vector-of (s-var 'e))))
    `concatv            {:type   :scheme
                         :s-vars ['a]
                         :body   (binary-transform (vector-of (s-var 'a)))}
@@ -544,11 +546,14 @@
                                         (vector-of (s-var 'a))]
                                        (vector-of (s-var 'b)))}
    'map2-vec           {:type   :scheme
-                        :s-vars ['a1 'a2 'b]
-                        :body   (fn-of [(fn-of [(s-var 'a1) (s-var 'a2)] (s-var 'b))
-                                        (vector-of (s-var 'a1))
-                                        (vector-of (s-var 'a2))]
+                        :s-vars ['a 'b]
+                        :body   (fn-of [(fn-of [(s-var 'a) (s-var 'a)] (s-var 'b))
+                                        (vector-of (s-var 'a))
+                                        (vector-of (s-var 'a))]
                                        (vector-of (s-var 'b)))}
+   
+    ; Changed from 3 type-variables to 2 for monomorphization
+
    `mapv-indexed       (scheme (fn-of [(fn-of [INT (s-var 'a)] (s-var 'b))
                                        (vector-of (s-var 'a))]
                                       (vector-of (s-var 'b))))
@@ -587,127 +592,127 @@
    `sortv-by           (scheme (fn-of [(fn-of [(s-var 'e)] (s-var 'k))
                                        (vector-of (s-var 'e))]
                                       (vector-of (s-var 'e))))
-   'group-by           (scheme (fn-of [(fn-of [(s-var 'e)] (s-var 'k))
-                                       (vector-of (s-var 'e))]
-                                      (map-of (s-var 'k) (vector-of (s-var 'e)))))
-   'zipmap             (scheme (fn-of [(vector-of (s-var 'k))
-                                       (vector-of (s-var 'v))]
-                                      (map-of (s-var 'k) (s-var 'v))))
+  ;;  'group-by           (scheme (fn-of [(fn-of [(s-var 'e)] (s-var 'k))
+  ;;                                      (vector-of (s-var 'e))]
+  ;;                                     (map-of (s-var 'k) (vector-of (s-var 'e)))))
+  ;;  'zipmap             (scheme (fn-of [(vector-of (s-var 'k))
+  ;;                                      (vector-of (s-var 'v))]
+  ;;                                     (map-of (s-var 'k) (s-var 'v))))
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;;; Tuple
-   '->tuple2           (scheme (fn-of [(s-var 'a) (s-var 'b)]
-                                      (tuple-of (s-var 'a) (s-var 'b))))
-   'left               (scheme (fn-of [(tuple-of (s-var 'a) (s-var 'b))]
-                                      (s-var 'a)))
-   'right              (scheme (fn-of [(tuple-of (s-var 'a) (s-var 'b))]
-                                      (s-var 'b)))
-   `assoc-left         (scheme (fn-of [(tuple-of (s-var 'a) (s-var 'b)) (s-var 'c)]
-                                      (tuple-of (s-var 'c) (s-var 'b))))
-   `assoc-right        (scheme (fn-of [(tuple-of (s-var 'a) (s-var 'b)) (s-var 'c)]
-                                      (tuple-of (s-var 'a) (s-var 'c))))
+  ;;  '->tuple2           (scheme (fn-of [(s-var 'a) (s-var 'b)]
+  ;;                                     (tuple-of (s-var 'a) (s-var 'b))))
+  ;;  'left               (scheme (fn-of [(tuple-of (s-var 'a) (s-var 'b))]
+  ;;                                     (s-var 'a)))
+  ;;  'right              (scheme (fn-of [(tuple-of (s-var 'a) (s-var 'b))]
+  ;;                                     (s-var 'b)))
+  ;;  `assoc-left         (scheme (fn-of [(tuple-of (s-var 'a) (s-var 'b)) (s-var 'c)]
+  ;;                                     (tuple-of (s-var 'c) (s-var 'b))))
+  ;;  `assoc-right        (scheme (fn-of [(tuple-of (s-var 'a) (s-var 'b)) (s-var 'c)]
+  ;;                                     (tuple-of (s-var 'a) (s-var 'c))))
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Set
-   '->set1             (scheme (fn-of [(s-var 'e)]
-                                      (set-of (s-var 'e))))
-   '->set2             (scheme (fn-of [(s-var 'e) (s-var 'e)]
-                                      (set-of (s-var 'e))))
-   '->set3             (scheme (fn-of [(s-var 'e) (s-var 'e) (s-var 'e)]
-                                      (set-of (s-var 'e))))
-   'vec->set           (scheme (fn-of [(vector-of (s-var 'e))]
-                                      (set-of (s-var 'e))))
-   'map->set           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
-                                      (set-of (tuple-of (s-var 'k) (s-var 'v)))))
-   `set/union          (scheme (fn-of [(set-of (s-var 'e))
-                                       (set-of (s-var 'e))]
-                                      (set-of (s-var 'e))))
-   `set/difference     (scheme (fn-of [(set-of (s-var 'e))
-                                       (set-of (s-var 'e))]
-                                      (set-of (s-var 'e))))
-   `set/intersection   (scheme (fn-of [(set-of (s-var 'e))
-                                       (set-of (s-var 'e))]
-                                      (set-of (s-var 'e))))
-   `set/subset?        (scheme (fn-of [(set-of (s-var 'e))
-                                       (set-of (s-var 'e))]
-                                      BOOLEAN))
-   `set/superset?      (scheme (fn-of [(set-of (s-var 'e))
-                                       (set-of (s-var 'e))]
-                                      BOOLEAN))
-   `conj-set           (scheme (fn-of [(set-of (s-var 'e)) (s-var 'e)]
-                                      (set-of (s-var 'e))))
-   'disj               (scheme (fn-of [(set-of (s-var 'e)) (s-var 'e)]
-                                      (set-of (s-var 'e))))
-   'set-contains?      (scheme (fn-of [(set-of (s-var 'e)) (s-var 'e)]
-                                      BOOLEAN))
-   'count-set          (scheme (fn-of [(set-of (s-var 'e))] INT))
-   `map-set            (scheme (fn-of [(fn-of [(s-var 'a)] (s-var 'b))
-                                       (set-of (s-var 'a))]
-                                      (set-of (s-var 'b))))
-   `filter-set         (scheme (fn-of [(fn-of [(s-var 'a)] BOOLEAN)
-                                       (set-of (s-var 'a))]
-                                      (set-of (s-var 'a))))
-   'reduce-set         (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'a)] (s-var 'a))
-                                       (set-of (s-var 'a))]
-                                      (s-var 'a)))
-   'fold-set           (scheme (fn-of [(fn-of [(s-var 'b) (s-var 'a)] (s-var 'b))
-                                       (s-var 'b)
-                                       (set-of (s-var 'a))]
-                                      (s-var 'b)))
+  ;;  '->set1             (scheme (fn-of [(s-var 'e)]
+  ;;                                     (set-of (s-var 'e))))
+  ;;  '->set2             (scheme (fn-of [(s-var 'e) (s-var 'e)]
+  ;;                                     (set-of (s-var 'e))))
+  ;;  '->set3             (scheme (fn-of [(s-var 'e) (s-var 'e) (s-var 'e)]
+  ;;                                     (set-of (s-var 'e))))
+  ;;  'vec->set           (scheme (fn-of [(vector-of (s-var 'e))]
+  ;;                                     (set-of (s-var 'e))))
+  ;;  'map->set           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
+  ;;                                     (set-of (tuple-of (s-var 'k) (s-var 'v)))))
+  ;;  `set/union          (scheme (fn-of [(set-of (s-var 'e))
+  ;;                                      (set-of (s-var 'e))]
+  ;;                                     (set-of (s-var 'e))))
+  ;;  `set/difference     (scheme (fn-of [(set-of (s-var 'e))
+  ;;                                      (set-of (s-var 'e))]
+  ;;                                     (set-of (s-var 'e))))
+  ;;  `set/intersection   (scheme (fn-of [(set-of (s-var 'e))
+  ;;                                      (set-of (s-var 'e))]
+  ;;                                     (set-of (s-var 'e))))
+  ;;  `set/subset?        (scheme (fn-of [(set-of (s-var 'e))
+  ;;                                      (set-of (s-var 'e))]
+  ;;                                     BOOLEAN))
+  ;;  `set/superset?      (scheme (fn-of [(set-of (s-var 'e))
+  ;;                                      (set-of (s-var 'e))]
+  ;;                                     BOOLEAN))
+  ;;  `conj-set           (scheme (fn-of [(set-of (s-var 'e)) (s-var 'e)]
+  ;;                                     (set-of (s-var 'e))))
+  ;;  'disj               (scheme (fn-of [(set-of (s-var 'e)) (s-var 'e)]
+  ;;                                     (set-of (s-var 'e))))
+  ;;  'set-contains?      (scheme (fn-of [(set-of (s-var 'e)) (s-var 'e)]
+  ;;                                     BOOLEAN))
+  ;;  'count-set          (scheme (fn-of [(set-of (s-var 'e))] INT))
+  ;;  `map-set            (scheme (fn-of [(fn-of [(s-var 'a)] (s-var 'b))
+  ;;                                      (set-of (s-var 'a))]
+  ;;                                     (set-of (s-var 'b))))
+  ;;  `filter-set         (scheme (fn-of [(fn-of [(s-var 'a)] BOOLEAN)
+  ;;                                      (set-of (s-var 'a))]
+  ;;                                     (set-of (s-var 'a))))
+  ;;  'reduce-set         (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'a)] (s-var 'a))
+  ;;                                      (set-of (s-var 'a))]
+  ;;                                     (s-var 'a)))
+  ;;  'fold-set           (scheme (fn-of [(fn-of [(s-var 'b) (s-var 'a)] (s-var 'b))
+  ;;                                      (s-var 'b)
+  ;;                                      (set-of (s-var 'a))]
+  ;;                                     (s-var 'b)))
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;;; Map
-   '->map1             (scheme (fn-of [(s-var 'k) (s-var 'v)]
-                                      (map-of (s-var 'k) (s-var 'v))))
-   '->map2             (scheme (fn-of [(s-var 'k) (s-var 'v)
-                                       (s-var 'k) (s-var 'v)]
-                                      (map-of (s-var 'k) (s-var 'v))))
-   '->map3             (scheme (fn-of [(s-var 'k) (s-var 'v)
-                                       (s-var 'k) (s-var 'v)
-                                       (s-var 'k) (s-var 'v)]
-                                      (map-of (s-var 'k) (s-var 'v))))
-   'vec->map           (scheme (fn-of [(vector-of (tuple-of (s-var 'k) (s-var 'v)))]
-                                      (map-of (s-var 'k) (s-var 'v))))
-   'set->map           (scheme (fn-of [(set-of (tuple-of (s-var 'k) (s-var 'v)))]
-                                      (map-of (s-var 'k) (s-var 'v))))
-   'get                (scheme (fn-of [(map-of (s-var 'k) (s-var 'v)) (s-var 'k)]
-                                      (s-var 'v)))
-   'get-or-else        (scheme (fn-of [(map-of (s-var 'k) (s-var 'v)) (s-var 'k) (s-var 'v)]
-                                      (s-var 'v)))
-   'assoc              (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))
-                                       (s-var 'k)
-                                       (s-var 'v)]
-                                      (map-of (s-var 'k) (s-var 'v))))
-   'update             (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))
-                                       (s-var 'k)
-                                       (fn-of [(s-var 'v)] (s-var 'v))]
-                                      (map-of (s-var 'k) (s-var 'v))))
-   'map-contains?      (scheme (fn-of [(map-of (s-var 'k) (s-var 'v)) (s-var 'k)]
-                                      BOOLEAN))
-   `keys-vec           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
-                                      (vector-of (s-var 'k))))
-   `keys-set           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
-                                      (set-of (s-var 'k))))
-   `vals-vec           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
-                                      (vector-of (s-var 'v))))
-   'merge              (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))
-                                       (map-of (s-var 'k) (s-var 'v))]
-                                      (map-of (s-var 'k) (s-var 'v))))
-   'count-map          (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
-                                      INT))
-   'map-map            (scheme (fn-of [(fn-of [(tuple-of (s-var 'k) (s-var 'v))] (s-var 'e))
-                                       (map-of (s-var 'k) (s-var 'v))]
-                                      (vector-of (s-var 'e))))
-   `filter-map         (scheme (fn-of [(fn-of [(tuple-of (s-var 'k) (s-var 'v))] BOOLEAN)
-                                       (map-of (s-var 'k) (s-var 'v))]
-                                      (map-of (s-var 'k) (s-var 'v))))
-   'reduce-map         (let [entry (tuple-of (s-var 'k) (s-var 'v))]
-                         (scheme (fn-of [(fn-of [entry entry] entry)
-                                         (map-of (s-var 'k) (s-var 'v))]
-                                        entry)))
-   'fold-map           (scheme (fn-of [(fn-of [(s-var 'r)
-                                               (tuple-of (s-var 'k) (s-var 'v))]
-                                              (s-var 'r))
-                                       (s-var 'r)
-                                       (map-of (s-var 'k) (s-var 'v))]
-                                      (s-var 'r)))
+  ;;  '->map1             (scheme (fn-of [(s-var 'k) (s-var 'v)]
+  ;;                                     (map-of (s-var 'k) (s-var 'v))))
+  ;;  '->map2             (scheme (fn-of [(s-var 'k) (s-var 'v)
+  ;;                                      (s-var 'k) (s-var 'v)]
+  ;;                                     (map-of (s-var 'k) (s-var 'v))))
+  ;;  '->map3             (scheme (fn-of [(s-var 'k) (s-var 'v)
+  ;;                                      (s-var 'k) (s-var 'v)
+  ;;                                      (s-var 'k) (s-var 'v)]
+  ;;                                     (map-of (s-var 'k) (s-var 'v))))
+  ;;  'vec->map           (scheme (fn-of [(vector-of (tuple-of (s-var 'k) (s-var 'v)))]
+  ;;                                     (map-of (s-var 'k) (s-var 'v))))
+  ;;  'set->map           (scheme (fn-of [(set-of (tuple-of (s-var 'k) (s-var 'v)))]
+  ;;                                     (map-of (s-var 'k) (s-var 'v))))
+  ;;  'get                (scheme (fn-of [(map-of (s-var 'k) (s-var 'v)) (s-var 'k)]
+  ;;                                     (s-var 'v)))
+  ;;  'get-or-else        (scheme (fn-of [(map-of (s-var 'k) (s-var 'v)) (s-var 'k) (s-var 'v)]
+  ;;                                     (s-var 'v)))
+  ;;  'assoc              (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))
+  ;;                                      (s-var 'k)
+  ;;                                      (s-var 'v)]
+  ;;                                     (map-of (s-var 'k) (s-var 'v))))
+  ;;  'update             (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))
+  ;;                                      (s-var 'k)
+  ;;                                      (fn-of [(s-var 'v)] (s-var 'v))]
+  ;;                                     (map-of (s-var 'k) (s-var 'v))))
+  ;;  'map-contains?      (scheme (fn-of [(map-of (s-var 'k) (s-var 'v)) (s-var 'k)]
+  ;;                                     BOOLEAN))
+  ;;  `keys-vec           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
+  ;;                                     (vector-of (s-var 'k))))
+  ;;  `keys-set           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
+  ;;                                     (set-of (s-var 'k))))
+  ;;  `vals-vec           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
+  ;;                                     (vector-of (s-var 'v))))
+  ;;  'merge              (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))
+  ;;                                      (map-of (s-var 'k) (s-var 'v))]
+  ;;                                     (map-of (s-var 'k) (s-var 'v))))
+  ;;  'count-map          (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
+  ;;                                     INT))
+  ;;  'map-map            (scheme (fn-of [(fn-of [(tuple-of (s-var 'k) (s-var 'v))] (s-var 'e))
+  ;;                                      (map-of (s-var 'k) (s-var 'v))]
+  ;;                                     (vector-of (s-var 'e))))
+  ;;  `filter-map         (scheme (fn-of [(fn-of [(tuple-of (s-var 'k) (s-var 'v))] BOOLEAN)
+  ;;                                      (map-of (s-var 'k) (s-var 'v))]
+  ;;                                     (map-of (s-var 'k) (s-var 'v))))
+  ;;  'reduce-map         (let [entry (tuple-of (s-var 'k) (s-var 'v))]
+  ;;                        (scheme (fn-of [(fn-of [entry entry] entry)
+  ;;                                        (map-of (s-var 'k) (s-var 'v))]
+  ;;                                       entry)))
+  ;;  'fold-map           (scheme (fn-of [(fn-of [(s-var 'r)
+  ;;                                              (tuple-of (s-var 'k) (s-var 'v))]
+  ;;                                             (s-var 'r))
+  ;;                                      (s-var 'r)
+  ;;                                      (map-of (s-var 'k) (s-var 'v))]
+  ;;                                     (s-var 'r)))
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Printing & Side Effects
    'do2                {:type   :scheme
@@ -721,10 +726,10 @@
                         :body   (fn-of [(s-var 'a)] NIL)}
    'println            {:type   :scheme
                         :s-vars ['a]
-                        :body   (fn-of [(s-var 'a)] NIL)}
-   })
+                        :body   (fn-of [(s-var 'a)] NIL)}})
+   
 
-(def dealiases
+(def original-dealiases
   '{->map1            hash-map
     ->map2            hash-map
     ->map3            hash-map
@@ -804,17 +809,83 @@
     vec->set          set
     vec-mapv          mapv
     zero-double?      zero?
-    zero-int?         zero?
-    })
+    zero-int?         zero?})
+    
 
-(def macros
+(def original-macros
   #{'if 'do2 'do3})
+
+(defn create-monomorphic-fn-name
+  [fn-name types]
+  (symbol (str (str/join "-" (map #(butlast-str (name %)) types)) "-" (name fn-name))))
+  
+
+(defn monomorphize-type-env
+  "Given a type environment and a list of ground types, detect all polymorphic functions
+   and monomorphize them."
+  [type-env ground-types]
+  (into {}
+        (mapcat (fn [[fn-name fn-type]]
+                  (if (not= :scheme (:type fn-type))
+                    (list [fn-name fn-type])
+                    (map (fn [ground]
+                           (vector (create-monomorphic-fn-name fn-name ground)
+                                   (let [replacement-map (zipmap (:s-vars fn-type) ground)]
+                                     (w/postwalk (fn [form]
+                                                   (if (and (map? form)
+                                                            (= :s-var (:type form)))
+                                                     {:type (get replacement-map (:sym form))}
+                                                     form))
+                                                 (:body fn-type)))))
+                         (combo/selections ground-types (count (:s-vars fn-type))))))
+                type-env)))
+  
+
+(defn monomorphize-dealiases
+  "Map all functions in monomorphic type environment to either the original function or
+   the dealised name found from the dealiases map (depending on whether the original
+   function needs to be dealiased)."
+  [type-env ground-types dealiases]
+  (into dealiases
+        (mapcat (fn [[fn-name fn-type]]
+                  (let [dealiased-name (if (contains? dealiases fn-name)
+                                        (get dealiases fn-name)
+                                        fn-name)]
+                    (if (not= :scheme (:type fn-type))
+                      '()
+                      (map (fn [ground]
+                             (vector (create-monomorphic-fn-name fn-name ground)
+                                     dealiased-name))
+                           (combo/selections ground-types (count (:s-vars fn-type)))))))
+                type-env)))
+
+(defn monomorphize-macros
+  [macros ground-types]
+  (into #{} (mapcat (fn
+                      [macro-name]
+                      (map
+                       #(create-monomorphic-fn-name macro-name [%])
+                       ground-types))
+                    macros)))
+
+(def ground-types ['int? 'double? 'string? 'char? 'boolean?])
+
+(def dealiases (monomorphize-dealiases original-type-env ground-types original-dealiases))
+
+(def type-env (monomorphize-type-env original-type-env ground-types))
+
+(def macros (monomorphize-macros original-macros ground-types))
 
 (defn lib-for-types
   [types]
-  (->> type-env
-       (filter (partial schema/has-all-ground-types? types))
-       (into {})))
+  (println "TYPES:" types)
+  (u/log-and-return "Included vars:")
+  (let [result (->> type-env
+                    (filter (partial schema/has-all-ground-types? types))
+                    (filter (partial schema/has-all-vector-types? types))
+                    (into {}))]
+    (u/log-and-return (set (keys result)))
+    result))
 
 "TODO
 x - Figure out which ground types will be included
@@ -827,13 +898,18 @@ x - Figure out which functions to cut entirely
 x - Write code that automatically monomorphizes existing instructions
   x - monomorphizing type-env
   x - make sure dealiasing works
-- Figure out what to do about collections
-  - If there's a problem that, for example, uses ints but not vectors of ints, will vector of int instructions be used?
+x - Figure out what to do about collections
+  x - If there's a problem that, for example, uses ints but not vectors of ints, will vector of int instructions be used?
+  x - Yes, above is bad. We only want vectors of the right vector types to be included
 - See if there are any new-ish Clojush functions that we should add
  "
 
 
 (comment
+
+  (first
+   (lib-for-types [{:type 'boolean?} {:type 'int?}]))
+
 
   `conj-vec
   ;; => erp12.cbgp-lite.lang.lib/conj-vec
@@ -870,15 +946,15 @@ x - Write code that automatically monomorphizes existing instructions
   ;;                :output {:type int?}}
 
   (def thing '{:type :=>,
-              :input
-              {:type :cat,
-               :children
-               [{:type :=>,
-                 :input {:type :cat, :children [{:type :s-var, :sym b} {:type :s-var, :sym a}]},
-                 :output {:type :s-var, :sym b}}
-                {:type :s-var, :sym b}
-                {:type :vector, :child {:type :s-var, :sym a}}]},
-              :output {:type :s-var, :sym b}})
+               :input
+               {:type :cat,
+                :children
+                [{:type :=>,
+                  :input {:type :cat, :children [{:type :s-var, :sym b} {:type :s-var, :sym a}]},
+                  :output {:type :s-var, :sym b}}
+                 {:type :s-var, :sym b}
+                 {:type :vector, :child {:type :s-var, :sym a}}]},
+               :output {:type :s-var, :sym b}})
 
   thing
 
