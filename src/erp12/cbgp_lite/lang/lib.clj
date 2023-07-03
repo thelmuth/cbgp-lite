@@ -865,7 +865,7 @@
                       (map
                        #(create-monomorphic-fn-name macro-name [%])
                        ground-types))
-                    original-macros)))
+                    macros)))
 
 (def ground-types ['int? 'double? 'string? 'char? 'boolean?])
 
