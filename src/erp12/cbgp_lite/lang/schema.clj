@@ -14,8 +14,8 @@
   "True if term is a ground type, false otherwise"
   [term]
   (and (map? term)
-            (= 1 (count term))
-            (symbol? (:type term))))
+       (= 1 (count term))
+       (symbol? (:type term))))
 
 (defn all-ground-types
   "Returns all ground types out of nested form"
@@ -31,6 +31,29 @@
   "Checks if all ground types in form are contained in types"
   [types form]
   (set/subset? (all-ground-types form)
+               (set types)))
+
+(defn vector-type?
+  "True if term is a vector type, false otherwise"
+  [term]
+  (and (map? term)
+       (= (:type term) :vector)))
+
+(defn all-vector-types
+  "Returns all vector types out of nested form"
+  [form]
+  (let [vector-types (atom #{})]
+    (w/postwalk #(do (when (vector-type? %)
+                       (swap! vector-types conj %))
+                     %)
+                form)
+    @vector-types))
+
+(defn has-all-vector-types?
+  "Checks if all vector types in form are contained in types"
+  [types form]
+  ;; (println "|ALL VECTOR TYPES:|" (first form) (all-vector-types form))
+  (set/subset? (all-vector-types form)
                (set types)))
 
 (defn fn-arg-schemas

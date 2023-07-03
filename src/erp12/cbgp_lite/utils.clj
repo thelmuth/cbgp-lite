@@ -1,4 +1,11 @@
-(ns erp12.cbgp-lite.utils)
+(ns erp12.cbgp-lite.utils
+  (:require [taoensso.timbre :as log]))
+
+(defn log-and-return
+  "Logs arg and then returns it."
+  [arg]
+  (log/info arg)
+  arg)
 
 (defn first-non-nil
   "Returns the first non-nil values from the collection, or returns `nil` if

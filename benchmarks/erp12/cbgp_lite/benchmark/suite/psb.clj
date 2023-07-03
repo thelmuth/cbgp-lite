@@ -90,7 +90,7 @@
       "even-squares"
       {:input->type {'input1 {:type 'int?}}
        :ret-type    {:type 'string?}
-       :other-types [{:type 'boolean?}]
+       :other-types [{:type 'boolean?} {:type :vector :child {:type 'int?}}]
        :extra-genes []
        :loss-fns    [; Error 1: Levenshtein distance of printed strings
                      lev/distance
@@ -137,7 +137,7 @@
                      'input2 {:type 'int?}
                      'input3 {:type 'int?}}
        :ret-type    {:type 'string?}
-       :other-types [{:type 'int?} {:type 'boolean?}]
+       :other-types [{:type 'int?} {:type 'boolean?} {:type :vector :child {:type 'int?}}]
        :loss-fns    [lev/distance]}
 
       "grade"
@@ -169,7 +169,7 @@
       "last-index-of-zero"
       {:input->type {'input1 {:type :vector :child {:type 'int?}}}
        :ret-type    {:type 'int?}
-       :other-types [{:type 'boolean?}]
+       :other-types [{:type 'boolean?} {:type :vector :child {:type 'boolean?}}]
        :extra-genes [{:gene :lit-generator, :fn (bu/int-generator 50), :type {:type 'int?}}]
        :loss-fns    [bu/absolute-distance]}
 
@@ -226,7 +226,7 @@
       "pig-latin"
       {:input->type {'input1 {:type 'string?}}
        :ret-type    {:type 'string?}
-       :other-types [{:type 'int?} {:type 'boolean?} {:type 'char?}]
+       :other-types [{:type 'int?} {:type 'boolean?} {:type 'char?} {:type :vector :child {:type 'string?}}]
        :extra-genes [{:gene :lit, :val \a, :type {:type 'char?}}
                      {:gene :lit, :val \e, :type {:type 'char?}}
                      {:gene :lit, :val \i, :type {:type 'char?}}
@@ -344,7 +344,7 @@
       {:input->type {'input1 {:type 'string?}
                      'input2 {:type 'string?}}
        :ret-type    {:type 'string?}
-       :other-types [{:type 'int?} {:type 'boolean?} {:type 'char?}]
+       :other-types [{:type 'int?} {:type 'boolean?} {:type 'char?} {:type :vector :child {:type 'int?}}]
        :extra-genes [{:gene :lit, :val \space, :type {:type 'char?}}
                      {:gene :lit, :val \newline, :type {:type 'char?}}
                      {:gene :lit-generator, :fn (bu/int-generator 10), :type {:type 'int?}}]
@@ -359,14 +359,14 @@
       "string-lengths-backwards"
       {:input->type {'input1 {:type :vector :child {:type 'string?}}}
        :ret-type    {:type 'string?}
-       :other-types [{:type 'int?} {:type 'boolean?}]
+       :other-types [{:type 'int?} {:type 'boolean?} {:type :vector :child {:type 'int?}}]
        :extra-genes [{:gene :lit-generator, :fn (bu/int-generator 100), :type {:type 'int?}}]
        :loss-fns    [lev/distance]}
 
       "sum-of-squares"
       {:input->type {'input1 {:type 'int?}}
        :ret-type    {:type 'int?}
-       :other-types [{:type 'boolean?}]
+       :other-types [{:type 'boolean?} {:type :vector :child {:type 'int?}}]
        :extra-genes [{:gene :lit, :val 0, :type {:type 'int?}}
                      {:gene :lit, :val 1, :type {:type 'int?}}
                      {:gene :lit-generator, :fn (bu/int-generator 100), :type {:type 'int?}}]
@@ -376,7 +376,7 @@
       {:input->type {'input1 {:type 'string?}
                      'input2 {:type 'string?}}
        :ret-type    {:type 'boolean?}
-       :other-types [{:type 'int?} {:type 'char?}]
+       :other-types [{:type 'int?} {:type 'char?} {:type :vector :child {:type 'int?}}]
        :extra-genes [{:gene :lit-generator, :fn bu/rand-bool, :type {:type 'boolean?}}
                      {:gene :lit-generator, :fn (bu/int-generator 1000), :type {:type 'int?}}
                      {:gene :lit-generator, :fn bu/rand-char, :type {:type 'char?}}]
@@ -434,7 +434,7 @@
       {:input->type {'input1 {:type 'string?}
                      'input2 {:type 'int?}}
        :ret-type    {:type 'string?}
-       :other-types [{:type 'boolean?} {:type 'char?}]
+       :other-types [{:type 'boolean?} {:type 'char?} {:type :vector :child {:type 'int?}}]
        :extra-genes [{:gene :lit, :val \newline, :type {:type 'char?}}
                      {:gene :lit, :val \space, :type {:type 'char?}}]
        :loss-fns    [; First error is Levenshtein distance of printed strings
@@ -469,7 +469,7 @@
       "basement"
       {:input->type {'input1 {:type :vector :child {:type 'int?}}}
        :ret-type    {:type 'int?}
-       :other-types [{:type 'boolean?}]
+       :other-types [{:type 'boolean?} {:type :vector :child {:type 'boolean?}}]
        :extra-genes [{:gene :lit, :val [], :type {:type :vector :child {:type 'int?}}}
                      {:gene :lit, :val -1, :type {:type 'int?}}
                      {:gene :lit, :val 0, :type {:type 'int?}}
@@ -482,7 +482,7 @@
                      'input2 {:type 'double?}
                      'input3 {:type 'int?}}
        :ret-type    {:type 'double?}
-       :other-types [{:type 'boolean?}]
+       :other-types [{:type 'boolean?} {:type :vector :child {:type 'int?}}]
        :extra-genes [{:gene :lit, :val 0.0, :type {:type 'double?}}
                      {:gene :lit, :val 1.0, :type {:type 'double?}}
                      {:gene :lit, :val 2.0, :type {:type 'double?}}]
@@ -491,7 +491,7 @@
       "bowling"
       {:input->type {'input1 {:type 'string?}}
        :ret-type    {:type 'int?}
-       :other-types [{:type 'boolean?} {:type 'char?}]
+       :other-types [{:type 'boolean?} {:type 'char?} {:type :vector :child {:type 'int?}}]
        :extra-genes [{:gene :lit, :val \-, :type {:type 'char?}}
                      {:gene :lit, :val \X, :type {:type 'char?}}
                      {:gene :lit, :val \/, :type {:type 'char?}}
@@ -511,7 +511,9 @@
       "camel-case"
       {:input->type {'input1 {:type 'string?}}
        :ret-type    {:type 'string?}
-       :other-types [{:type 'int?} {:type 'boolean?} {:type 'char?}]
+       :other-types [{:type 'int?} {:type 'boolean?} {:type 'char?}
+                     {:type :vector :child {:type 'int?}}
+                     {:type :vector :child {:type 'string?}}]
        :extra-genes [{:gene :lit, :val \-, :type {:type 'char?}}
                      {:gene :lit, :val \space, :type {:type 'char?}}
                      {:gene :lit-generator, :fn bu/rand-char, :type {:type 'char?}}
@@ -523,43 +525,43 @@
 
    ;;  "coin-sums" ;; NEEDS MULTIPLE OUTPUTS
 
-      "cut-vector"
-      {:input->type {'input1 {:type :vector :child {:type 'int?}}}
-       :ret-type    {:type :tuple, :children [{:type :vector :child {:type 'int?}}
-                                              {:type :vector :child {:type 'int?}}]}
-       :out-key     [:output1 :output2]
-       :other-types [{:type 'int?} {:type 'boolean?}]
-       :extra-genes [{:gene :lit, :val 0, :type {:type 'int?}}
-                     {:gene :lit, :val [], :type {:type :vector :child {:type 'int?}}}
-                     ;; This is a random vector generator
-                     {:gene :lit-generator,
-                      :fn   (fn [] (vec (repeatedly (rand-int 21) #(inc (rand-int 10000)))))
-                      :type {:type :vector :child {:type 'int?}}}]
-       :loss-fns    [#(bu/vector-of-numbers-loss (first %1) (first %2))
-                     #(bu/vector-of-numbers-loss (second %1) (second %2))]}
+      ;; "cut-vector"
+      ;; {:input->type {'input1 {:type :vector :child {:type 'int?}}}
+      ;;  :ret-type    {:type :tuple, :children [{:type :vector :child {:type 'int?}}
+      ;;                                         {:type :vector :child {:type 'int?}}]}
+      ;;  :out-key     [:output1 :output2]
+      ;;  :other-types [{:type 'int?} {:type 'boolean?}]
+      ;;  :extra-genes [{:gene :lit, :val 0, :type {:type 'int?}}
+      ;;                {:gene :lit, :val [], :type {:type :vector :child {:type 'int?}}}
+      ;;                ;; This is a random vector generator
+      ;;                {:gene :lit-generator,
+      ;;                 :fn   (fn [] (vec (repeatedly (rand-int 21) #(inc (rand-int 10000)))))
+      ;;                 :type {:type :vector :child {:type 'int?}}}]
+      ;;  :loss-fns    [#(bu/vector-of-numbers-loss (first %1) (first %2))
+      ;;                #(bu/vector-of-numbers-loss (second %1) (second %2))]}
 
       "dice-game"
       {:input->type {'input1 {:type 'int?}
                      'input2 {:type 'int?}}
        :ret-type    {:type 'double?}
-       :other-types [{:type 'boolean?}]
+       :other-types [{:type 'boolean?} {:type :vector :child {:type 'int?}}]
        :extra-genes [{:gene :lit, :val 0.0, :type {:type 'double?}}
                      {:gene :lit, :val 1.0, :type {:type 'double?}}]
        :loss-fns    [#(bu/round 3 (bu/absolute-distance %1 %2))]}
 
-      "find-pair"
-      {:input->type {'input1 {:type :vector :child {:type 'int?}}
-                     'input2 {:type 'int?}}
-       :ret-type    {:type :tuple, :children [{:type 'int?} {:type 'int?}]}
-       :out-key     [:output1 :output2]
-       :other-types [{:type 'boolean?}]
-       :extra-genes [{:gene :lit, :val -1, :type {:type 'int?}}
-                     {:gene :lit, :val 0, :type {:type 'int?}}
-                     {:gene :lit, :val 1, :type {:type 'int?}}
-                     {:gene :lit, :val 2, :type {:type 'int?}}
-                     {:gene :lit-generator, :fn (bu/int-generator 1000), :type {:type 'int?}}]
-       :loss-fns    [#(bu/absolute-distance (first %1) (first %2))
-                     #(bu/absolute-distance (second %1) (second %2))]}
+      ;; "find-pair"
+      ;; {:input->type {'input1 {:type :vector :child {:type 'int?}}
+      ;;                'input2 {:type 'int?}}
+      ;;  :ret-type    {:type :tuple, :children [{:type 'int?} {:type 'int?}]}
+      ;;  :out-key     [:output1 :output2]
+      ;;  :other-types [{:type 'boolean?}]
+      ;;  :extra-genes [{:gene :lit, :val -1, :type {:type 'int?}}
+      ;;                {:gene :lit, :val 0, :type {:type 'int?}}
+      ;;                {:gene :lit, :val 1, :type {:type 'int?}}
+      ;;                {:gene :lit, :val 2, :type {:type 'int?}}
+      ;;                {:gene :lit-generator, :fn (bu/int-generator 1000), :type {:type 'int?}}]
+      ;;  :loss-fns    [#(bu/absolute-distance (first %1) (first %2))
+      ;;                #(bu/absolute-distance (second %1) (second %2))]}
 
       "fizz-buzz"
       {:input->type {'input1 {:type 'int?}}
@@ -609,7 +611,7 @@
       {:input->type {'input1 {:type 'int?}
                      'input2 {:type 'int?}}
        :ret-type    {:type 'int?}
-       :other-types [{:type 'boolean?}]
+       :other-types [{:type 'boolean?} {:type :vector :child {:type 'int?}}]
        :extra-genes [{:gene :lit-generator, :fn (bu/int-generator 10), :type {:type 'int?}}]
        :loss-fns    [bu/absolute-distance]}
 
@@ -663,7 +665,7 @@
       "paired-digits"
       {:input->type {'input1 {:type 'string?}}
        :ret-type    {:type 'int?}
-       :other-types [{:type 'boolean?} {:type 'char?}]
+       :other-types [{:type 'boolean?} {:type 'char?} {:type :vector :child {:type 'int?}}]
        :extra-genes [{:gene :lit, :val 0, :type {:type 'int?}}
                      {:gene :lit-generator, :fn (fn [] (rand-nth "0123456789")), :type {:type 'char?}}
                      {:gene :lit-generator, :fn (fn [] (rand-int 10)), :type {:type 'int?}}]
@@ -673,7 +675,7 @@
       {:input->type {'input1 {:type :vector :child {:type 'double?}}
                      'input2 {:type :vector :child {:type 'double?}}}
        :ret-type    {:type 'double?}
-       :other-types [{:type 'boolean?} {:type 'int?}]
+       :other-types [{:type 'boolean?} {:type 'int?} {:type :vector :child {:type 'int?}}]
        :extra-genes [{:gene :lit, :val 0.0, :type {:type 'double?}}
                      {:gene :lit, :val 100.0, :type {:type 'double?}}
                      {:gene :lit-generator, :fn (fn [] (* (rand) 100)), :type {:type 'double?}}]
@@ -685,7 +687,7 @@
                      'input3 {:type 'double?}
                      'input4 {:type 'double?}}
        :ret-type    {:type 'double?}
-       :other-types [{:type 'boolean?}]
+       :other-types [{:type 'boolean?} {:type :vector :child {:type 'int?}}]
        :extra-genes [{:gene :lit, :val 0, :type {:type 'int?}}
                      {:gene :lit, :val 1, :type {:type 'int?}}
                      {:gene :lit, :val -1, :type {:type 'int?}}
@@ -697,7 +699,7 @@
       "solve-boolean"
       {:input->type {'input1 {:type 'string?}}
        :ret-type    {:type 'boolean?}
-       :other-types [{:type 'int?} {:type 'char?}]
+       :other-types [{:type 'int?} {:type 'char?} {:type :vector :child {:type 'int?}}]
        :extra-genes [{:gene :lit, :val true, :type {:type 'boolean?}}
                      {:gene :lit, :val false, :type {:type 'boolean?}}
                      {:gene :lit, :val \t, :type {:type 'char?}}
@@ -709,7 +711,8 @@
       "spin-words"
       {:input->type {'input1 {:type 'string?}}
        :ret-type    {:type 'string?}
-       :other-types [{:type 'int?} {:type 'char?} {:type 'boolean?}]
+       :other-types [{:type 'int?} {:type 'char?} {:type 'boolean?}
+                     {:type :vector :child {:type 'string?}}]
        :extra-genes [{:gene :lit, :val 4, :type {:type 'int?}}
                      {:gene :lit, :val 5, :type {:type 'int?}}
                      {:gene :lit, :val \space, :type {:type 'char?}}
@@ -722,7 +725,7 @@
       "square-digits"
       {:input->type {'input1 {:type 'int?}}
        :ret-type    {:type 'string?}
-       :other-types [{:type 'char?} {:type 'boolean?}]
+       :other-types [{:type 'char?} {:type 'boolean?} {:type :vector :child {:type 'int?}}]
        :extra-genes [{:gene :lit, :val "", :type {:type 'string?}}
                      {:gene :lit, :val 0, :type {:type 'int?}}
                      {:gene :lit, :val 1, :type {:type 'int?}}
@@ -735,7 +738,8 @@
                      'input2 {:type 'string?}
                      'input3 {:type 'string?}}
        :ret-type    {:type 'string?}
-       :other-types [{:type 'int?} {:type 'char?} {:type 'boolean?}]
+       :other-types [{:type 'int?} {:type 'char?} {:type 'boolean?}
+                     {:type :vector :child {:type 'int?}}]
        :extra-genes [{:gene :lit, :val "", :type {:type 'string?}}
                      {:gene :lit, :val 0, :type {:type 'int?}}]
        :loss-fns    [lev/distance]}
@@ -756,7 +760,7 @@
       {:input->type {'input1 {:type :vector :child {:type 'double?}}
                      'input2 {:type :vector :child {:type 'double?}}}
        :ret-type    {:type 'double?}
-       :other-types [{:type 'boolean?} {:type 'int?}]
+       :other-types [{:type 'boolean?} {:type 'int?} {:type :vector :child {:type 'int?}}]
        :extra-genes [{:gene :lit, :val [], :type {:type :vector :child {:type 'double?}}}
                      {:gene :lit, :val 0, :type {:type 'int?}}]
        :loss-fns    [#(bu/round 3 (bu/absolute-distance %1 %2))]}}
