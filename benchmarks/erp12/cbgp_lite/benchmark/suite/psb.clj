@@ -853,4 +853,29 @@
   ;;     :test ()}
 
 
+  (+ 3
+     (Double/parseDouble "NaN"))
+
+  (Math/abs (- (Double/parseDouble "NaN") 42.3))
+
+  (bu/round 4 (Math/abs (- (Double/parseDouble "NaN") 42.3)))
+  
+  (bu/round 4 ##NaN)
+
+  ##Inf
+  ##-Inf
+
+  (bu/absolute-distance 3 ##-Inf)
+
+  (/ 1.0 0.0)
+
+  (Math/tan (/ Math/PI 2.0))
+
+  (Math/round ##NaN)
+  ;; => 0
+
+  (Math/round ##Inf)
+  ;; => 9223372036854775807
+
+
   )
