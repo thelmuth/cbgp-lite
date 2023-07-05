@@ -16,6 +16,7 @@
 ;; that you want to use. The options are :original, :all, ;dna, and :baked-in. For :baked-in, the baked-in apply probability also has to be defined. By default, it is set to 0.5.
 ;; To change it, add the command-line argument :baked-in-apply-probability as well as the value you want.
 ;; If you want to use the original apply strategy, neither of these two command line arguments have to be provided.
+;; Backtracking is the same as :app-type and :baked-in-apply-probability. In the command line, type :backtracking followed by true or false to enable or disable it.
 (def app-type (atom :original))
 (def baked-in-apply-probability (atom 0.5))
 (def backtracking (atom false))
