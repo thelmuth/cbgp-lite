@@ -6,7 +6,8 @@
             [erp12.cbgp-lite.lang.lib :as lib]
             [erp12.cbgp-lite.search.individual :as i]
             [erp12.cbgp-lite.task :as task]
-            [psb2.core :as psb2]))
+            [psb2.core :as psb2]
+            ))
 
 (defn problems
   [{:keys [penalty]}]

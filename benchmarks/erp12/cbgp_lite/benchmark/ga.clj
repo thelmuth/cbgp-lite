@@ -1,15 +1,17 @@
 (ns erp12.cbgp-lite.benchmark.ga
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]
-            [erp12.cbgp-lite.benchmark.utils :as bu]
-            [erp12.cbgp-lite.lang.compile :as c]
-            [erp12.cbgp-lite.search.individual :as i]
-            [erp12.cbgp-lite.search.pluhsy :as pl]
-            [erp12.cbgp-lite.task :as task]
-            [erp12.ga-clj.search.ga :as ga]
-            [erp12.ga-clj.toolbox :as tb]
-            [taoensso.timbre :as log]
-            [taoensso.timbre.appenders.core :as log-app]))
+  (:require
+   [clojure.java.io :as io]
+   [clojure.string :as str]
+   [erp12.cbgp-lite.benchmark.utils :as bu]
+   [erp12.cbgp-lite.lang.compile :as c]
+   [erp12.cbgp-lite.search.individual :as i]
+   [erp12.cbgp-lite.search.pluhsy :as pl]
+   [erp12.cbgp-lite.task :as task]
+   [erp12.ga-clj.search.ga :as ga]
+   [erp12.ga-clj.toolbox :as tb]
+   [taoensso.timbre :as log]
+   [taoensso.timbre.appenders.core :as log-app]
+   [clj-async-profiler.core :as prof]))
 
 (log/merge-config!
   {:output-fn (partial log/default-output-fn {:stacktrace-fonts {}})
@@ -53,12 +55,14 @@
                  (map (fn [[k v]] (str (pr-str k) "\t" (pr-str v))))
                  (str/join "\n")
                  (str "\n")))
-  
+
   ;opts is parameters
   (when (:app-type opts)
     (reset! c/app-type (:app-type opts)))
   (when (:baked-in-apply-probability opts)
     (reset! c/baked-in-apply-probability (:baked-in-apply-probability opts)))
+  (when (:backtracking opts)
+    (reset! c/backtracking (:backtracking opts)))
 
   (when type-counts-file
     (log/warn "Type counting enabled. This is slow!")
@@ -132,8 +136,7 @@
                                                                 ;; no individual can become the new best and the run will fail.
                                                                 ;; @todo Fix this in ga-clj somehow?
                                                                 (log/info "Best individual solved a batch but not all training cases.")))))
-                                       :mapper          pmap
-                                       })
+                                       :mapper          pmap})
         _ (log/info "PRE-SIMPLIFICATION" best)
         ;; Simplify the best individual seen during evolution.
         best (i/simplify {:individual           best
@@ -170,9 +173,19 @@
 
 
 (comment
+ ;add a do block here, where it sets up the flame graph.
+  (do
 
-  (run {:suite-ns        'erp12.cbgp-lite.benchmark.suite.psb
-        :data-dir        "data/psb/"
-        :problem         "vectors-summed"})
+    (prof/profile
+     {:event :alloc}
+     (run {:suite-ns        'erp12.cbgp-lite.benchmark.suite.composite
+           ;:data-dir        "data/psb/"
+           :problem         "sum-vector-vals"
+           :app-type :baked-in
+           :baked-in-apply-probability 0.25
+           :mapper mapv}))
+  (prof/serve-ui 8080))
+
+(prof/serve-ui 8080)
 
   )
