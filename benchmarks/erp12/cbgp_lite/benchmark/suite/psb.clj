@@ -55,8 +55,14 @@
        :extra-genes [{:gene :lit, :val 0, :type {:type 'int?}}
                      {:gene :lit, :val 1, :type {:type 'int?}}
                      {:gene :lit, :val 2, :type {:type 'int?}}
+                     {:gene :lit, :val 31, :type {:type 'int?}}
                      {:gene :lit-generator, :fn (bu/int-generator 1000), :type {:type 'int?}}]
-       :loss-fns    [bu/absolute-distance]
+       :loss-fns    [bu/absolute-distance
+                     #_(fn [actual expected]
+                       (let [abs-dist (bu/absolute-distance actual expected)]
+                         (if (< abs-dist 0)
+                           (throw (str "Bad stuff happened = " actual " - " expected))
+                           abs-dist)))]
        :solution    (list {:gene :local :idx 0}
                           {:gene :fn :arg-types [lib/INT] :ret-type lib/BOOLEAN}
                           {:gene :lit :val 2 :type {:type 'int?}}

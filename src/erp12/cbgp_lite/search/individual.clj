@@ -77,7 +77,7 @@
                    (inc cases-used))))))))
 
 (defn evaluate-full-behavior
-  [{:keys [func cases loss-fns penalty]}]
+  [{:keys [func cases loss-fns penalty] :as ind}]
   (if (nil? func)
     ;; If the compilation process did not produce any code
     ;; give penalty for all loss functions and std-out for each case.
@@ -102,13 +102,17 @@
                       (filter some?)
                       vec)
           _ (log/debug "Errors" errors)
-          total-error (reduce +' errors)]
-      {:behavior    behavior
-       :errors      errors
-       :total-error total-error
-       :solution?   (zero? total-error)
-       :cases-used  (count cases)
-       :exception   (:output (first (filter #(instance? Exception (:output %)) behavior)))})))
+          total-error (reduce +' errors)
+          result
+          {:behavior    behavior
+           :errors      errors
+           :total-error total-error
+           :solution?   (zero? total-error)
+           :cases-used  (count cases)
+           :exception   (:output (first (filter #(instance? Exception (:output %)) behavior)))}]
+      (if (some neg? errors)
+        (throw (ex-info (str "It's very bad" (dissoc (merge ind result) :type-env)) (merge ind result)))
+        result))))
 
 (defn make-evaluator
   [{:keys [evaluate-fn cases arg-symbols] :as opts}]

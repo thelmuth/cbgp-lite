@@ -950,4 +950,26 @@
 
   (pow 5 2)
 
+  (int-pow 2 (+ 31 ((comp abs safe-mod) (last [0]) -854)))
+  ;; => 2147483648
+
+  (- 0 2147483648)
+  ;; => -2147483648
+
+
+  (Math/abs (- 0 2147483648))
+  ;; => 2147483648
+
+  (Math/abs (- 0 (int-pow 2 (+ 31 ((comp abs safe-mod) (last [0]) -854)))))
+  ;; => 2147483648
+
+  (def a (int-pow 2 (+ 31 ((comp abs safe-mod) (last [0]) -854))))
+
+  (Math/abs (- 0 a))
+  ;; => 2147483648
+
+  (Math/abs (- a 0))
+  ;; => 2147483648
+
+  
   )
