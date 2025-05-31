@@ -1,10 +1,12 @@
-(ns llmgp.initial-testing
+(ns llmgp.decompiling
   (:require [erp12.cbgp-lite.search.pluhsy :as pl]
             [erp12.cbgp-lite.lang.ast :as ast]
             [erp12.cbgp-lite.lang.compile :as co]
-            [erp12.cbgp-lite.lang.lib :as lib]))
+            [erp12.cbgp-lite.lang.lib :as lib]
+            [clojure.tools.analyzer.jvm :as ana.jvm]))
 
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;; Compilation testing
 (comment
 
   ;;; I don't think we'll need this, but might as well keep it around in case
@@ -61,5 +63,43 @@
   (read-string "(- 22 33)")
 
 
+
+  )
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;; Below here is work on decompiling
+
+(defn my-add
+  [x y]
+  (+ x y))
+
+
+(defn decompile-ast
+  [ast]
+  nil)
+
+(comment
+  
+(ana.jvm/analyze '(first [1 2]))
+
+(ana.jvm/analyze '(+ 1.2 2.3))
+  
+(ana.jvm/analyze '(my-add 22 33))
+
+(ana.jvm/analyze '(not true))
+
+(ana.jvm/analyze true)
+
+(ana.jvm/analyze 5)
+
+
+
+(decompile-ast (ana.jvm/analyze 5))
+
+; this should return: 
+;({:gene :lit :val 5 :type {:type int?}})
+
+  
   
   )
