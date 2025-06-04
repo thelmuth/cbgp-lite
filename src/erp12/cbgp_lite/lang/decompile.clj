@@ -87,24 +87,55 @@
 
     :else ast-fn-name))
 
+
+(defn find-type
+  "Returns the type of val in the given ast"
+  [val ast]
+  (cond
+    ;; Ground types
+    (integer? val) {:type 'int?}
+    (number? val) {:type 'double?}
+    (boolean? val) {:type 'boolean?}
+    (string? val) {:type 'string?}
+    (char? val) {:type 'char?}
+    (keyword? val) {:type 'keyword?}
+    (nil? val) {:type 'nil?}
+
+    ;; Vectors and sets
+    (or (vector? val)
+        (set? val))
+    (let [child-type (if (empty? val)
+                       (lib/s-var 'T)
+                       (find-type (first val)
+                                  ast))]
+      {:type (:type ast) :child child-type})
+    
+    ;; Maps
+    (map? val)
+    (let [key-type (if (empty? val)
+                     (lib/s-var 'T)
+                     (find-type (first (first val))
+                                ast))
+          val-type (if (empty? val)
+                     (lib/s-var 'S)
+                     (find-type (second (first val))
+                                ast))]
+      {:type :map-of :key key-type :value val-type})
+    
+    :else (throw (Exception.
+                  (str "AST contains a type that shouldn't be possible: "
+                       ast)))))
+
 (defn decompile-ast
   "Decompiles AST into a CBGP genome."
-  [{:keys [op val tag method args] :as ast}]
+  [{:keys [op val tag args] :as ast}]
   (cond
     ;; Handle constants
     (= :const op)
-    (list (assoc {} :gene :lit
-                 :val val
-                 :type {:type (cond
-                                (integer? val) 'int?
-                                (number? val) 'double?
-                                (boolean? val) 'boolean?
-                                (string? val) 'string?
-                                (char? val) 'char?
-                                (nil? val) 'nil?
-                                :else (throw (Exception.
-                                              (str "AST contains a type that shouldn't be possible: "
-                                                   ast))))}))
+    (list {:gene :lit
+           :val val
+           :type (find-type val ast)})
+    
     ;; Handle static method or invoke
     (or (= op :static-call)
         (= op :invoke))
@@ -116,6 +147,13 @@
       (concat decompiled-args
               (list {:gene :var :name (get-fn-symbol ast-fn-name tag)}
                     {:gene :apply})))
+    
+    ;; Handle quote for lists; translate into vector
+    (= op :quote)
+    (let [the-vector (vec (-> ast :expr :val))]
+      (list {:gene :lit
+             :val the-vector
+             :type (find-type the-vector (assoc ast :type :vector))}))
 
     :else
     (do
@@ -124,10 +162,7 @@
 
 (comment
 
-  (decompile-ast (ana.jvm/analyze [1 2]))
-
   (decompile-ast (ana.jvm/analyze '(- 22 33)))
-
 
   (compile-debugging (decompile-ast (ana.jvm/analyze '(+ 22.2 33.3)))
                      {:type 'double?})
@@ -145,7 +180,6 @@
   (compile-debugging (decompile-ast (ana.jvm/analyze '(< 4 5)))
                      {:type 'boolean?})
 
-
   (compile-debugging (decompile-ast (ana.jvm/analyze '(< \a \c)))
                      {:type 'boolean?})
 
@@ -157,13 +191,11 @@
   (compile-debugging (decompile-ast (ana.jvm/analyze '(not (< 4 5))))
                      {:type 'boolean?})
 
-
   (compile-debugging (decompile-ast (ana.jvm/analyze '(* 8 -5)))
                      {:type 'int?})
 
   (compile-debugging (decompile-ast (ana.jvm/analyze '(quot 80 7)))
                      {:type 'int?})
-
 
   (compile-debugging (decompile-ast (ana.jvm/analyze '(/ 6 2)))
                      {:type 'double?})
@@ -174,7 +206,6 @@
   (compile-debugging (decompile-ast (ana.jvm/analyze '(/ 80.3 7.1)))
                      {:type 'double?})
 
-
   (compile-debugging (decompile-ast (ana.jvm/analyze '(dec 5)))
                      {:type 'int?})
 
@@ -183,7 +214,6 @@
 
   (compile-debugging (decompile-ast (ana.jvm/analyze '(or true false)))
                      {:type 'boolean?})
-
 
   (compile-debugging (decompile-ast (ana.jvm/analyze '(+ 1 2 3 4)))
                      {:type 'int?})
@@ -196,8 +226,71 @@
   (compile-debugging (decompile-ast (ana.jvm/analyze '(< 4 5 8)))
                      {:type 'boolean?})
 
+;;;; Works with empty vectors (and empty maps!)
+  (=
+   '({:gene :lit, :type {:child {:sym T, :type :s-var}, :type :vector}, :val []})
+   (decompile-ast (ana.jvm/analyze [])))
 
-  ;; vectors and sets etc
+  (decompile-ast (ana.jvm/analyze []))
+
+  (compile-debugging
+   (concat
+    (decompile-ast (ana.jvm/analyze []))
+    ;; (list {:gene :lit, :val [], :type {:type :vector :child (lib/s-var 'T)}})
+    (list {:gene :var :name `lib/conj-vec}
+          {:gene :lit :val 5 :type {:type 'int?}}
+          {:gene :apply}))
+   {:type :vector :child {:type 'int?}}
+   true)
+
+  ;; maps
+  (=
+   (decompile-ast (ana.jvm/analyze {}))
+   '({:gene :lit, :type {:key {:sym T, :type :s-var}, :type :map-of, :value {:sym S, :type :s-var}}, :val {}}))
+
+  (compile-debugging
+   (concat
+    (decompile-ast (ana.jvm/analyze {}))
+    (list {:gene :lit :val 5 :type {:type 'int?}}
+          {:gene :lit :val "hi" :type {:type 'string?}}
+          {:gene :var :name 'assoc}
+          {:gene :apply}))
+   {:key {:type 'string?}, :type :map-of, :value {:type 'int?}}
+   true)
+
+  (compile-debugging
+   (concat
+    (decompile-ast (ana.jvm/analyze {"apples" 17}))
+    (list {:gene :lit :val 5 :type {:type 'int?}}
+          {:gene :lit :val "hi" :type {:type 'string?}}
+          {:gene :var :name 'assoc}
+          {:gene :apply}))
+   {:key {:type 'string?}, :type :map-of, :value {:type 'int?}}
+   true)
+
+   ;;; Recompiling works with maps!
+
+  (ana.jvm/analyze {1 "asd" 5 "asdfff"})
+
+  (first (first {1 "asd" 5 "asdfff"}))
+
+  (decompile-ast (ana.jvm/analyze {1 "asd" 5 "asdfff"}))
+
+  (=
+   (list {:gene :lit, :type {:key {:type 'int?}, :type :map-of, :value {:type 'string?}}, :val {1 "asd", 5 "asdfff"}})
+   (decompile-ast (ana.jvm/analyze {1 "asd" 5 "asdfff"})))
+
+  (compile-debugging (decompile-ast (ana.jvm/analyze {1 "asd" 5 "asdfff"}))
+                     {:key {:type 'int?}, :type :map-of, :value {:type 'string?}}
+                     true)
+
+  (compile-debugging (list {:gene :lit, :type {:key {:type 'int?}, :type :map-of, :val {:type 'string?}}, :val {1 "asd", 5 "asdfff"}}
+                           {:gene :lit, :type {:type 'int?}, :val 6})
+                     {:type 'int}
+                     true)
+
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(max 5 7)))
+                     {:type 'int?})
 
   )
 
