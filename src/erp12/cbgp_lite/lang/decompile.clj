@@ -1,5 +1,5 @@
 (ns erp12.cbgp-lite.lang.decompile
-  (:require [erp12.cbgp-lite.search.pluhsy :as pl]
+  (:require [erp12.cbgp-lite.search.plushy :as pl]
             [erp12.cbgp-lite.lang.ast :as ast]
             [erp12.cbgp-lite.lang.compile :as co]
             [erp12.cbgp-lite.lang.lib :as lib]
@@ -265,7 +265,7 @@
   (compile-debugging (decompile-ast (ana.jvm/analyze '(< \a \c)))
                      {:type 'boolean?})
 
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(< "hi" "hi")))
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(< "hi" "true")))
                      {:type 'boolean?})
 
   (decompile-ast (ana.jvm/analyze '(< "hi" "there")))
