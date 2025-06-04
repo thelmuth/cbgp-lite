@@ -1,4 +1,4 @@
-(ns llmgp.decompiling
+(ns erp12.cbgp-lite.lang.decompile
   (:require [erp12.cbgp-lite.search.pluhsy :as pl]
             [erp12.cbgp-lite.lang.ast :as ast]
             [erp12.cbgp-lite.lang.compile :as co]
@@ -63,7 +63,7 @@
                        ;;  {:gene :lit :val 5 :type {:type int?}}
                        )
                      {:type 'int?})
-  
+
   (compile-debugging '({:gene :lit :val 33.2 :type {:type double?}}
                        {:gene :lit :val 22.33333 :type {:type double?}}
                        {:gene :var :name double-add}
@@ -73,8 +73,7 @@
                      {:type 'double?})
 
   ;; Our first step for decompiling
-  (read-string "(- 22 33)")
-  )
+  (read-string "(- 22 33)"))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -84,13 +83,37 @@
   [x y]
   (+ x y))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Broken instructions
+;; < is broken for any number of arguments != 2
+
+;;;; Broken because they're macros
+;;  'and `lib/and
+;;  'or `lib/or
+
+(def work-without-change
+  ['not
+   'not=])
+
 (def ast-aliasing
   {'lt `lib/<'
    'lte `lib/<='
-   ;;;; Broken because they're macros
-  ;;  'and `lib/and
-  ;;  'or `lib/or
-   })
+   'gt `lib/>'
+   'gte `lib/>='
+   'equiv '=
+
+   'max `lib/max'
+   'min `lib/min'
+   'doubleCast 'double
+
+   'sin `lib/sin
+   'cos `lib/cos
+   'tan `lib/tan
+
+   'charCast `lib/int->char
+   'isWhitespace `lib/whitespace?
+   'isDigit `lib/digit?
+   'isLetter `lib/letter?})
 
 (def ast-multi-type-aliasing
   {'add "add"
@@ -108,7 +131,7 @@
   (cond
 
     ;;; note: we might need this: (or (= "long" (str tag)) (= java.lang.Long tag))
-    
+
     (contains? ast-multi-type-aliasing ast-fn-name)
     (symbol (str (if (= (str tag) "double")
                    "double-"
@@ -186,6 +209,9 @@
 
   (ana.jvm/analyze nil)
 
+
+  (ana.jvm/analyze '(not= 2 3))
+
   (integer? 4)
 
   (float? 5M)
@@ -235,6 +261,7 @@
   (compile-debugging (decompile-ast (ana.jvm/analyze '(< 4 5)))
                      {:type 'boolean?})
 
+
   (compile-debugging (decompile-ast (ana.jvm/analyze '(< \a \c)))
                      {:type 'boolean?})
 
@@ -279,21 +306,23 @@
 
   (compile-debugging (decompile-ast (ana.jvm/analyze '(+ 1 2 3 4)))
                      {:type 'int?})
-  
+
   (compile-debugging (decompile-ast (ana.jvm/analyze '(* 1 2 3 4)))
                      {:type 'int?})
 
   (decompile-ast (ana.jvm/analyze '(+ 1 2 3 4)))
 
-   (compile-debugging (decompile-ast (ana.jvm/analyze '(+ 3 0.4)))
-                     {:type 'double?})
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(< 4 5 8)))
+                     {:type 'boolean?})
 
   (ana.jvm/analyze '(+ 1 2 3 4))
 
+  (ana.jvm/analyze
+   '(< 4 5 8 17))
   
-  ;; vectors and sets etc
-  ;; what functions do we not have to alias for now?
+  (str "asdsa" "ASD")
 
+  ;; vectors and sets etc
 
   )
 
