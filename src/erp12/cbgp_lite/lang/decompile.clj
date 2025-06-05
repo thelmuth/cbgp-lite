@@ -61,8 +61,7 @@
    'charCast `lib/int->char
    'isWhitespace `lib/whitespace?
    'isDigit `lib/digit?
-   'isLetter `lib/letter?
-   
+   'isLetter `lib/letter? 
    })
 
 (def ast-number-aliasing
@@ -88,17 +87,38 @@
    ; 'intCast 'char->int
    })
 
+(def ast-str-vec-aliasing
+  {'first "first"
+   'last "last"
+  ;; nth has strange naming conventions, 
+  ;; nth-str and nth-or-else.
+  ;;'nth
+   'empty? "empty"
+  ;; Same Namespace issues as in ast-number-aliasing
+  ;; Make a new dictionary for namespace qualified (ns-q)
+  ;; symbols, because ns-q vector symbols append v
+  ;; whereas other non-ns-q append nothing or vec 
+  ;; 'rest "`lib/rest"
+   }) 
+
 (defn get-fn-symbol
   "Finds the CBGP function name for this ast-fn-name"
-  [ast-fn-name tag]
+  [ast-fn-name tag args]
   (cond
-
     ;;; note: we might need this: (or (= "long" (str tag)) (= java.lang.Long tag))
     (contains? ast-number-aliasing ast-fn-name)
     (symbol (str (if (= (str tag) "double")
                    "double-"
                    "int-")
                  (get ast-number-aliasing ast-fn-name)))
+    (contains? ast-str-vec-aliasing ast-fn-name)
+    (symbol (str (get ast-str-vec-aliasing ast-fn-name)
+                 (if (= (:tag (first args)) java.lang.String)
+                   "-str"
+                   "")
+                 (if (= 'empty? ast-fn-name)
+                   "?"
+                   "")))
 
     (contains? ast-aliasing ast-fn-name)
     (get ast-aliasing ast-fn-name)
@@ -163,7 +183,7 @@
           raw-decompiled-args (map decompile-ast args)
           decompiled-args (flatten (reverse raw-decompiled-args))]
       (concat decompiled-args
-              (list {:gene :var :name (get-fn-symbol ast-fn-name tag)}
+              (list {:gene :var :name (get-fn-symbol ast-fn-name tag args)}
                     {:gene :apply})))
     
     ;; Handle quote for lists; translate into vector
@@ -180,7 +200,7 @@
           raw-decompiled-args (map decompile-ast (map ast children))
           decompiled-args (flatten (reverse raw-decompiled-args))]
       (concat decompiled-args
-              (list {:gene :var :name (get-fn-symbol ast-fn-name tag)}
+              (list {:gene :var :name (get-fn-symbol ast-fn-name tag args)}
                     {:gene :apply})))
 
     :else
@@ -297,7 +317,7 @@
    true)
 
    ;;; Recompiling works with maps!
-
+  
   (ana.jvm/analyze {1 "asd" 5 "asdfff"})
 
   (first (first {1 "asd" 5 "asdfff"}))
@@ -351,7 +371,7 @@
   ; problem: the above compile-decompile test does not compile correctly (defaults to true)
   ;          even though it gives the exact same (manually typed) genome as seen in the 
   ;          compile test (??? why.)
-
+  
   ;--test case 2 (false, w/ methods) [! currently broken]
   (compile-debugging
    '({:gene :lit, :type {:type int?}, :val 2}
@@ -370,23 +390,47 @@
   ;          may be a return type issue? i hope not
   
   (decompile-ast (ana.jvm/analyze '(if (= 0 99) (max 10 11) 2)))
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(if (= 1 2) (max 10 11) 12))) {:type 'int?}) 
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(if (= 1 2) (max 10 11) 12))) {:type 'int?})
 
   ;--test case 3 (false, w/ method in if, same typing)
   (compile-debugging
    '({:gene :lit, :type {:type boolean?}, :val false}
-    {:gene :lit, :type {:type boolean?}, :val true}
-    {:gene :lit, :type {:type int?}, :val 1}
-    {:gene :lit, :type {:type int?}, :val 0} ; change to 1 to check true
-    {:gene :var, :name =}
-    {:gene :apply}
-    {:gene :var, :name :if}
-    {:gene :apply})
+     {:gene :lit, :type {:type boolean?}, :val true}
+     {:gene :lit, :type {:type int?}, :val 1}
+     {:gene :lit, :type {:type int?}, :val 0} ; change to 1 to check true
+     {:gene :var, :name =}
+     {:gene :apply}
+     {:gene :var, :name :if}
+     {:gene :apply})
    {:type 'boolean?})
   ; okay this DOES work. so it IS a typing issue ahhghhghhh
   
   (decompile-ast (ana.jvm/analyze '(if (= 0 1) true false)))
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(if (= 0 1) true false))) {:type 'boolean?}) 
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(if (= 0 1) true false))) {:type 'boolean?})
+
+;; String and Vector Functions
+  (ana.jvm/analyze '(first "Hello"))
+  (decompile-ast (ana.jvm/analyze '(rest "Hello")))
+  (decompile-ast (ana.jvm/analyze '(rest [1 2 3])))
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(rest [1 2 3]))) 
+                     {:child {:type 'int?} :type 'vector?})
+
+  (decompile-ast (ana.jvm/analyze '(empty? [])))
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(empty? ""))) 
+                     {:type 'boolean?})
+  (decompile-ast (ana.jvm/analyze '(empty? "")))
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(empty? []))) 
+                     {:type 'boolean?})
+  
+  (decompile-ast (ana.jvm/analyze '(last [1 2 3])))
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(last "String")))
+                     {:type 'char?})
+  (= (decompile-ast (ana.jvm/analyze '(last [1 2 3])))
+     '({:gene :lit, :type {:child {:type int?}, :type :vector}, :val [1 2 3]} {:gene :var, :name last} {:gene :apply}))
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(last [1 2 3]))) {:type 'int?})
+  (= (compile-debugging (decompile-ast (ana.jvm/analyze '(last [\C \a \t]))) {:type 'char?})
+     \t)
+  
+  (decompile-ast (ana.jvm/analyze '(nth [1 2 3] 2 5)))
+  
   )
-
-
