@@ -71,6 +71,7 @@
 
 
 (deftest decompile-function-calls-test
+  ;; mathematical operations
   (is (= (de/decompile-ast (ana.jvm/analyze '(+ 22 33)))
          '({:gene :lit, :type {:type int?}, :val 33}
            {:gene :lit, :type {:type int?}, :val 22}
@@ -107,6 +108,8 @@
            {:gene :lit, :type {:type int?}, :val 22}
            {:gene :var, :name int-sub}
            {:gene :apply})))
+  
+  ;; comparison (<, <=, >, >=)
   (is (= (de/decompile-ast (ana.jvm/analyze '(< 4 4)))
          '({:gene :lit, :type {:type int?}, :val 4}
            {:gene :lit, :type {:type int?}, :val 4}
@@ -167,6 +170,8 @@
            {:gene :lit, :type {:type string?}, :val "hi"}
            {:gene :var, :name erp12.cbgp-lite.lang.lib/>='}
            {:gene :apply})))
+  
+  ;; not
   (is (= (de/decompile-ast (ana.jvm/analyze '(not true)))
          '({:gene :lit, :type {:type boolean?}, :val true}
            {:gene :var, :name not}
@@ -181,6 +186,7 @@
 )
 
 (deftest decompile-recompile-function-calls-test
+  ;; mathematical operations
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(+ 22 33)))
                                {:type 'int?})
          55))
@@ -199,6 +205,8 @@
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(- 22 (- 33 44))))
                                {:type 'int?})
          33))
+  
+  ;; comparison (<, <=, >, >=)
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(< 4 4)))
                                {:type 'boolean?})
          false))
@@ -236,6 +244,7 @@
                                {:type 'boolean?})
          false))
 
+  ;; not
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(not true)))
                                {:type 'boolean?})
          false))
