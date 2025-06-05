@@ -1,9 +1,9 @@
 (ns erp12.cbgp-lite.lang.decompile
-  (:require [erp12.cbgp-lite.search.plushy :as pl]
+  (:require [clojure.tools.analyzer.jvm :as ana.jvm]
             [erp12.cbgp-lite.lang.ast :as ast]
             [erp12.cbgp-lite.lang.compile :as co]
             [erp12.cbgp-lite.lang.lib :as lib]
-            [clojure.tools.analyzer.jvm :as ana.jvm]))
+            [erp12.cbgp-lite.search.plushy :as pl]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;; Compilation testing
@@ -24,7 +24,6 @@
          func (ast/form->fn [] form)]
      (func))))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;; Below here is work on decompiling
 
@@ -42,7 +41,7 @@
 
 (def ast-aliasing
   {'if 'if
-   
+
    'lt `lib/<'
    'lte `lib/<='
    'gt `lib/>'
@@ -56,13 +55,19 @@
    'sqrt `lib/safe-sqrt ; doesn't work??
    'sin `lib/sin
    'cos `lib/cos
-   'tan `lib/tan 
+   'tan `lib/tan
+   'asin `lib/safe-asin
+   'acos `lib/safe-acos
+   'atan `lib/atan
+   'log10 `lib/log10
+   'ceil `lib/ceil
+   'floor `lib/floor
+   ;; CBGP has log2 and square, which don't exist in clojure
 
    'charCast `lib/int->char
    'isWhitespace `lib/whitespace?
    'isDigit `lib/digit?
-   'isLetter `lib/letter? 
-   })
+   'isLetter `lib/letter?})
 
 (def ast-number-aliasing
   {'add "add"
@@ -79,8 +84,8 @@
    ;;; below methods need `lib/ (eg. `lib/int-pow)
    ; 'pow "pow" 
    ; 'pow "square" ; square is just (Math/pow x 2)
-   ; 'ceil "ceil"
-   ; 'floor "floor"
+   ; 'ceil "ceil", implemented for doubles
+   ; 'floor "floor", implemented for doubles
 
    ;;; other adhoc polymorphic methods
    ; 'intCast 'int
@@ -94,16 +99,30 @@
   ;; nth-str and nth-or-else.
   ;;'nth
    'empty? "empty"
+
   ;; Same Namespace issues as in ast-number-aliasing
   ;; Make a new dictionary for namespace qualified (ns-q)
-  ;; symbols, because ns-q vector symbols append v
+  ;; symbols that are type dependent,  
+  ;; because ns-q vector symbols append v
   ;; whereas other non-ns-q append nothing or vec 
   ;; 'rest "`lib/rest"
-   }) 
+   })
+
+
+;; int-pow does not work because tag is a double, 
+;; potentially a reason to change find type to check tags
+;; instead of the type of val
+(def ast-namespace-qualified-type-aliased
+  {'pow "pow"
+   'ceil "ceil"
+   'floor "floor"
+   'rest "rest"
+   'concat "concat"})
 
 (defn get-fn-symbol
   "Finds the CBGP function name for this ast-fn-name"
   [ast-fn-name tag args]
+  (print "TAG: " tag)
   (cond
     ;;; note: we might need this: (or (= "long" (str tag)) (= java.lang.Long tag))
     (contains? ast-number-aliasing ast-fn-name)
@@ -119,12 +138,21 @@
                  (if (= 'empty? ast-fn-name)
                    "?"
                    "")))
-
+    (contains? ast-namespace-qualified-type-aliased ast-fn-name)
+    (symbol "erp12.cbgp-lite.lang.lib" (cond (get ast-namespace-qualified-type-aliased ast-fn-name)
+                                             (cond
+                                               (= (str tag) "double")
+                                               (str "double-" (get ast-namespace-qualified-type-aliased ast-fn-name))
+                                               (= (:tag (first args)) java.lang.String)
+                                               (str (get ast-namespace-qualified-type-aliased ast-fn-name) "-str")
+                                               (= (:tag (first args)) clojure.lang.PersistentVector) 
+                                               (str (get ast-namespace-qualified-type-aliased ast-fn-name) "v")
+                                               :else (str "int-" (get ast-namespace-qualified-type-aliased ast-fn-name)))))
     (contains? ast-aliasing ast-fn-name)
     (get ast-aliasing ast-fn-name)
+    
 
     :else ast-fn-name))
-
 
 (defn find-type
   "Returns the type of val in the given ast"
@@ -147,22 +175,22 @@
                        (find-type (first val)
                                   ast))]
       {:type (:type ast) :child child-type})
-    
+
     ;; Maps
     (map? val)
     (let [key-type (if (empty? val)
                      (lib/s-var 'T)
                      (find-type (first (first val))
-                                ast))
+                                (ana.jvm/analyze (first (first val)))))
           val-type (if (empty? val)
                      (lib/s-var 'S)
                      (find-type (second (first val))
-                                ast))]
+                                (ana.jvm/analyze (second (first val)))))]
       {:type :map-of :key key-type :value val-type})
-    
-    :else (throw (Exception.
-                  (str "AST contains a type that shouldn't be possible: "
-                       ast)))))
+
+              :else (throw (Exception.
+                            (str "AST contains a type that shouldn't be possible: "
+                                 ast)))))
 
 (defn decompile-ast
   "Decompiles AST into a CBGP genome."
@@ -173,7 +201,7 @@
     (list {:gene :lit
            :val val
            :type (find-type val ast)})
-    
+
     ;; Handle static method or invoke
     (or (= op :static-call)
         (= op :invoke))
@@ -185,14 +213,14 @@
       (concat decompiled-args
               (list {:gene :var :name (get-fn-symbol ast-fn-name tag args)}
                     {:gene :apply})))
-    
+
     ;; Handle quote for lists; translate into vector
     (= op :quote)
     (let [the-vector (vec (-> ast :expr :val))]
       (list {:gene :lit
              :val the-vector
              :type (find-type the-vector (assoc ast :type :vector))}))
-    
+
     ;; Handle if
     ; could be merged w/ the static/invoke handling?
     (= op :if)
@@ -412,16 +440,16 @@
   (ana.jvm/analyze '(first "Hello"))
   (decompile-ast (ana.jvm/analyze '(rest "Hello")))
   (decompile-ast (ana.jvm/analyze '(rest [1 2 3])))
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(rest [1 2 3]))) 
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(rest [1 2 3])))
                      {:child {:type 'int?} :type 'vector?})
 
   (decompile-ast (ana.jvm/analyze '(empty? [])))
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(empty? ""))) 
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(empty? "")))
                      {:type 'boolean?})
   (decompile-ast (ana.jvm/analyze '(empty? "")))
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(empty? []))) 
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(empty? [])))
                      {:type 'boolean?})
-  
+
   (decompile-ast (ana.jvm/analyze '(last [1 2 3])))
   (compile-debugging (decompile-ast (ana.jvm/analyze '(last "String")))
                      {:type 'char?})
@@ -430,7 +458,31 @@
   (compile-debugging (decompile-ast (ana.jvm/analyze '(last [1 2 3]))) {:type 'int?})
   (= (compile-debugging (decompile-ast (ana.jvm/analyze '(last [\C \a \t]))) {:type 'char?})
      \t)
-  
+
   (decompile-ast (ana.jvm/analyze '(nth [1 2 3] 2 5)))
+  (decompile-ast (ana.jvm/analyze '(char 60)))
+  (ana.jvm/analyze '(print "Hello" "World"))
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(print "Hello" "World"))) {:type 'nil?})
+
+  (ana.jvm/analyze '(Math/pow 2 2))
+  (decompile-ast (ana.jvm/analyze '(Math/pow 2 3)))
+  (ana.jvm/analyze '(Math/pow 2.0 3.0))
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(Math/pow 2.0 3.0))) {:type 'double?})
+  (decompile-ast (ana.jvm/analyze '(rest [1 2 3])))
+  (ana.jvm/analyze '(rest [1 2 3]))
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(rest [1 2 3]))) {:child {:type 'int?} :type :vector})
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(- 0 1))) {:type 'int?})
+  (ana.jvm/analyze '(- 1))
+
+  (decompile-ast (ana.jvm/analyze '(concat [1 2] [3 4])))
+  (concat "Hello " "there")
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(concat "Hello " "there"))) {:child {:type 'char?} :type '?} true)
+  (decompile-ast (ana.jvm/analyze '(zero? 0)))
+  (decompile-ast (ana.jvm/analyze #{1 2 3}))
+
+  (compile-debugging (decompile-ast (ana.jvm/analyze {[1 2] #{1 2} [3 4] #{3 4}}))
+                     '{:key {:child {:type int?}, :type :vector}, :type :map-of, :value {:child {:type int?}, :type :set}})
+   (ana.jvm/analyze {[1 2] #{1 2} {3 4} #{3 4}}) 
   
+
   )
