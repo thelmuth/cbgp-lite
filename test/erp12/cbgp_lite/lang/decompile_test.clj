@@ -88,7 +88,97 @@
            {:gene :apply}
            {:gene :lit, :type {:type int?}, :val 22}
            {:gene :var, :name int-add}
-           {:gene :apply}))))
+           {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(- 22 33)))
+         '({:gene :lit, :type {:type int?}, :val 33}
+           {:gene :lit, :type {:type int?}, :val 22}
+           {:gene :var, :name int-sub}
+           {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(- 22.5 33.5)))
+         '({:gene :lit, :type {:type double?}, :val 33.5}
+           {:gene :lit, :type {:type double?}, :val 22.5}
+           {:gene :var, :name double-sub}
+           {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(- 22 (- 33 44))))
+         '({:gene :lit, :type {:type int?}, :val 44}
+           {:gene :lit, :type {:type int?}, :val 33}
+           {:gene :var, :name int-sub}
+           {:gene :apply}
+           {:gene :lit, :type {:type int?}, :val 22}
+           {:gene :var, :name int-sub}
+           {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(< 4 4)))
+         '({:gene :lit, :type {:type int?}, :val 4}
+           {:gene :lit, :type {:type int?}, :val 4}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/<'}
+           {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(< \a \b)))
+         '({:gene :lit, :type {:type char?}, :val \b}
+           {:gene :lit, :type {:type char?}, :val \a}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/<'}
+           {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(< "hi" "there")))
+         '({:gene :lit, :type {:type string?}, :val "there"}
+           {:gene :lit, :type {:type string?}, :val "hi"}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/<'}
+           {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(<= 4 4)))
+         '({:gene :lit, :type {:type int?}, :val 4}
+           {:gene :lit, :type {:type int?}, :val 4}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/<='}
+           {:gene :apply}))) 
+  (is (= (de/decompile-ast (ana.jvm/analyze '(<= \a \a)))
+         '({:gene :lit, :type {:type char?}, :val \a}
+           {:gene :lit, :type {:type char?}, :val \a}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/<='}
+           {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(< "you there" "hi!")))
+         '({:gene :lit, :type {:type string?}, :val "hi!"}
+           {:gene :lit, :type {:type string?}, :val "you there"}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/<'}
+           {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(> 5 4)))
+         '({:gene :lit, :type {:type int?}, :val 4}
+           {:gene :lit, :type {:type int?}, :val 5}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/>'}
+           {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(> \a \b)))
+         '({:gene :lit, :type {:type char?}, :val \b}
+           {:gene :lit, :type {:type char?}, :val \a}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/>'}
+           {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(> "hi" "there")))
+         '({:gene :lit, :type {:type string?}, :val "there"}
+           {:gene :lit, :type {:type string?}, :val "hi"}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/>'}
+           {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(>= 5 5)))
+         '({:gene :lit, :type {:type int?}, :val 5}
+           {:gene :lit, :type {:type int?}, :val 5}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/>='}
+           {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(>= \a \b)))
+         '({:gene :lit, :type {:type char?}, :val \b}
+           {:gene :lit, :type {:type char?}, :val \a}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/>='}
+           {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(>= "hi" "there")))
+         '({:gene :lit, :type {:type string?}, :val "there"}
+           {:gene :lit, :type {:type string?}, :val "hi"}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/>='}
+           {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(not true)))
+         '({:gene :lit, :type {:type boolean?}, :val true}
+           {:gene :var, :name not}
+           {:gene :apply}))) 
+  (is (= (de/decompile-ast (ana.jvm/analyze '(not (< 4 5))))
+         '({:gene :lit, :type {:type int?}, :val 5}
+           {:gene :lit, :type {:type int?}, :val 4}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/<'}
+           {:gene :apply}
+           {:gene :var, :name not}
+           {:gene :apply})))
+)
 
 (deftest decompile-recompile-function-calls-test
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(+ 22 33)))
@@ -99,4 +189,57 @@
          99))
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(+ 22.2 33.3)))
                                {:type 'double?})
-         55.5)))
+         55.5))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(- 22 33)))
+                               {:type 'int?})
+         -11))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(- 22.5 33.5)))
+                               {:type 'double?})
+         -11.0))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(- 22 (- 33 44))))
+                               {:type 'int?})
+         33))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(< 4 4)))
+                               {:type 'boolean?})
+         false))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(< \a \b)))
+                               {:type 'boolean?})
+         true))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(< "hi" "there")))
+                               {:type 'boolean?})
+         true))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(<= 4 4)))
+                               {:type 'boolean?})
+         true))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(<= \a \a)))
+                               {:type 'boolean?})
+         true))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(< "you there" "hi!")))
+                               {:type 'boolean?})
+         false))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(> 5 4)))
+                               {:type 'boolean?})
+         true))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(> \a \b)))
+                               {:type 'boolean?})
+         false))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(> "hi" "there")))
+                               {:type 'boolean?})
+         false))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(>= 5 5)))
+                               {:type 'boolean?})
+         true))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(>= \a \b)))
+                               {:type 'boolean?})
+         false))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(>= "hi" "there")))
+                               {:type 'boolean?})
+         false))
+
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(not true)))
+                               {:type 'boolean?})
+         false))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(not (< 4 5))))
+                               {:type 'boolean?})
+         false))
+  )
