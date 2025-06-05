@@ -41,7 +41,9 @@
    'not=])
 
 (def ast-aliasing
-  {'lt `lib/<'
+  {'if 'if
+   
+   'lt `lib/<'
    'lte `lib/<='
    'gt `lib/>'
    'gte `lib/>='
@@ -51,14 +53,17 @@
    'min `lib/min'
    'doubleCast 'double
 
+   'sqrt `lib/safe-sqrt ; doesn't work??
    'sin `lib/sin
    'cos `lib/cos
-   'tan `lib/tan
+   'tan `lib/tan 
 
    'charCast `lib/int->char
    'isWhitespace `lib/whitespace?
    'isDigit `lib/digit?
-   'isLetter `lib/letter?})
+   'isLetter `lib/letter?
+   
+   })
 
 (def ast-number-aliasing
   {'add "add"
@@ -68,7 +73,20 @@
    'quotient "quot"
    'mod "mod"
    'inc "inc"
-   'dec "dec"})
+   'dec "dec"
+   ; 'minus "neg" ; minus w/ one arg
+   'abs "abs"
+
+   ;;; below methods need `lib/ (eg. `lib/int-pow)
+   ; 'pow "pow" 
+   ; 'pow "square" ; square is just (Math/pow x 2)
+   ; 'ceil "ceil"
+   ; 'floor "floor"
+
+   ;;; other adhoc polymorphic methods
+   ; 'intCast 'int
+   ; 'intCast 'char->int
+   })
 
 (defn get-fn-symbol
   "Finds the CBGP function name for this ast-fn-name"
@@ -128,7 +146,7 @@
 
 (defn decompile-ast
   "Decompiles AST into a CBGP genome."
-  [{:keys [op val tag args] :as ast}]
+  [{:keys [op val tag args children] :as ast}]
   (cond
     ;; Handle constants
     (= :const op)
@@ -154,6 +172,16 @@
       (list {:gene :lit
              :val the-vector
              :type (find-type the-vector (assoc ast :type :vector))}))
+    
+    ;; Handle if
+    ; could be merged w/ the static/invoke handling?
+    (= op :if)
+    (let [ast-fn-name op
+          raw-decompiled-args (map decompile-ast (map ast children))
+          decompiled-args (flatten (reverse raw-decompiled-args))]
+      (concat decompiled-args
+              (list {:gene :var :name (get-fn-symbol ast-fn-name tag)}
+                    {:gene :apply})))
 
     :else
     (do
@@ -292,6 +320,73 @@
   (compile-debugging (decompile-ast (ana.jvm/analyze '(max 5 7)))
                      {:type 'int?})
 
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(abs 1000.0)))
+                     {:type 'double?})
+
+  ;; NEW STUFF - Sydney
+  ; testing abs
+  (decompile-ast (ana.jvm/analyze '(abs -10)))
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(abs -10))) {:type 'int?})
+
+  (decompile-ast (ana.jvm/analyze '(abs -10.5)))
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(abs -10.5))) {:type 'double?})
+
+  ; testing sqrt
+  ; (why does this not work tf)
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(Math/sqrt 9.0))) {:type 'double?})
+
+  ;; testing if 
+  ; !! does not work without the else condition 
+  ;
+  ;--test case 1 (false, w/ literals)
+  (compile-debugging
+   '({:gene :lit, :type {:type int?}, :val 2}
+     {:gene :lit, :type {:type int?}, :val 5}
+     {:gene :lit, :type {:type boolean?}, :val false}
+     {:gene :var, :name if}
+     {:gene :apply})
+   {:type 'int?})
+  (decompile-ast (ana.jvm/analyze '(if false 5 2)))
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(if false 5 2))) {:type 'int?})
+  ; problem: the above compile-decompile test does not compile correctly (defaults to true)
+  ;          even though it gives the exact same (manually typed) genome as seen in the 
+  ;          compile test (??? why.)
+
+  ;--test case 2 (false, w/ methods) [! currently broken]
+  (compile-debugging
+   '({:gene :lit, :type {:type int?}, :val 2}
+     {:gene :lit, :type {:type int?}, :val 11}
+     {:gene :lit, :type {:type int?}, :val 10}
+     {:gene :var, :name erp12.cbgp-lite.lang.lib/max'}
+     {:gene :apply}
+     {:gene :lit, :type {:type int?}, :val 1}
+     {:gene :lit, :type {:type int?}, :val 2}
+     {:gene :var, :name =} ; this section definitely evaluates correctly (tested on (= 1 2) w/ {:type 'boolean?})
+     {:gene :apply}
+     {:gene :var, :name :if}
+     {:gene :apply})
+   {:type 'int?})
+  ; problem: always evaluates to the true condition...
+  ;          may be a return type issue? i hope not
+  
+  (decompile-ast (ana.jvm/analyze '(if (= 0 99) (max 10 11) 2)))
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(if (= 1 2) (max 10 11) 12))) {:type 'int?}) 
+
+  ;--test case 3 (false, w/ method in if, same typing)
+  (compile-debugging
+   '({:gene :lit, :type {:type boolean?}, :val false}
+    {:gene :lit, :type {:type boolean?}, :val true}
+    {:gene :lit, :type {:type int?}, :val 1}
+    {:gene :lit, :type {:type int?}, :val 0} ; change to 1 to check true
+    {:gene :var, :name =}
+    {:gene :apply}
+    {:gene :var, :name :if}
+    {:gene :apply})
+   {:type 'boolean?})
+  ; okay this DOES work. so it IS a typing issue ahhghhghhh
+  
+  (decompile-ast (ana.jvm/analyze '(if (= 0 1) true false)))
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(if (= 0 1) true false))) {:type 'boolean?}) 
   )
 
 
