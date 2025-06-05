@@ -64,7 +64,14 @@
          {1 "asd" 5 "asdfff"}))
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(quote (4 6))))
                                {:child {:type 'int?}, :type :vector})
-         [4 6])))
+         [4 6]))
+  
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze {[1] "asd" [5] "asdfff"}))
+                               {:key {:type 'int?}, :type :map-of, :value {:type 'string?}})
+         {[1] "asd" [5] "asdfff"}))
+  
+  )
+(de/decompile-ast (ana.jvm/analyze {[1] "asd" [5] "asdfff"}))
 
 (deftest decompile-function-calls-test
   ;; mathematical operations
@@ -72,45 +79,45 @@
          '({:gene :lit, :type {:type int?}, :val 33}
            {:gene :lit, :type {:type int?}, :val 22}
            {:gene :var, :name int-add}
-           {:gene :apply}))) 
+           {:gene :apply})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(* 3 4)))
          '({:gene :lit, :type {:type int?}, :val 4}
-             {:gene :lit, :type {:type int?}, :val 3}
-             {:gene :var, :name int-mult}
-             {:gene :apply}))) 
+           {:gene :lit, :type {:type int?}, :val 3}
+           {:gene :var, :name int-mult}
+           {:gene :apply})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(/ 3 4)))
          '({:gene :lit, :type {:type int?}, :val 4}
            {:gene :lit, :type {:type int?}, :val 3}
            {:gene :var, :name int-div}
-           {:gene :apply}))) 
+           {:gene :apply})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(/ 3.5 7.0)))
          '({:gene :lit, :type {:type double?}, :val 7.0}
            {:gene :lit, :type {:type double?}, :val 3.5}
            {:gene :var, :name double-div}
-           {:gene :apply}))) 
-  
+           {:gene :apply})))
+
   (is (= (de/decompile-ast (ana.jvm/analyze '(* 3.2 4.4)))
-          '({:gene :lit, :type {:type double?}, :val 4.4}
-            {:gene :lit, :type {:type double?}, :val 3.2}
-            {:gene :var, :name double-mult}
-            {:gene :apply})))
+         '({:gene :lit, :type {:type double?}, :val 4.4}
+           {:gene :lit, :type {:type double?}, :val 3.2}
+           {:gene :var, :name double-mult}
+           {:gene :apply})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(quot 80 7)))
          '({:gene :lit, :type {:type int?}, :val 7}
            {:gene :lit, :type {:type int?}, :val 80}
            {:gene :var, :name int-quot}
-           {:gene :apply}))) 
+           {:gene :apply})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(quot 80.3 7.8)))
          '({:gene :lit, :type {:type double?}, :val 7.8}
            {:gene :lit, :type {:type double?}, :val 80.3}
            {:gene :var, :name double-quot}
-           {:gene :apply}))) 
+           {:gene :apply})))
 
   (is (= (de/decompile-ast (ana.jvm/analyze '(+ 22.2 33.3)))
          '({:gene :lit, :type {:type double?}, :val 33.3}
            {:gene :lit, :type {:type double?}, :val 22.2}
            {:gene :var, :name double-add}
            {:gene :apply})))
-  
+
   (is (= (de/decompile-ast (ana.jvm/analyze '(+ 22 (+ 33 44))))
          '({:gene :lit, :type {:type int?}, :val 44}
            {:gene :lit, :type {:type int?}, :val 33}
@@ -137,7 +144,7 @@
            {:gene :lit, :type {:type int?}, :val 22}
            {:gene :var, :name int-sub}
            {:gene :apply})))
-  
+
   ;; comparison (<, <=, >, >=)
   (is (= (de/decompile-ast (ana.jvm/analyze '(< 4 4)))
          '({:gene :lit, :type {:type int?}, :val 4}
@@ -158,7 +165,7 @@
          '({:gene :lit, :type {:type int?}, :val 4}
            {:gene :lit, :type {:type int?}, :val 4}
            {:gene :var, :name erp12.cbgp-lite.lang.lib/<='}
-           {:gene :apply}))) 
+           {:gene :apply})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(<= \a \a)))
          '({:gene :lit, :type {:type char?}, :val \a}
            {:gene :lit, :type {:type char?}, :val \a}
@@ -199,12 +206,12 @@
            {:gene :lit, :type {:type string?}, :val "hi"}
            {:gene :var, :name erp12.cbgp-lite.lang.lib/>='}
            {:gene :apply})))
-  
+
   ;; not
   (is (= (de/decompile-ast (ana.jvm/analyze '(not true)))
          '({:gene :lit, :type {:type boolean?}, :val true}
            {:gene :var, :name not}
-           {:gene :apply}))) 
+           {:gene :apply})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(not (< 4 5))))
          '({:gene :lit, :type {:type int?}, :val 5}
            {:gene :lit, :type {:type int?}, :val 4}
@@ -213,87 +220,97 @@
            {:gene :var, :name not}
            {:gene :apply})))
 
-(is (= (de/decompile-ast (ana.jvm/analyze '(+ 1 2 3 4)))
-       '({:gene :lit, :type {:type int?}, :val 4}
-         {:gene :lit, :type {:type int?}, :val 3}
-         {:gene :lit, :type {:type int?}, :val 2}
-         {:gene :lit, :type {:type int?}, :val 1}
-         {:gene :var, :name int-add}
-         {:gene :apply}
-         {:gene :var, :name int-add}
-         {:gene :apply}
-         {:gene :var, :name int-add}
-         {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(+ 1 2 3 4)))
+         '({:gene :lit, :type {:type int?}, :val 4}
+           {:gene :lit, :type {:type int?}, :val 3}
+           {:gene :lit, :type {:type int?}, :val 2}
+           {:gene :lit, :type {:type int?}, :val 1}
+           {:gene :var, :name int-add}
+           {:gene :apply}
+           {:gene :var, :name int-add}
+           {:gene :apply}
+           {:gene :var, :name int-add}
+           {:gene :apply})))
 
-(is (= (de/decompile-ast (ana.jvm/analyze '(* 1 2 3 4)))
-       '({:gene :lit, :type {:type int?}, :val 4}
-         {:gene :lit, :type {:type int?}, :val 3}
-         {:gene :lit, :type {:type int?}, :val 2}
-         {:gene :lit, :type {:type int?}, :val 1}
-         {:gene :var, :name int-mult}
-         {:gene :apply}
-         {:gene :var, :name int-mult}
-         {:gene :apply}
-         {:gene :var, :name int-mult}
-         {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(* 1 2 3 4)))
+         '({:gene :lit, :type {:type int?}, :val 4}
+           {:gene :lit, :type {:type int?}, :val 3}
+           {:gene :lit, :type {:type int?}, :val 2}
+           {:gene :lit, :type {:type int?}, :val 1}
+           {:gene :var, :name int-mult}
+           {:gene :apply}
+           {:gene :var, :name int-mult}
+           {:gene :apply}
+           {:gene :var, :name int-mult}
+           {:gene :apply})))
 
-(is (= (de/decompile-ast (ana.jvm/analyze '(- 1 2 3 4)))
-       '({:gene :lit, :type {:type int?}, :val 4}
-         {:gene :lit, :type {:type int?}, :val 3}
-         {:gene :lit, :type {:type int?}, :val 2}
-         {:gene :lit, :type {:type int?}, :val 1}
-         {:gene :var, :name int-sub}
-         {:gene :apply}
-         {:gene :var, :name int-sub}
-         {:gene :apply}
-         {:gene :var, :name int-sub}
-         {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(- 1 2 3 4)))
+         '({:gene :lit, :type {:type int?}, :val 4}
+           {:gene :lit, :type {:type int?}, :val 3}
+           {:gene :lit, :type {:type int?}, :val 2}
+           {:gene :lit, :type {:type int?}, :val 1}
+           {:gene :var, :name int-sub}
+           {:gene :apply}
+           {:gene :var, :name int-sub}
+           {:gene :apply}
+           {:gene :var, :name int-sub}
+           {:gene :apply})))
 
-(is (= (de/decompile-ast (ana.jvm/analyze '(+ 1.1 2.2 3.3 4.4)))
-       '({:gene :lit, :type {:type double?}, :val 4.4}
-         {:gene :lit, :type {:type double?}, :val 3.3}
-         {:gene :lit, :type {:type double?}, :val 2.2}
-         {:gene :lit, :type {:type double?}, :val 1.1}
-         {:gene :var, :name double-add}
-         {:gene :apply}
-         {:gene :var, :name double-add}
-         {:gene :apply}
-         {:gene :var, :name double-add}
-         {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(+ 1.1 2.2 3.3 4.4)))
+         '({:gene :lit, :type {:type double?}, :val 4.4}
+           {:gene :lit, :type {:type double?}, :val 3.3}
+           {:gene :lit, :type {:type double?}, :val 2.2}
+           {:gene :lit, :type {:type double?}, :val 1.1}
+           {:gene :var, :name double-add}
+           {:gene :apply}
+           {:gene :var, :name double-add}
+           {:gene :apply}
+           {:gene :var, :name double-add}
+           {:gene :apply})))
 
-(is (= (de/decompile-ast (ana.jvm/analyze '(* 1.1 2.2 3.3 4.4)))
-       '({:gene :lit, :type {:type double?}, :val 4.4}
-         {:gene :lit, :type {:type double?}, :val 3.3}
-         {:gene :lit, :type {:type double?}, :val 2.2}
-         {:gene :lit, :type {:type double?}, :val 1.1}
-         {:gene :var, :name double-mult}
-         {:gene :apply}
-         {:gene :var, :name double-mult}
-         {:gene :apply}
-         {:gene :var, :name double-mult}
-         {:gene :apply})))
-(is (= (de/decompile-ast (ana.jvm/analyze '(- 1.1 2.2 3.3 4.4)))
-       '({:gene :lit, :type {:type double?}, :val 4.4}
-         {:gene :lit, :type {:type double?}, :val 3.3}
-         {:gene :lit, :type {:type double?}, :val 2.2}
-         {:gene :lit, :type {:type double?}, :val 1.1}
-         {:gene :var, :name double-sub}
-         {:gene :apply}
-         {:gene :var, :name double-sub}
-         {:gene :apply}
-         {:gene :var, :name double-sub}
-         {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(* 1.1 2.2 3.3 4.4)))
+         '({:gene :lit, :type {:type double?}, :val 4.4}
+           {:gene :lit, :type {:type double?}, :val 3.3}
+           {:gene :lit, :type {:type double?}, :val 2.2}
+           {:gene :lit, :type {:type double?}, :val 1.1}
+           {:gene :var, :name double-mult}
+           {:gene :apply}
+           {:gene :var, :name double-mult}
+           {:gene :apply}
+           {:gene :var, :name double-mult}
+           {:gene :apply})))
+  
+  (is (= (de/decompile-ast (ana.jvm/analyze '(- 1.1 2.2 3.3 4.4)))
+         '({:gene :lit, :type {:type double?}, :val 4.4}
+           {:gene :lit, :type {:type double?}, :val 3.3}
+           {:gene :lit, :type {:type double?}, :val 2.2}
+           {:gene :lit, :type {:type double?}, :val 1.1}
+           {:gene :var, :name double-sub}
+           {:gene :apply}
+           {:gene :var, :name double-sub}
+           {:gene :apply}
+           {:gene :var, :name double-sub}
+           {:gene :apply})))
 
-
-(is (= (de/decompile-ast (ana.jvm/analyze '(inc 4)))
-       '({:gene :lit, :type {:type int?}, :val 4} {:gene :var, :name int-inc} {:gene :apply})))
-(is (= (de/decompile-ast (ana.jvm/analyze '(dec 4)))
-       '({:gene :lit, :type {:type int?}, :val 4} {:gene :var, :name int-dec} {:gene :apply})))
-(is (= (de/decompile-ast (ana.jvm/analyze '(inc 4.2)))
-       '({:gene :lit, :type {:type double?}, :val 4.2} {:gene :var, :name double-inc} {:gene :apply})))
-(is (= (de/decompile-ast (ana.jvm/analyze '(dec 4.2)))
-       '({:gene :lit, :type {:type double?}, :val 4.2} {:gene :var, :name double-dec} {:gene :apply})))
-)
+  (is (= (de/decompile-ast (ana.jvm/analyze '(inc 4)))
+         '({:gene :lit, :type {:type int?}, :val 4} 
+           {:gene :var, :name int-inc} 
+           {:gene :apply})))
+  
+  (is (= (de/decompile-ast (ana.jvm/analyze '(dec 4)))
+         '({:gene :lit, :type {:type int?}, :val 4} 
+           {:gene :var, :name int-dec} 
+           {:gene :apply})))
+  
+  (is (= (de/decompile-ast (ana.jvm/analyze '(inc 4.2)))
+         '({:gene :lit, :type {:type double?}, :val 4.2} 
+           {:gene :var, :name double-inc}
+           {:gene :apply})))
+  
+  (is (= (de/decompile-ast (ana.jvm/analyze '(dec 4.2)))
+         '({:gene :lit, :type {:type double?}, :val 4.2}
+           {:gene :var, :name double-dec} 
+           {:gene :apply}))))
 
 (deftest decompile-recompile-function-calls-test
   ;; mathematical operations
