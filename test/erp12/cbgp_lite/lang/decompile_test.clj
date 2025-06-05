@@ -21,6 +21,7 @@
          '({:gene :lit, :type {:type char?}, :val \d})))
 
 ;; Vectors
+;; Vectors
   (is (= '({:gene :lit, :val [1 2 7], :type {:type :vector :child {:type int?}}})
          (de/decompile-ast (ana.jvm/analyze [1 2 7]))))
   (is (= '({:gene :lit, :val [6.1 32.003], :type {:type :vector :child {:type double?}}})
@@ -46,7 +47,7 @@
   (is (=
        (de/decompile-ast (ana.jvm/analyze {}))
        '({:gene :lit, :type {:key {:sym T, :type :s-var}, :type :map-of, :value {:sym S, :type :s-var}}, :val {}})))
-
+  
   ;; Treat quoted lists as vectors
   (is (=
        (de/decompile-ast (ana.jvm/analyze '(quote ("string" "hi"))))
@@ -426,10 +427,10 @@
   ;; mathematical operations
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(+ 22 33)))
                                {:type 'int?})
-         55))
+         55)) 
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(+ 22 (+ 33 44))))
                                {:type 'int?})
-         99))
+         99)) 
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(+ 22.2 33.3)))
                                {:type 'double?})
          55.5))
