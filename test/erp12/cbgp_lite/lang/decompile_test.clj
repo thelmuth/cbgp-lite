@@ -1,7 +1,7 @@
 (ns erp12.cbgp-lite.lang.decompile-test
   (:require [clojure.test :refer [deftest is testing]]
-            [erp12.cbgp-lite.lang.decompile :as de]
-            [clojure.tools.analyzer.jvm :as ana.jvm]))
+            [clojure.tools.analyzer.jvm :as ana.jvm]
+            [erp12.cbgp-lite.lang.decompile :as de]))
 
 ;; To test only this file:
 ;; clj -X:test :only erp12.cbgp-lite.lang.decompile-test 
@@ -37,14 +37,12 @@
   (is (=
        (list {:gene :lit, :type {:key {:type 'int?}, :type :map-of, :value {:type 'string?}}, :val {1 "asd", 5 "asdfff"}})
        (de/decompile-ast (ana.jvm/analyze {1 "asd" 5 "asdfff"}))))
-  
+
   ;; Treat quoted lists as vectors
   (is (=
        (de/decompile-ast (ana.jvm/analyze '(quote ("string" "hi"))))
        (de/decompile-ast (ana.jvm/analyze  ''("string" "hi")))
-       '({:gene :lit, :type {:child {:type string?}, :type :vector}, :val ["string" "hi"]})))
-  )
-
+       '({:gene :lit, :type {:child {:type string?}, :type :vector}, :val ["string" "hi"]}))))
 
 (deftest decompile-recompile-constants-test
   (is (= (map #(de/compile-debugging (de/decompile-ast (ana.jvm/analyze %))
@@ -65,10 +63,8 @@
                                {:key {:type 'int?}, :type :map-of, :value {:type 'string?}})
          {1 "asd" 5 "asdfff"}))
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(quote (4 6))))
-                            {:child {:type 'int?}, :type :vector})
-         [4 6]))
-  )
-
+                               {:child {:type 'int?}, :type :vector})
+         [4 6])))
 
 (deftest decompile-function-calls-test
   (is (= (de/decompile-ast (ana.jvm/analyze '(+ 22 33)))
@@ -100,3 +96,41 @@
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(+ 22.2 33.3)))
                                {:type 'double?})
          55.5)))
+
+(deftest decompile-str-vec-test
+  (is (= (de/decompile-ast (ana.jvm/analyze '(first [1 2 3])))
+         '({:gene :lit, :type {:child {:type int?}, :type :vector}, :val [1 2 3]} {:gene :var, :name first} {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(first "Hello")))
+         '({:gene :lit, :type {:type string?}, :val "Hello"} {:gene :var, :name first-str} {:gene :apply}))) 
+  (is (= (de/decompile-ast (ana.jvm/analyze '(empty? [])))
+         '({:gene :lit, :type {:child {:sym T, :type :s-var}, :type :vector}, :val []} {:gene :var, :name empty?} {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(last [1 2 3])))
+      '({:gene :lit, :type {:child {:type int?}, :type :vector}, :val [1 2 3]} {:gene :var, :name last} {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(last "String")))
+         '({:gene :lit, :type {:type string?}, :val "String"} {:gene :var, :name last-str} {:gene :apply})))
+)
+
+
+(deftest decompile-recompile-str-vec-test
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(first [1.1 2.2 3.3])))
+                               {:type 'double?})
+         1.1))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(first "Hello"))) 
+                               {:type 'char?})
+         \H))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(empty? ["Hi" "Hello" "Hey"])))
+                               {:type 'boolean?})
+         false))
+  
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(empty? [])))
+                               {:type 'boolean?})
+         true))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(empty? ""))) 
+                               {:type 'boolean?})
+         true))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(last [\C \a \t]))) {:type 'char?})
+         \t)) 
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(last "String")))
+                            {:type 'char?})
+         \g))
+  )
