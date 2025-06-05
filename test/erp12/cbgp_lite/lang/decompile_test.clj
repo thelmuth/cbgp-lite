@@ -19,8 +19,7 @@
          '({:gene :lit, :type {:type string?}, :val "hello"})))
   (is (= (de/decompile-ast (ana.jvm/analyze \d))
          '({:gene :lit, :type {:type char?}, :val \d})))
-
-;; Vectors
+  
 ;; Vectors
   (is (= '({:gene :lit, :val [1 2 7], :type {:type :vector :child {:type int?}}})
          (de/decompile-ast (ana.jvm/analyze [1 2 7]))))
@@ -97,8 +96,6 @@
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze {[1] "asd" [5] "asdfff"})) 
                                     {:key {:type :vector :child {:type 'int?}}, :type :map-of, :value {:type 'string?}})
               {[1] "asd" [5] "asdfff"})) 
-  
-  
   )
 
 (deftest decompile-function-calls-test
@@ -604,7 +601,7 @@
 )
 
 (deftest decompile-collections-test
-  ;; empty collections
+  ;; empty collections 
   
 
   ;; strings & vectors
@@ -620,7 +617,17 @@
          '({:gene :lit, :type {:type string?}, :val "String"} {:gene :var, :name last-str} {:gene :apply}))))
 
 (deftest decompile-recompile-collections-test
-  ;; empty collections
+  ;; empty collections 
+
+  ; broken test; returns [], not [5]
+;;   (is (= (de/compile-debugging
+;;           (concat (de/decompile-ast (ana.jvm/analyze []))
+;;                   ;; (list {:gene :lit, :val [], :type {:type :vector :child (`lib/s-var 'T)}})
+;;                   (list {:gene :var :name `lib/conj-vec}
+;;                         {:gene :lit :val 5 :type {:type 'int?}}
+;;                         {:gene :apply}))
+;;           {:type :vector :child {:type 'int?}}) 
+;;          [5]))
 
 
   ;; strings & vectors

@@ -312,12 +312,14 @@
   (compile-debugging
    (concat
     (decompile-ast (ana.jvm/analyze []))
-    ;; (list {:gene :lit, :val [], :type {:type :vector :child (lib/s-var 'T)}})
+    ;; (list {:gene :lit, :val [], :type {:type :vector :child (`lib/s-var 'T)}})
     (list {:gene :var :name `lib/conj-vec}
           {:gene :lit :val 5 :type {:type 'int?}}
           {:gene :apply}))
    {:type :vector :child {:type 'int?}}
    true)
+  ; test works here, but not in decompile_test
+  
 
   ;; maps
   (=
