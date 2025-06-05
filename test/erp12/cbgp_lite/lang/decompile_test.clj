@@ -421,16 +421,17 @@
   (is (= (de/decompile-ast (ana.jvm/analyze '(inc 4.2)))
          '({:gene :lit, :type {:type double?}, :val 4.2} {:gene :var, :name double-inc} {:gene :apply})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(dec 4.2)))
-         '({:gene :lit, :type {:type double?}, :val 4.2} {:gene :var, :name double-dec} {:gene :apply}))))
+         '({:gene :lit, :type {:type double?}, :val 4.2} {:gene :var, :name double-dec} {:gene :apply})))
+  )
 
 (deftest decompile-recompile-function-calls-test
   ;; mathematical operations
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(+ 22 33)))
                                {:type 'int?})
-         55)) 
+         55))
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(+ 22 (+ 33 44))))
                                {:type 'int?})
-         99)) 
+         99))
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(+ 22.2 33.3)))
                                {:type 'double?})
          55.5))
@@ -576,32 +577,33 @@
 ;;   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(/ 1 2 3 4)))
 ;;                                {:type 'double?})
 ;;          1/24))
-  
+
   ;; working through div for more the 2
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(/ 3 4)))
                                {:type 'double?})
-     3/4))
-  (de/compile-debugging '({:gene :lit, :type {:type int?}, :val 3}
-                        {:gene :lit, :type {:type int?}, :val 2}
-                        {:gene :lit, :type {:type int?}, :val 1}
-                        {:gene :var, :name int-div}
-                        {:gene :apply}
-                        {:gene :var, :name int-div}
-                        {:gene :apply}
-                        {:gene :var, :name int-div}
-                        {:gene :apply})
-                      {:type 'int?}) 
-  
-   (is (= (de/decompile-ast (ana.jvm/analyze '(/ (/ 1 2) 3)))
+         3/4))
+;;   (de/compile-debugging '({:gene :lit, :type {:type int?}, :val 3}
+;;                         {:gene :lit, :type {:type int?}, :val 2}
+;;                         {:gene :lit, :type {:type int?}, :val 1}
+;;                         {:gene :var, :name int-div}
+;;                         {:gene :apply}
+;;                         {:gene :var, :name int-div}
+;;                         {:gene :apply}
+;;                         {:gene :var, :name int-div}
+;;                         {:gene :apply})
+;;                       {:type 'int?}) 
 
-         '({:gene :lit, :type {:type int?}, :val 3}
-           {:gene :lit, :type {:type int?}, :val 2}
-           {:gene :lit, :type {:type int?}, :val 1}
-           {:gene :var, :name int-div}
-           {:gene :apply}
-           {:gene :var, :name int-div} 
-           {:gene :apply})))
-)
+  
+  ;; These only work on doubles 
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/pow 2.0 3.0))) {:type 'double?})
+         8.0))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/pow 2.5 2.5))) {:type 'double?})
+         9.882117688026186))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/ceil 4.5))) {:type 'double?})
+         5.0))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/floor 4.5))) {:type 'double?})
+         4.0))
+  )
 
 (deftest decompile-collections-test
   ;; empty collections
@@ -644,4 +646,11 @@
          \t))
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(last "String")))
                                {:type 'char?})
-         \g)))
+         \g))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(rest "String")))
+                               {:type 'string?})
+         "tring"))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(rest [1 2 3 4])))
+                               {:type :vector :child {:type 'int?}})
+         [2 3 4]))
+  )

@@ -112,17 +112,19 @@
 ;; int-pow does not work because tag is a double, 
 ;; potentially a reason to change find type to check tags
 ;; instead of the type of val
+;; Concat does not work yet because it is supposed to 
+;; return a lazySeq
 (def ast-namespace-qualified-type-aliased
   {'pow "pow"
-   'ceil "ceil"
-   'floor "floor"
-   'rest "rest"
-   'concat "concat"})
+  ;;  'ceil "ceil"
+  ;;  'floor "floor"
+   'rest "rest" 
+  ;;  'concat "concat"
+   })
 
 (defn get-fn-symbol
   "Finds the CBGP function name for this ast-fn-name"
   [ast-fn-name tag args]
-  (print "TAG: " tag)
   (cond
     ;;; note: we might need this: (or (= "long" (str tag)) (= java.lang.Long tag))
     (contains? ast-number-aliasing ast-fn-name)
@@ -345,7 +347,7 @@
    true)
 
    ;;; Recompiling works with maps!
-  
+
   (ana.jvm/analyze {1 "asd" 5 "asdfff"})
 
   (first (first {1 "asd" 5 "asdfff"}))
@@ -399,7 +401,7 @@
   ; problem: the above compile-decompile test does not compile correctly (defaults to true)
   ;          even though it gives the exact same (manually typed) genome as seen in the 
   ;          compile test (??? why.)
-  
+
   ;--test case 2 (false, w/ methods) [! currently broken]
   (compile-debugging
    '({:gene :lit, :type {:type int?}, :val 2}
@@ -416,7 +418,7 @@
    {:type 'int?})
   ; problem: always evaluates to the true condition...
   ;          may be a return type issue? i hope not
-  
+
   (decompile-ast (ana.jvm/analyze '(if (= 0 99) (max 10 11) 2)))
   (compile-debugging (decompile-ast (ana.jvm/analyze '(if (= 1 2) (max 10 11) 12))) {:type 'int?})
 
@@ -432,7 +434,7 @@
      {:gene :apply})
    {:type 'boolean?})
   ; okay this DOES work. so it IS a typing issue ahhghhghhh
-  
+
   (decompile-ast (ana.jvm/analyze '(if (= 0 1) true false)))
   (compile-debugging (decompile-ast (ana.jvm/analyze '(if (= 0 1) true false))) {:type 'boolean?})
 
@@ -482,7 +484,13 @@
 
   (compile-debugging (decompile-ast (ana.jvm/analyze {[1 2] #{1 2} [3 4] #{3 4}}))
                      '{:key {:child {:type int?}, :type :vector}, :type :map-of, :value {:child {:type int?}, :type :set}})
-   (ana.jvm/analyze {[1 2] #{1 2} {3 4} #{3 4}}) 
-  
+  (ana.jvm/analyze {[1 2] #{1 2} {3 4} #{3 4}})
 
+  (= 
+   (compile-debugging (decompile-ast (ana.jvm/analyze '(Math/ceil 4.5))) {:type 'double?})
+     5.0)
+  (= (compile-debugging (decompile-ast (ana.jvm/analyze '(Math/floor 4.5))) {:type 'double?})
+     4.0)
+  
+  (Math/pow 2.5 2.5)
   )
