@@ -42,16 +42,13 @@
    `lib/safe-log2
    `lib/double-square
    `lib/int-square
-   `lib/int-pow
-
-  ]
-  
-  )
+   `lib/int-pow])
 
 (def work-without-change
   ['not
    'not=
-   'if])
+   'if
+   'merge])
 
 (def ast-aliasing
   {'lt `lib/<'
@@ -66,6 +63,7 @@
 
    'isZero 'zero-int?
    'sqrt `lib/safe-sqrt
+   'pow `lib/double-pow
    'sin `lib/sin
    'cos `lib/cos
    'tan `lib/tan
@@ -83,7 +81,10 @@
    'isLetter `lib/letter?
 
    'concat `lib/concatv
-   })
+   'vals `lib/vals-vec
+   ;; There is a keys-set, which returns as a set
+   ;; but I don't think Clojure has this functionality
+   'keys `lib/keys-vec})
 
 (def ast-number-aliasing
   {'add "add"
@@ -93,7 +94,7 @@
    'quotient "quot"
    'mod "mod"
    'inc "inc"
-   'dec "dec" 
+   'dec "dec"
    'neg "neg" ; minus w/ one arg
    'abs "abs"
 
@@ -104,7 +105,7 @@
    ; 'floor "floor", implemented for doubles
 
    ;;; other adhoc polymorphic methods
-   ; 'intCast 'int
+   'intCast 'int
    ; 'intCast 'char->int
    })
 
@@ -124,20 +125,26 @@
   ;; 'rest "`lib/rest"
    })
 
+(def ast-collection-aliasing
+  {'count "count"
+  ;;  'reduce "reduce"
+  ;;  'fold "fold"
+   })
+
 (def ast-arity-aliasing
   {'str {1 'str
          2 `lib/concat-str
          :default `lib/concat-str}
    'minus {1 'neg
            2 'sub}
+  ;;  'reduce {2 'reduce
+  ;;           3 'fold}
    })
-
 
 ;; Concat does not work yet because it is supposed to 
 ;; return a lazySeq
 (def ast-namespace-qualified-type-aliasing
-  {'pow "pow"
-   'rest "rest" 
+  {'rest "rest"
   ;;  'concat "concat"
    })
 
@@ -145,6 +152,11 @@
   "Finds the CBGP function name for this ast-fn-name"
   [ast-fn-name tag args]
   (cond
+    ;; Because of the phrasing, this needs to be hard coded
+    (= ast-fn-name 'intCast)
+    (if (= (str (:tag (first args))) "char")
+      'char->int
+      'int)
     ;; functions with multiple arities to support
     (contains? ast-arity-aliasing ast-fn-name)
     (let [arity-map (get ast-arity-aliasing ast-fn-name)
@@ -158,7 +170,7 @@
     ;; numbers
     (contains? ast-number-aliasing ast-fn-name)
     (symbol (str (if (= (str tag) "double")
-                   "double-"
+                   "double-" 
                    "int-")
                  (get ast-number-aliasing ast-fn-name)))
 
@@ -171,7 +183,17 @@
                  (if (= 'empty? ast-fn-name)
                    "?"
                    "")))
-
+    
+    ;;Vector-set-map
+    (contains? ast-collection-aliasing ast-fn-name)
+    (symbol (str (get ast-collection-aliasing ast-fn-name)
+                 (cond 
+                   (vector? (:val (first args)))
+                   "-vec"
+                   (set? (:val (first args)))
+                   "-set"
+                   (map? (:val (first args)))
+                   "-map")))
     ;; rest only right now?
     (contains? ast-namespace-qualified-type-aliasing ast-fn-name)
     (symbol "erp12.cbgp-lite.lang.lib" (cond (get ast-namespace-qualified-type-aliasing ast-fn-name)
@@ -204,6 +226,7 @@
     (string? val) {:type 'string?}
     (char? val) {:type 'char?}
     (keyword? val) {:type 'keyword?}
+    (symbol? val) {:type 'symbol?}
     (nil? val) {:type 'nil?}
 
     ;; Vectors and sets
@@ -227,9 +250,9 @@
                                 (ana.jvm/analyze (second (first val)))))]
       {:type :map-of :key key-type :value val-type})
 
-              :else (throw (Exception.
-                            (str "AST contains a type that shouldn't be possible: "
-                                 ast)))))
+    :else (throw (Exception.
+                  (str "AST contains a type that shouldn't be possible: "
+                       ast)))))
 
 (defn decompile-ast
   "Decompiles AST into a CBGP genome."
@@ -426,5 +449,47 @@
   (compile-debugging (decompile-ast (ana.jvm/analyze '(if (= 0 1) false true)))
                      {:type 'boolean?})
 
+  (ana.jvm/analyze '(fn [x] (+ x 5)))
 
+  (ana.jvm/analyze (read-string "(defn count-vowels [s]
+     (count (filter #(contains? #{\\a \\e \\i \\o \\u} (Character/toLowerCase %)) s)))"))
+
+  
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;   (compile-debugging
+;;    (list {:gene :local :idx 0}
+;;         {:gene :fn :arg-types [lib/INT] :ret-type lib/BOOLEAN}
+;;         {:gene :lit :val 2 :type {:type 'int?}}
+;;         {:gene :local :idx 1}
+;;         {:gene :var :name 'int-mod}
+;;         {:gene :apply}
+;;         {:gene :lit :val 1 :type {:type 'int?}}
+;;         {:gene :var :name '=}
+;;         {:gene :apply}
+;;         {:gene :close}
+;;         {:gene :var :name 'filterv}
+;;         {:gene :apply}
+;;         {:gene :var :name 'count-vec}
+;;         {:gene :apply})
+;;    {:type 'boolean?})
+
+;;   (defn count-odds [x]
+;;     ((count (filter (fn [y] (mod y 2)) x))))
+  
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(keys {1 #{1 2} 2 #{3 4}})))
+                     {:type :vector :child {:type 'int?}})
+  
+  (decompile-ast (ana.jvm/analyze '(str "Hi" "hey")))
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(merge {:a 1} {:b 2})))
+                     {:type :map-of :key {:type 'keyword?}
+                      :value {:type 'int?}})
+  
+  (decompile-ast (ana.jvm/analyze '(merge {[\a \a \a] 1} {[\b \b \b] 2}))) 
+  
+  
+  
   )
+
+
+
+
