@@ -427,8 +427,8 @@
             {:gene :var, :name erp12.cbgp-lite.lang.lib/double-pow}
             {:gene :apply})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(Math/pow 2.5 2.5)))
-         '({:gene :lit, :type {:type double?}, :val 3.0}
-            {:gene :lit, :type {:type double?}, :val 2.0}
+         '({:gene :lit, :type {:type double?}, :val 2.5}
+            {:gene :lit, :type {:type double?}, :val 2.5}
             {:gene :var, :name erp12.cbgp-lite.lang.lib/double-pow}
             {:gene :apply})))
   
