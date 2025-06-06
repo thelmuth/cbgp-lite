@@ -3,7 +3,8 @@
             [erp12.cbgp-lite.lang.ast :as ast]
             [erp12.cbgp-lite.lang.compile :as co]
             [erp12.cbgp-lite.lang.lib :as lib]
-            [erp12.cbgp-lite.search.plushy :as pl]))
+            [erp12.cbgp-lite.search.plushy :as pl]
+            [erp12.cbgp-lite.task :as tsk]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;; Compilation testing
@@ -23,6 +24,67 @@
          _ (when verbose (println "FORM:" form))
          func (ast/form->fn [] form)]
      (func))))
+
+(defn compile-debugging2
+  ([genome task]
+   (compile-debugging genome task false)) 
+  ([genome task verbose]
+   (let [enhanced-task (tsk/enhance-task task)
+         _ (when verbose (println "PLUSHY:" genome))
+         push (pl/plushy->push genome)
+         _ (when verbose (println "PUSH:" push))
+         ast (::co/ast (co/push->ast
+                        (assoc
+                         enhanced-task
+                         :locals (:arg-symbols enhanced-task)
+                         :push push
+                         :type-env (merge (:type-env enhanced-task)
+                                          lib/type-env)
+                         )))
+         _ (when verbose (println "AST:" ast))
+         form (ast/ast->form ast)
+         _ (when verbose (println "FORM:" form))
+         func (ast/form->fn ['input1] form)]
+     (func [1 6 7 9 0 8]))))
+
+(comment
+
+  (let [task {:input->type {'input1 {:type :vector
+                                     :child {:type 'int?}}}
+              :ret-type {:type 'int?}}
+        genome (list {:gene :local ;; arg to the function (vec)
+                      :idx 0}
+                     {:gene :fn    ;; create an anon fn
+                      :arg-types [lib/INT]
+                      :ret-type lib/BOOLEAN}
+                     {:gene :lit   ;; 2 (in anon fn)
+                      :val 2
+                      :type {:type 'int?}}
+                     {:gene :local ;; arg to the anon fn (int)
+                      :idx 1}
+                     {:gene :var   ;; mod in anon fn
+                      :name 'int-mod}
+                     {:gene :apply} ;; apply mod
+                     {:gene :lit ;;; 1
+                      :val 1
+                      :type {:type 'int?}}
+                     {:gene :var  ;; = (of modded input and 1)
+                      :name '=}
+                     {:gene :apply} ;; apply =
+                     {:gene :close} ;; end anon fn
+                     {:gene :var
+                      :name 'filterv} ;; call filter on anon fn and vector input
+                     {:gene :apply} ;; apply filter
+                     {:gene :var
+                      :name 'count-vec} ;; count the filtered vector
+                     {:gene :apply}) ;; apply count
+                     ]
+    (compile-debugging2 genome
+                        task
+                        true))
+
+  )
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;; Below here is work on decompiling
@@ -269,6 +331,10 @@
               (list {:gene :var :name (get-fn-symbol ast-fn-name tag args)}
                     {:gene :apply})))
 
+    ;; Handle anonymous function abstraction
+    (= op :fn)
+    nil
+
     :else
     (do
       (println "not handled yet AST op:" op)
@@ -296,7 +362,7 @@
    true)
 
   ;; maps
-
+  
   (compile-debugging
    (concat
     (decompile-ast (ana.jvm/analyze {}))
@@ -318,7 +384,7 @@
    true)
 
    ;;; Recompiling works with maps!
-
+  
   (compile-debugging (decompile-ast (ana.jvm/analyze '(abs 1000.0)))
                      {:type 'double?})
 
@@ -358,7 +424,7 @@
   (decompile-ast (ana.jvm/analyze '(- 4 5 (- 2))))
 
 ;;;; THESE DON'T WORK
-
+  
   (decompile-ast (ana.jvm/analyze '(nth [1 2 3] 2 5)))
 
   (compile-debugging (decompile-ast (ana.jvm/analyze '(or true false)))
@@ -387,7 +453,7 @@
   ; problem: the above compile-decompile test does not compile correctly (defaults to true)
   ;          even though it gives the exact same (manually typed) genome as seen in the 
   ;          compile test (??? why.)
-
+  
   ;--test case 2 (false, w/ methods) [! currently broken]
   (compile-debugging
    '({:gene :lit, :type {:type int?}, :val 2}
@@ -404,7 +470,7 @@
    {:type 'int?})
   ; problem: always evaluates to the true condition...
   ;          may be a return type issue? i hope not
-
+  
   (decompile-ast (ana.jvm/analyze '(if (= 0 99) (max 10 11) 2)))
   (compile-debugging (decompile-ast (ana.jvm/analyze '(if (= 1 2) (max 10 11) 12))) {:type 'int?})
 
@@ -420,11 +486,115 @@
      {:gene :apply})
    {:type 'boolean?})
   ; okay this DOES work. so it IS a typing issue ahhghhghhh
-
+  
   (decompile-ast (ana.jvm/analyze '(if (= 0 1) false true)))
 
   (compile-debugging (decompile-ast (ana.jvm/analyze '(if (= 0 1) false true)))
                      {:type 'boolean?})
+
+;;; new stuff
+  
+  (read-string
+   "(defn count-vowels
+    [s]
+    (count (filter #(contains? #{\\a \\e \\i \\o \\u} (Character/toLowerCase %)) s)))")
+
+  "(count (filter #(contains? #{\\a \\e \\i \\o \\u} (Character/toLowerCase %)) input1)))"
+
+  (ana.jvm/analyze '(fn [x] x))
+
+; OPEN, LocalVar(1), Literal(0), Var(max), APP, CLOSE, ABS[Int]
+  
+  (compile-debugging
+   (list {:gene :local :idx 0}
+        ;;  {:gene :lit :val 6 :type {:type 'int?}}
+         {:gene :lit :val 8 :type {:type 'int?}}
+         {:gene :var :name `lib/max'}
+         {:gene :apply})
+   {:type 'int?}
+   true)
+
+  #_{:children [:methods],
+     :body? true,
+     :return-tag java.lang.Object,
+     :op :fn,
+     :env
+     {:context :ctx/expr,
+      :locals {},
+      :ns erp12.cbgp-lite.lang.decompile,
+      :column 21,
+      :line 441,
+      :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj"},
+     :o-tag clojure.lang.AFunction,
+     :variadic? false,
+     :methods
+     [{:children [:params :body],
+       :loop-id loop_19853,
+       :arglist [x],
+       :params
+       [{:name x__#0,
+         :op :binding,
+         :env
+         {:context :ctx/expr,
+          :locals {},
+          :ns erp12.cbgp-lite.lang.decompile,
+          :once false,
+          :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
+          :column 21,
+          :line 441},
+         :o-tag java.lang.Object,
+         :variadic? false,
+         :arg-id 0,
+         :form x,
+         :tag java.lang.Object,
+         :atom :FAIL ;#<Atom@edf2694: {:tag java.lang.Object}>,
+         :local :arg}],
+       :fixed-arity 1,
+       :op :fn-method,
+       :env
+       {:context :ctx/expr,
+        :locals {},
+        :ns erp12.cbgp-lite.lang.decompile,
+        :once false,
+        :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
+        :column 21,
+        :line 441},
+       :o-tag java.lang.Object,
+       :variadic? false,
+       :form ([x] x),
+       :tag java.lang.Object,
+       :body
+       {:children [],
+        :body? true,
+        :name x__#0,
+        :op :local,
+        :env
+        {:loop-locals 1,
+         :locals {x {:form x, :name x, :variadic? false, :op :binding, :arg-id 0, :local :arg}},
+         :ns erp12.cbgp-lite.lang.decompile,
+         :loop-id loop_19853,
+         :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
+         :column 21,
+         :line 441,
+         :once false,
+         :context :ctx/return},
+        :o-tag java.lang.Object,
+        :variadic? false,
+        :arg-id 0,
+        :form x,
+        :tag java.lang.Object,
+        :atom :FAIL ;#<Atom@edf2694: {:tag java.lang.Object}>,
+        :local :arg,
+        :assignable? false,
+        :raw-forms ((do x))}}],
+     :once false,
+     :top-level true,
+     :max-fixed-arity 1,
+     :form (fn* ([x] x)),
+     :tag clojure.lang.AFunction,
+     :arglists ([x]),
+     :raw-forms ((fn* ([x] x)) (fn [x] x) (fn [x] x))}
+
 
 
   )
