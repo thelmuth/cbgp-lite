@@ -1,7 +1,8 @@
 (ns erp12.cbgp-lite.lang.decompile-test
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.tools.analyzer.jvm :as ana.jvm]
-            [erp12.cbgp-lite.lang.decompile :as de]))
+            [erp12.cbgp-lite.lang.decompile :as de]
+            [erp12.cbgp-lite.lang.lib :as lib]))
 
 ;; To test only this file:
 ;; clj -X:test :only erp12.cbgp-lite.lang.decompile-test 
@@ -231,16 +232,23 @@
            {:gene :lit, :type {:type string?}, :val "hi"}
            {:gene :var, :name erp12.cbgp-lite.lang.lib/>='}
            {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(zero? (- 4 1))))
+         '({:gene :lit, :type {:type int?}, :val 1}
+           {:gene :lit, :type {:type int?}, :val 4}
+           {:gene :var, :name int-sub}
+           {:gene :apply}
+           {:gene :var, :name zero-int?}
+           {:gene :apply})))
   
   ;;max and min
   (is (= (de/decompile-ast (ana.jvm/analyze '(max 1 2 3)))
-       '({:gene :lit, :type {:type int?}, :val 3}
-         {:gene :lit, :type {:type int?}, :val 2}
-         {:gene :lit, :type {:type int?}, :val 1}
-         {:gene :var, :name erp12.cbgp-lite.lang.lib/max'}
-         {:gene :apply}
-         {:gene :var, :name erp12.cbgp-lite.lang.lib/max'}
-         {:gene :apply}))) 
+         '({:gene :lit, :type {:type int?}, :val 3}
+           {:gene :lit, :type {:type int?}, :val 2}
+           {:gene :lit, :type {:type int?}, :val 1}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/max'}
+           {:gene :apply}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/max'}
+           {:gene :apply}))) 
   (is (= (de/decompile-ast (ana.jvm/analyze '(max 1.3 2.2 3.9)))
          '({:gene :lit, :type {:type double?}, :val 3.9}
            {:gene :lit, :type {:type double?}, :val 2.2}
@@ -258,13 +266,13 @@
            {:gene :var, :name erp12.cbgp-lite.lang.lib/max'} 
            {:gene :apply})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(max "ai" "smile" "go")))
-       '({:gene :lit, :type {:type string?}, :val "go"}
-         {:gene :lit, :type {:type string?}, :val "smile"}
-         {:gene :lit, :type {:type string?}, :val "ai"}
-         {:gene :var, :name erp12.cbgp-lite.lang.lib/max'}
-         {:gene :apply} 
-         {:gene :var, :name erp12.cbgp-lite.lang.lib/max'} 
-         {:gene :apply})))
+         '({:gene :lit, :type {:type string?}, :val "go"}
+           {:gene :lit, :type {:type string?}, :val "smile"}
+           {:gene :lit, :type {:type string?}, :val "ai"}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/max'}
+           {:gene :apply} 
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/max'} 
+           {:gene :apply})))
   
   (is (= (de/decompile-ast (ana.jvm/analyze '(min 1 2 3)))
          '({:gene :lit, :type {:type int?}, :val 3}
@@ -351,15 +359,15 @@
   
   (is (= (de/decompile-ast (ana.jvm/analyze '(/ 1 2 3 4)))
          '({:gene :lit, :type {:type int?}, :val 4}
-          {:gene :lit, :type {:type int?}, :val 3}
-          {:gene :lit, :type {:type int?}, :val 2}
-          {:gene :lit, :type {:type int?}, :val 1}
-          {:gene :var, :name int-div}
-          {:gene :apply}
-          {:gene :var, :name int-div}
-          {:gene :apply}
-          {:gene :var, :name int-div}
-          {:gene :apply})))
+           {:gene :lit, :type {:type int?}, :val 3}
+           {:gene :lit, :type {:type int?}, :val 2}
+           {:gene :lit, :type {:type int?}, :val 1}
+           {:gene :var, :name int-div}
+           {:gene :apply}
+           {:gene :var, :name int-div}
+           {:gene :apply}
+           {:gene :var, :name int-div}
+           {:gene :apply})))
 
   (is (= (de/decompile-ast (ana.jvm/analyze '(+ 1.1 2.2 3.3 4.4)))
          '({:gene :lit, :type {:type double?}, :val 4.4}
@@ -398,16 +406,16 @@
            {:gene :apply})))
   
   (is (= (de/decompile-ast (ana.jvm/analyze '(/ 1.1 2.2 3.3 4.4)))
-       '({:gene :lit, :type {:type double?}, :val 4.4}
-         {:gene :lit, :type {:type double?}, :val 3.3}
-         {:gene :lit, :type {:type double?}, :val 2.2}
-         {:gene :lit, :type {:type double?}, :val 1.1}
-         {:gene :var, :name double-div}
-         {:gene :apply}
-         {:gene :var, :name double-div}
-         {:gene :apply}
-         {:gene :var, :name double-div}
-         {:gene :apply})))
+         '({:gene :lit, :type {:type double?}, :val 4.4}
+           {:gene :lit, :type {:type double?}, :val 3.3}
+           {:gene :lit, :type {:type double?}, :val 2.2}
+           {:gene :lit, :type {:type double?}, :val 1.1}
+           {:gene :var, :name double-div}
+           {:gene :apply}
+           {:gene :var, :name double-div}
+           {:gene :apply}
+           {:gene :var, :name double-div}
+           {:gene :apply})))
   
 
   ;;inc and dec
@@ -421,21 +429,21 @@
          '({:gene :lit, :type {:type double?}, :val 4.2} {:gene :var, :name double-dec} {:gene :apply})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(abs -10)))
          '({:gene :lit, :type {:type int?}, :val -10} {:gene :var, :name int-abs} {:gene :apply})))
-      
+  
   (is (= (de/decompile-ast (ana.jvm/analyze '(abs -10.5)))
          '({:gene :lit, :type {:type double?}, :val -10.5} {:gene :var, :name double-abs} {:gene :apply}))) 
   
-  
+  ;; Other math
   (is (= (de/decompile-ast (ana.jvm/analyze '(Math/pow 2.0 3.0)))
          '({:gene :lit, :type {:type double?}, :val 3.0}
-            {:gene :lit, :type {:type double?}, :val 2.0}
-            {:gene :var, :name erp12.cbgp-lite.lang.lib/double-pow}
-            {:gene :apply})))
+           {:gene :lit, :type {:type double?}, :val 2.0}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/double-pow}
+           {:gene :apply})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(Math/pow 2.5 2.5)))
          '({:gene :lit, :type {:type double?}, :val 2.5}
-            {:gene :lit, :type {:type double?}, :val 2.5}
-            {:gene :var, :name erp12.cbgp-lite.lang.lib/double-pow}
-            {:gene :apply})))
+           {:gene :lit, :type {:type double?}, :val 2.5}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/double-pow}
+           {:gene :apply})))
   
   (is (= (de/decompile-ast (ana.jvm/analyze '(Math/ceil 4.5)))
          '({:gene :lit, :type {:type double?}, :val 4.5} 
@@ -444,7 +452,9 @@
   (is (= (de/decompile-ast (ana.jvm/analyze '(Math/floor 4.5)))
          '({:gene :lit, :type {:type double?}, :val 4.5} 
            {:gene :var, :name erp12.cbgp-lite.lang.lib/floor} 
-           {:gene :apply}))) 
+           {:gene :apply})))
+  
+  
   )
 
 (deftest decompile-recompile-function-calls-test
@@ -521,6 +531,14 @@
                                {:type 'boolean?})
          false))
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(>= "hi" "there")))
+                               {:type 'boolean?})
+         false))
+  (is (= (de/compile-debugging (de/decompile-ast
+                                (ana.jvm/analyze '(zero? 0)))
+                               {:type 'boolean?})
+         true))
+  (is (= (de/compile-debugging (de/decompile-ast
+                                (ana.jvm/analyze '(zero? (- 4 1))))
                                {:type 'boolean?})
          false))
 
@@ -622,22 +640,28 @@
                                {:type 'double?})
          10.5))
 
-
-  ;; These only work on doubles 
+;; These only work on doubles 
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/pow 2.0 3.0))) {:type 'double?})
          8.0))
-  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/pow 2.5 2.5))) {:type 'double?})
-         9.882117688026186))
+  (is (= (format "%.4f" (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/pow 2.5 2.5))) {:type 'double?}))
+         "9.8821"))
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/ceil 4.5))) {:type 'double?})
          5.0))
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/floor 4.5))) {:type 'double?})
          4.0))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/sqrt 9.0)))
+                               {:type 'double?})
+         3.0))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/sqrt -64.0)))
+                               {:type 'double?})
+         8.0))
+  (is (= (format "%.5f" (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/sqrt 3.1415927)))
+                                              {:type 'double?}))
+         "1.77245"))
+
   )
 
 (deftest decompile-collections-test
-  ;; empty collections 
-  
-
   ;; strings & vectors
   (is (= (de/decompile-ast (ana.jvm/analyze '(first [1 2 3])))
          '({:gene :lit, :type {:child {:type int?}, :type :vector}, :val [1 2 3]} {:gene :var, :name first} {:gene :apply})))
@@ -652,19 +676,20 @@
 
 (deftest decompile-recompile-collections-test
   ;; empty collections 
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze []))
 
-  ; broken test; returns [], not [5]
-;;   (is (= (de/compile-debugging
-;;           (concat (de/decompile-ast (ana.jvm/analyze []))
-;;                   ;; (list {:gene :lit, :val [], :type {:type :vector :child (`lib/s-var 'T)}})
-;;                   (list {:gene :var :name `lib/conj-vec}
-;;                         {:gene :lit :val 5 :type {:type 'int?}}
-;;                         {:gene :apply}))
-;;           {:type :vector :child {:type 'int?}}) 
-;;          [5]))
+                               {:type :vector :child (lib/s-var 'T)})
+         []))
+  (is (= (de/compile-debugging
+          (concat
+           (de/decompile-ast (ana.jvm/analyze []))
+           (list {:gene :var :name `lib/conj-vec}
+                 {:gene :lit :val 5 :type {:type 'int?}}
+                 {:gene :apply}))
+          {:type :vector :child {:type 'int?}})
+         [5]))
 
-
-  ;; strings & vectors
+;; strings & vectors
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(first [1.1 2.2 3.3])))
                                {:type 'double?})
          1.1))
@@ -691,5 +716,4 @@
          "tring"))
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(rest [1 2 3 4])))
                                {:type :vector :child {:type 'int?}})
-         [2 3 4]))
-  )
+         [2 3 4])))
