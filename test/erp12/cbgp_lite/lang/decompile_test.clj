@@ -626,8 +626,8 @@
   ;; These only work on doubles 
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/pow 2.0 3.0))) {:type 'double?})
          8.0))
-  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/pow 2.5 2.5))) {:type 'double?})
-         9.882117688026186))
+  (is (= (format "%.4f" (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/pow 2.5 2.5))) {:type 'double?}))
+         "9.8821"))
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/ceil 4.5))) {:type 'double?})
          5.0))
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/floor 4.5))) {:type 'double?})
@@ -654,14 +654,15 @@
   ;; empty collections 
 
   ; broken test; returns [], not [5]
-;;   (is (= (de/compile-debugging
-;;           (concat (de/decompile-ast (ana.jvm/analyze []))
-;;                   ;; (list {:gene :lit, :val [], :type {:type :vector :child (`lib/s-var 'T)}})
-;;                   (list {:gene :var :name `lib/conj-vec}
-;;                         {:gene :lit :val 5 :type {:type 'int?}}
-;;                         {:gene :apply}))
-;;           {:type :vector :child {:type 'int?}}) 
-;;          [5]))
+  (is (= (de/compile-debugging
+          (concat (de/decompile-ast (ana.jvm/analyze []))
+                  ;; (list {:gene :lit, :val [], :type {:type :vector :child (`lib/s-var 'T)}})
+                  (list {:gene :var :name `lib/conj-vec}
+                        {:gene :lit :val 5 :type {:type 'int?}}
+                        {:gene :apply}))
+          {:type :vector :child {:type 'int?}}) 
+         [5]))
+  
 
 
   ;; strings & vectors

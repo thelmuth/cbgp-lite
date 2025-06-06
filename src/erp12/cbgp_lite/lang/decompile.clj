@@ -52,7 +52,7 @@
    'min `lib/min'
    'doubleCast 'double
 
-   'sqrt `lib/safe-sqrt ; doesn't work??
+   'sqrt `lib/safe-sqrt
    'sin `lib/sin
    'cos `lib/cos
    'tan `lib/tan
@@ -229,7 +229,7 @@
     ;; Handle if
     ; could be merged w/ the static/invoke handling?
     (= op :if)
-    (let [ast-fn-name op
+    (let [ast-fn-name 'if
           raw-decompiled-args (map decompile-ast (map ast children))
           decompiled-args (flatten (reverse raw-decompiled-args))]
       (concat decompiled-args
@@ -300,8 +300,7 @@
   (decompile-ast (ana.jvm/analyze '(abs -10.5)))
   (compile-debugging (decompile-ast (ana.jvm/analyze '(abs -10.5))) {:type 'double?})
 
-  ; testing sqrt
-  ; (why does this not work tf)
+  ; testing sqrt 
   (compile-debugging (decompile-ast (ana.jvm/analyze '(Math/sqrt 9.0))) {:type 'double?})
 
   ;; testing if 
@@ -343,16 +342,16 @@
 
   ;--test case 3 (false, w/ method in if, same typing)
   (compile-debugging
-   '({:gene :lit, :type {:type boolean?}, :val false}
-     {:gene :lit, :type {:type boolean?}, :val true}
+   '({:gene :lit, :type {:type boolean?}, :val true}
+     {:gene :lit, :type {:type boolean?}, :val false}
      {:gene :lit, :type {:type int?}, :val 1}
-     {:gene :lit, :type {:type int?}, :val 0} ; change to 1 to check true
+     {:gene :lit, :type {:type int?}, :val 1} ; change to 1 to check true
      {:gene :var, :name =}
      {:gene :apply}
      {:gene :var, :name :if}
      {:gene :apply})
    {:type 'boolean?})
-  ; okay this DOES work. so it IS a typing issue ahhghhghhh
+  ; also broken ;-;
 
   (decompile-ast (ana.jvm/analyze '(if (= 0 1) true false)))
   (compile-debugging (decompile-ast (ana.jvm/analyze '(if (= 0 1) true false))) {:type 'boolean?})
