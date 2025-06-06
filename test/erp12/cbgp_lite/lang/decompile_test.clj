@@ -54,8 +54,8 @@
        (de/decompile-ast (ana.jvm/analyze  ''("string" "hi")))
        '({:gene :lit, :type {:child {:type string?}, :type :vector}, :val ["string" "hi"]})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(quote ())))
-         '({:gene :lit, :type {:child {:sym T, :type :s-var}, :type :vector}, :val []})))
-  )
+         '({:gene :lit, :type {:child {:sym T, :type :s-var}, :type :vector}, :val []}))))
+  
 
 (deftest decompile-recompile-constants-test
   (is (= (map #(de/compile-debugging (de/decompile-ast (ana.jvm/analyze %))
@@ -63,6 +63,8 @@
               '(-5 0 2999 true nil 43.12 \d "hey hey")
               '(int? int? int? boolean? nil? double? char? string?))
          '(-5 0 2999 true nil 43.12 \d "hey hey")))
+  
+  ;; vectors
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze [1 2 7]))
                                {:type :vector :child {:type 'int?}})
          [1 2 7])) 
@@ -75,29 +77,47 @@
   
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze [1 2 7]))
                                {:type :vector :child {:type 'int?}})
-         [1 2 7]))
+         [1 2 7])) 
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze [[[true false] [false] [true true]] [[true]] [[true true true] [false false false]]]))
                                {:type :vector :child {:type :vector :child {:type :vector :child {:type 'boolean?}}}})
          [[[true false] [false] [true true]] [[true]] [[true true true] [false false false]]]))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze []))
+                             {:type :vector :child (lib/s-var 'T)})
+       []))
+  
+  ;; sets
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze #{8 2 0}))
                                {:type :set :child {:type 'int?}})
-         #{8 2 0}))
+         #{8 2 0}) 
+   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze #{}))
+                              {:type :set :child (lib/s-var 'T)})
+        #{})))
+  
+  ;; lists
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(quote (4 6))))
                                {:child {:type 'int?}, :type :vector})
-         [4 6]))
+         [4 6])
+   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(quote ())))
+                               {:type :vector :child (lib/s-var 'T)})
+         [])))
   
-
+  ;; maps
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze {1 "asd" 5 "asdfff"}))
                                {:key {:type 'int?}, :type :map-of, :value {:type 'string?}}) 
-         {1 "asd" 5 "asdfff"}))
+         {1 "asd" 5 "asdfff"})
+   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze {}))
+                               {:type :map-of :key (lib/s-var 'T) :value (lib/s-var 'T)})
+         {})))
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze {[[7 8] [9 30]] #{"this" "is"} [[45 67][7 0]] #{ "absolutely" "insane"}}))
                                {:key {:type :vector :child {:type :vector :child {:type 'int?}}}, :type :map-of, :value {:type :set :child {:type 'string?}}})
          {[[7 8] [9 30]] #{"this" "is"} [[45 67] [7 0]] #{"absolutely" "insane"}}))
   
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze {[1] "asd" [5] "asdfff"})) 
-                                    {:key {:type :vector :child {:type 'int?}}, :type :map-of, :value {:type 'string?}})
-              {[1] "asd" [5] "asdfff"})) 
-  )
+                               {:key {:type :vector :child {:type 'int?}}, :type :map-of, :value {:type 'string?}})
+         {[1] "asd" [5] "asdfff"})))
+   
+
+  
 
 (deftest decompile-function-calls-test
   ;; mathematical operations
@@ -239,6 +259,20 @@
            {:gene :apply}
            {:gene :var, :name zero-int?}
            {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(- 1)))
+       '({:gene :lit, :type {:type int?}, :val 1} {:gene :var, :name int-neg} {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(- 1.0)))
+         '({:gene :lit, :type {:type double?}, :val 1.0} {:gene :var, :name double-neg} {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(- 4 5 (- 2))))
+         '({:gene :lit, :type {:type int?}, :val 2}
+           {:gene :var, :name int-neg}
+           {:gene :apply}
+           {:gene :lit, :type {:type int?}, :val 5}
+           {:gene :lit, :type {:type int?}, :val 4}
+           {:gene :var, :name int-sub}
+           {:gene :apply}
+           {:gene :var, :name int-sub}
+           {:gene :apply})))
   
   ;;max and min
   (is (= (de/decompile-ast (ana.jvm/analyze '(max 1 2 3)))
@@ -355,7 +389,7 @@
            {:gene :var, :name int-sub}
            {:gene :apply}
            {:gene :var, :name int-sub}
-           {:gene :apply})))
+           {:gene :apply}))) 
   
   (is (= (de/decompile-ast (ana.jvm/analyze '(/ 1 2 3 4)))
          '({:gene :lit, :type {:type int?}, :val 4}
@@ -452,10 +486,8 @@
   (is (= (de/decompile-ast (ana.jvm/analyze '(Math/floor 4.5)))
          '({:gene :lit, :type {:type double?}, :val 4.5} 
            {:gene :var, :name erp12.cbgp-lite.lang.lib/floor} 
-           {:gene :apply})))
+           {:gene :apply}))))
   
-  
-  )
 
 (deftest decompile-recompile-function-calls-test
   ;; mathematical operations
@@ -477,6 +509,15 @@
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(- 22 (- 33 44))))
                                {:type 'int?})
          33))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(- 1)))
+                               {:type 'int?})
+         -1))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(- 1.0)))
+                               {:type 'double?})
+         -1.0))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(- 4 5 (- 2))))
+                               {:type 'int?})
+         1))
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(* 3 4)))
                                {:type 'int?})
          12))
@@ -657,42 +698,132 @@
          8.0))
   (is (= (format "%.5f" (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/sqrt 3.1415927)))
                                               {:type 'double?}))
-         "1.77245"))
+         "1.77245")))
 
-  )
+  
 
 (deftest decompile-collections-test
-  ;; strings & vectors
-  (is (= (de/decompile-ast (ana.jvm/analyze '(first [1 2 3])))
-         '({:gene :lit, :type {:child {:type int?}, :type :vector}, :val [1 2 3]} {:gene :var, :name first} {:gene :apply})))
-  (is (= (de/decompile-ast (ana.jvm/analyze '(first "Hello")))
-         '({:gene :lit, :type {:type string?}, :val "Hello"} {:gene :var, :name first-str} {:gene :apply})))
+  ;; empty collections
   (is (= (de/decompile-ast (ana.jvm/analyze '(empty? [])))
          '({:gene :lit, :type {:child {:sym T, :type :s-var}, :type :vector}, :val []} {:gene :var, :name empty?} {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(concat [] [1 2])))
+         '({:gene :lit, :type {:child {:type int?}, :type :vector}, :val [1 2]}
+           {:gene :lit, :type {:child {:sym T, :type :s-var}, :type :vector}, :val []}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/concatv}
+           {:gene :apply})))
+
+  ; does not work until conj-vec and conj-set are implemented
+  #_(is (= (de/decompile-ast (ana.jvm/analyze '(conj [] 5)))
+           '({:gene :lit :val 5 :type {:type 'int?}}
+             {:gene :lit, :type {:child {:sym T, :type :s-var}, :type :vector}, :val []}
+             {:gene :var :name `lib/conj-vec}
+             {:gene :apply})))
+  #_(is (= (de/decompile-ast (ana.jvm/analyze '(conj #{} 5)))
+           '({:gene :lit :val 5 :type {:type 'int?}}
+             {:gene :lit, :type {:child {:sym T, :type :s-var}, :type :set}, :val #{}}
+             {:gene :var :name `lib/conj-set}
+             {:gene :apply})))
+
+  (is (= (de/decompile-ast (ana.jvm/analyze '(assoc {} "a" 10)))
+         '({:gene :lit, :type {:type int?}, :val 10}
+           {:gene :lit, :type {:type string?}, :val "a"}
+           {:gene :lit, :type {:key {:sym T, :type :s-var}, :type :map-of, :value {:sym S, :type :s-var}}, :val {}}
+           {:gene :var, :name assoc}
+           {:gene :apply})))
+
+  ;; vectors
+  (is (= (de/decompile-ast (ana.jvm/analyze '(concat [1 2] [3 4])))
+         '({:gene :lit, :type {:child {:type int?}, :type :vector}, :val [3 4]}
+           {:gene :lit, :type {:child {:type int?}, :type :vector}, :val [1 2]}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/concatv}
+           {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(concat (rest [1 2 3]) [3 4])))
+         '({:gene :lit, :type {:child {:type int?}, :type :vector}, :val [3 4]}
+           {:gene :lit, :type {:child {:type int?}, :type :vector}, :val [1 2 3]}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/restv}
+           {:gene :apply}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/concatv}
+           {:gene :apply})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(last [1 2 3])))
          '({:gene :lit, :type {:child {:type int?}, :type :vector}, :val [1 2 3]} {:gene :var, :name last} {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(first [1 2 3])))
+         '({:gene :lit, :type {:child {:type int?}, :type :vector}, :val [1 2 3]} {:gene :var, :name first} {:gene :apply})))
+
+  ;; strings
+  (is (= (de/decompile-ast (ana.jvm/analyze '(first "Hello")))
+         '({:gene :lit, :type {:type string?}, :val "Hello"} {:gene :var, :name first-str} {:gene :apply})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(last "String")))
-         '({:gene :lit, :type {:type string?}, :val "String"} {:gene :var, :name last-str} {:gene :apply}))))
+         '({:gene :lit, :type {:type string?}, :val "String"} {:gene :var, :name last-str} {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(str "hello" "world")))
+         '({:gene :lit, :type {:type string?}, :val "world"}
+           {:gene :lit, :type {:type string?}, :val "hello"}
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/concat-str}
+           {:gene :apply})))
+  ; doesn't work; 3+ args
+  #_(is (= (de/decompile-ast (ana.jvm/analyze '(str "hello" "world" "yay")))
+           '({:gene :lit, :type {:type string?}, :val "yay"}
+             {:gene :lit, :type {:type string?}, :val "world"}
+             {:gene :lit, :type {:type string?}, :val "hello"}
+             {:gene :var, :name erp12.cbgp-lite.lang.lib/concat-str}
+             {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(str (+ 2 3))))
+         '({:gene :lit, :type {:type int?}, :val 3}
+           {:gene :lit, :type {:type int?}, :val 2}
+           {:gene :var, :name int-add}
+           {:gene :apply}
+           {:gene :var, :name str}
+           {:gene :apply}))))
+  
 
 (deftest decompile-recompile-collections-test
   ;; empty collections 
-  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze []))
-
-                               {:type :vector :child (lib/s-var 'T)})
-         []))
-  (is (= (de/compile-debugging
-          (concat
-           (de/decompile-ast (ana.jvm/analyze []))
-           (list {:gene :var :name `lib/conj-vec}
-                 {:gene :lit :val 5 :type {:type 'int?}}
-                 {:gene :apply}))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(empty? [])))
+                               {:type 'boolean?})
+         true)) 
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(concat [] [1 2])))
+                               {:type :vector :child {:type 'int?}})
+         [1 2]))
+  
+  ; replace concat'd genome w/ (ana.jvm/analyze '(conj [] 5)) when conj-vec is added
+  ; (is (= (de/compile-debugging (concat (de/decompile-ast (ana.jvm/analyze '(conj [] 5))
+  (is (= (de/compile-debugging (concat (de/decompile-ast (ana.jvm/analyze []))
+                                       (list {:gene :var :name `lib/conj-vec}
+                                             {:gene :lit :val 5 :type {:type 'int?}}
+                                             {:gene :apply}))
           {:type :vector :child {:type 'int?}})
          [5]))
-
-;; strings & vectors
+  
+  ; replace concat'd genome w/ (ana.jvm/analyze '(conj #{} 5)) when conj-set is added
+  ; (is (= (de/compile-debugging (concat (de/decompile-ast (ana.jvm/analyze '(conj #{} 5))
+  (is (= (de/compile-debugging (concat (de/decompile-ast (ana.jvm/analyze #{}))
+                                       (list {:gene :var :name `lib/conj-set}
+                                             {:gene :lit :val 5 :type {:type 'int?}}
+                                             {:gene :apply}))
+                               {:type :set :child {:type 'int?}})
+         #{5}))
+  
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(assoc {} "a" 10)))
+                            {:key {:type 'string?}, :type :map-of, :value {:type 'int?}})
+         {"a" 10}))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(assoc {"b" 42} "a" 10)))
+                               {:key {:type 'string?}, :type :map-of, :value {:type 'int?}})
+         {"b" 42 "a" 10}))
+  
+  ;; vectors
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(concat [1 2] [3 4])))
+          {:child {:type 'int?} :type :vector}) 
+       [1 2 3 4]))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(concat (rest [1 2 3]) [3 4])))
+                               {:child {:type 'int?} :type :vector})
+         [2 3 3 4]))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(rest [1 2 3 4])))
+                             {:type :vector :child {:type 'int?}})
+       [2 3 4]))
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(first [1.1 2.2 3.3])))
                                {:type 'double?})
          1.1))
+  
+  ;; strings
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(first "Hello")))
                                {:type 'char?})
          \H))
@@ -700,9 +831,6 @@
                                {:type 'boolean?})
          false))
 
-  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(empty? [])))
-                               {:type 'boolean?})
-         true))
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(empty? "")))
                                {:type 'boolean?})
          true))
@@ -714,6 +842,72 @@
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(rest "String")))
                                {:type 'string?})
          "tring"))
-  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(rest [1 2 3 4])))
-                               {:type :vector :child {:type 'int?}})
-         [2 3 4])))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(str "hello" "world")))
+                               {:type 'string?})
+         "helloworld"))
+  ; doesn't work; 3+ args
+  #_(is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(str "hello" "world" "yay")))
+                                 {:type 'string?})
+           "helloworldyay"))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(str (+ 2 3))))
+                               {:type 'string?})
+         "5")))
+  
+  
+(deftest decompile-misc-test 
+  ; if
+  (is (= (de/decompile-ast (ana.jvm/analyze '(if false 5 2)))
+       '({:gene :lit, :type {:type int?}, :val 2}
+         {:gene :lit, :type {:type int?}, :val 5}
+         {:gene :lit, :type {:type boolean?}, :val false}
+         {:gene :var, :name if}
+         {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(if (= 1 2) (max 10 11) 12)))
+       '({:gene :lit, :type {:type int?}, :val 12}
+         {:gene :lit, :type {:type int?}, :val 11}
+         {:gene :lit, :type {:type int?}, :val 10}
+         {:gene :var, :name erp12.cbgp-lite.lang.lib/max'}
+         {:gene :apply}
+         {:gene :lit, :type {:type int?}, :val 2}
+         {:gene :lit, :type {:type int?}, :val 1}
+         {:gene :var, :name =}
+         {:gene :apply}
+         {:gene :var, :name if}
+         {:gene :apply})))
+  
+  ; printing
+  (is (= (de/decompile-ast (ana.jvm/analyze '(print "hi"))
+          '({:gene :lit, :type {:type string?}, :val "hi"} {:gene :var, :name print} {:gene :apply}))))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(println "hi")))
+       '({:gene :lit, :type {:type string?}, :val "hi"} {:gene :var, :name println} {:gene :apply}))))
+ 
+(deftest decompile-recompile-misc-test
+  ; if
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(if false 5 2)))
+                               {:type 'int?})
+         2))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(if (= 1 2) (max 10 11) 12)))
+                               {:type 'int?})
+         12))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(if (= 0 1) (= 1 10) (< 1 2))))
+                               {:type 'boolean?})
+         true))
+  ; multitype test?
+
+  ; printing 
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(print "hi"))
+                                {:type 'nil?})
+          nil)))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(println "hi"))) 
+                               {:type 'nil?})
+         nil)))
+  
+  
+
+  
+  
+  
+  
+  
+  
+      
