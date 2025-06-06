@@ -419,6 +419,27 @@
          '({:gene :lit, :type {:type double?}, :val 4.2} {:gene :var, :name double-inc} {:gene :apply})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(dec 4.2)))
          '({:gene :lit, :type {:type double?}, :val 4.2} {:gene :var, :name double-dec} {:gene :apply})))
+  
+  
+  (is (= (de/decompile-ast (ana.jvm/analyze '(Math/pow 2.0 3.0)))
+         '({:gene :lit, :type {:type double?}, :val 3.0}
+            {:gene :lit, :type {:type double?}, :val 2.0}
+            {:gene :var, :name erp12.cbgp-lite.lang.lib/double-pow}
+            {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(Math/pow 2.5 2.5)))
+         '({:gene :lit, :type {:type double?}, :val 3.0}
+            {:gene :lit, :type {:type double?}, :val 2.0}
+            {:gene :var, :name erp12.cbgp-lite.lang.lib/double-pow}
+            {:gene :apply})))
+  
+  (is (= (de/decompile-ast (ana.jvm/analyze '(Math/ceil 4.5)))
+         '({:gene :lit, :type {:type double?}, :val 4.5} 
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/ceil} 
+           {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(Math/floor 4.5)))
+         '({:gene :lit, :type {:type double?}, :val 4.5} 
+           {:gene :var, :name erp12.cbgp-lite.lang.lib/floor} 
+           {:gene :apply}))) 
   )
 
 (deftest decompile-recompile-function-calls-test

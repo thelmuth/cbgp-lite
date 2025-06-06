@@ -488,11 +488,14 @@
                      '{:key {:child {:type int?}, :type :vector}, :type :map-of, :value {:child {:type int?}, :type :set}})
   (ana.jvm/analyze {[1 2] #{1 2} {3 4} #{3 4}})
 
+  (decompile-ast (ana.jvm/analyze '(Math/pow 2.0 3.0)))
+
   (= 
    (compile-debugging (decompile-ast (ana.jvm/analyze '(Math/ceil 4.5))) {:type 'double?})
      5.0)
   (= (compile-debugging (decompile-ast (ana.jvm/analyze '(Math/floor 4.5))) {:type 'double?})
      4.0)
   
-  (Math/pow 2.5 2.5)
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(Math/abs -6))) {:type 'int?})
+  (decompile-ast (ana.jvm/analyze '(Math/floor 4.5)))
   )
