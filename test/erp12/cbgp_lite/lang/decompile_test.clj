@@ -422,6 +422,11 @@
          '({:gene :lit, :type {:type double?}, :val 4.2} {:gene :var, :name double-inc} {:gene :apply})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(dec 4.2)))
          '({:gene :lit, :type {:type double?}, :val 4.2} {:gene :var, :name double-dec} {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(abs -10)))
+         '({:gene :lit, :type {:type int?}, :val -10} {:gene :var, :name int-abs} {:gene :apply})))
+      
+  (is (= (de/decompile-ast (ana.jvm/analyze '(abs -10.5)))
+         '({:gene :lit, :type {:type double?}, :val -10.5} {:gene :var, :name double-abs} {:gene :apply}))) 
   )
 
 (deftest decompile-recompile-function-calls-test
@@ -536,21 +541,6 @@
                                {:type 'boolean?})
          false))
 
-  ;;inc and dec
-  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(dec 5)))
-                               {:type 'int?})
-         4))
-  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(dec 5.4)))
-                               {:type 'double?})
-         4.4))
-  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(inc 5)))
-                               {:type 'int?})
-         6))
-
-  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(inc 5.4)))
-                               {:type 'double?})
-         6.4))
-
   ;;math with 4+ arguemnts
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(- 1.1 2.2 3.3 4.4)))
                                {:type 'double?})
@@ -593,7 +583,28 @@
 ;;                         {:gene :apply})
 ;;                       {:type 'int?}) 
 
-  
+  ;;inc and dec
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(dec 5)))
+                               {:type 'int?})
+         4))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(dec 5.4)))
+                               {:type 'double?})
+         4.4))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(inc 5)))
+                               {:type 'int?})
+         6))
+
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(inc 5.4)))
+                               {:type 'double?})
+         6.4))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(abs -10)))
+                               {:type 'int?})
+         10))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(abs -10.5)))
+                               {:type 'double?})
+         10.5))
+
+
   ;; These only work on doubles 
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/pow 2.0 3.0))) {:type 'double?})
          8.0))

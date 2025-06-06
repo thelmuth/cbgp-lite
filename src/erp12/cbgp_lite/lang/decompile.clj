@@ -238,68 +238,9 @@
       (println "not handled yet AST op:" op)
       nil)))
 
-(comment
-
-  (decompile-ast (ana.jvm/analyze '(- 22 33)))
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(+ 22.2 33.3)))
-                     {:type 'double?})
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(- 22 33)))
-                     {:type 'int?})
-
-  (decompile-ast (ana.jvm/analyze '(< 4 5)))
-
-  (decompile-ast (ana.jvm/analyze '(<= 4 5)))
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(not true)))
-                     {:type 'boolean?})
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(< 4 5)))
-                     {:type 'boolean?})
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(< \a \c)))
-                     {:type 'boolean?})
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(< "hi" "true")))
-                     {:type 'boolean?})
-
-  (decompile-ast (ana.jvm/analyze '(< "hi" "there")))
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(not (< 4 5))))
-                     {:type 'boolean?})
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(* 8 -5)))
-                     {:type 'int?})
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(quot 80 7)))
-                     {:type 'int?})
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(/ 6 2)))
-                     {:type 'double?})
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(/ 80 7)))
-                     {:type 'double?})
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(/ 80.3 7.1)))
-                     {:type 'double?})
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(dec 5)))
-                     {:type 'int?})
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(inc 5.3)))
-                     {:type 'double?})
-
+(comment 
   (compile-debugging (decompile-ast (ana.jvm/analyze '(or true false)))
                      {:type 'boolean?})
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(+ 1 2 3 4)))
-                     {:type 'int?})
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(* 1 2 3 4)))
-                     {:type 'int?})
-
-  (decompile-ast (ana.jvm/analyze '(+ 1 2 3 4)))
 
   (compile-debugging (decompile-ast (ana.jvm/analyze '(< 4 5 8)))
                      {:type 'boolean?})
@@ -322,9 +263,6 @@
    true)
 
   ;; maps
-  (=
-   (decompile-ast (ana.jvm/analyze {}))
-   '({:gene :lit, :type {:key {:sym T, :type :s-var}, :type :map-of, :value {:sym S, :type :s-var}}, :val {}}))
 
   (compile-debugging
    (concat
@@ -347,28 +285,6 @@
    true)
 
    ;;; Recompiling works with maps!
-
-  (ana.jvm/analyze {1 "asd" 5 "asdfff"})
-
-  (first (first {1 "asd" 5 "asdfff"}))
-
-  (decompile-ast (ana.jvm/analyze {1 "asd" 5 "asdfff"}))
-
-  (=
-   (list {:gene :lit, :type {:key {:type 'int?}, :type :map-of, :value {:type 'string?}}, :val {1 "asd", 5 "asdfff"}})
-   (decompile-ast (ana.jvm/analyze {1 "asd" 5 "asdfff"})))
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze {1 "asd" 5 "asdfff"}))
-                     {:key {:type 'int?}, :type :map-of, :value {:type 'string?}}
-                     true)
-
-  (compile-debugging (list {:gene :lit, :type {:key {:type 'int?}, :type :map-of, :val {:type 'string?}}, :val {1 "asd", 5 "asdfff"}}
-                           {:gene :lit, :type {:type 'int?}, :val 6})
-                     {:type 'int}
-                     true)
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(max 5 7)))
-                     {:type 'int?})
 
   (compile-debugging (decompile-ast (ana.jvm/analyze '(abs 1000.0)))
                      {:type 'double?})
