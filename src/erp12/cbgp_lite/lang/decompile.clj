@@ -27,30 +27,34 @@
 
 (defn compile-debugging2
   ([genome task]
-   (compile-debugging genome task false)) 
-  ([genome task verbose]
+   (compile-debugging2 genome task []))
+
+  ([genome task args]
+   (compile-debugging2 genome task args false))
+
+  ([genome task args verbose]
    (let [enhanced-task (tsk/enhance-task task)
+         locals (:arg-symbols enhanced-task)
          _ (when verbose (println "PLUSHY:" genome))
          push (pl/plushy->push genome)
          _ (when verbose (println "PUSH:" push))
          ast (::co/ast (co/push->ast
                         (assoc
                          enhanced-task
-                         :locals (:arg-symbols enhanced-task)
+                         :locals locals
                          :push push
                          :type-env (merge (:type-env enhanced-task)
-                                          lib/type-env)
-                         )))
+                                          lib/type-env))))
          _ (when verbose (println "AST:" ast))
          form (ast/ast->form ast)
          _ (when verbose (println "FORM:" form))
-         func (ast/form->fn ['input1] form)]
-     (func [1 6 7 9 0 8]))))
+         func (ast/form->fn locals form)]
+     (apply func args))))
 
 (comment
 
-  (let [task {:input->type {'input1 {:type :vector
-                                     :child {:type 'int?}}}
+  ;;; Test for Count Odds problem
+  (let [task {:input->type {'input1 {:type :vector :child {:type 'int?}}}
               :ret-type {:type 'int?}}
         genome (list {:gene :local ;; arg to the function (vec)
                       :idx 0}
@@ -81,7 +85,61 @@
                      ]
     (compile-debugging2 genome
                         task
+                        [[8 3 2 5 7 0 11]]
                         true))
+
+  
+  ;;; Test for  Smallest problem 
+  (let [task {:input->type {'input1 {:type 'int?}
+                            'input2 {:type 'int?}
+                            'input3 {:type 'int?}
+                            'input4 {:type 'int?}}
+              :ret-type {:type 'int?}}
+        genome [{:gene :local
+                 :idx 0}
+                {:gene :local
+                 :idx 1}
+                {:gene :var
+                 :name `lib/min'}
+                {:gene :apply}
+                {:gene :local
+                 :idx 2}
+                {:gene :var
+                 :name `lib/min'}
+                {:gene :apply}
+                {:gene :local
+                 :idx 3}
+                {:gene :var
+                 :name `lib/min'}
+                {:gene :apply}]
+        ]
+    (compile-debugging2 genome
+                        task
+                        [5 6 -33 9]
+                        true))
+  
+  ;; Test for Number IO
+  (let [task {:input->type {'input1 {:type 'double?}
+                            'input2 {:type 'int?}}
+              :ret-type {:type 'string?}}
+        genome (list {:gene :local
+                      :idx 1}
+                     {:gene :var
+                      :name 'double}
+                     {:gene :apply}
+                     {:gene :local
+                      :idx 0}
+                     {:gene :var
+                      :name 'double-add}
+                     {:gene :apply}
+                     {:gene :var
+                      :name 'str}
+                     {:gene :apply})]
+    (compile-debugging2 genome
+                        task
+                        [100.23 33]
+                        true))
+
 
   )
 
