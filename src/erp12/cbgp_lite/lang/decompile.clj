@@ -30,19 +30,31 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Broken instructions
 ;; < is broken for any number of arguments != 2
+;; / with more than 2 arguments
 
 ;;;; Broken because they're macros
 ;;  'and `lib/and
 ;;  'or `lib/or
 
+(def fns-llm-won't-use
+  [`lib/int-ceil
+   `lib/int-floor
+   `lib/safe-log2
+   `lib/double-square
+   `lib/int-square
+   `lib/int-pow
+
+  ]
+  
+  )
+
 (def work-without-change
   ['not
-   'not=])
+   'not=
+   'if])
 
 (def ast-aliasing
-  {'if 'if
-
-   'lt `lib/<'
+  {'lt `lib/<'
    'lte `lib/<='
    'gt `lib/>'
    'gte `lib/>='
@@ -52,6 +64,7 @@
    'min `lib/min'
    'doubleCast 'double
 
+   'isZero 'zero-int?
    'sqrt `lib/safe-sqrt
    'sin `lib/sin
    'cos `lib/cos
@@ -67,18 +80,21 @@
    'charCast `lib/int->char
    'isWhitespace `lib/whitespace?
    'isDigit `lib/digit?
-   'isLetter `lib/letter?})
+   'isLetter `lib/letter?
+
+   'concat `lib/concatv
+   })
 
 (def ast-number-aliasing
   {'add "add"
-   'minus "sub"
+   'sub "sub"
    'multiply "mult"
    'divide "div"
    'quotient "quot"
    'mod "mod"
    'inc "inc"
-   'dec "dec"
-   ; 'minus "neg" ; minus w/ one arg
+   'dec "dec" 
+   'neg "neg" ; minus w/ one arg
    'abs "abs"
 
    ;;; below methods need `lib/ (eg. `lib/int-pow)
@@ -108,16 +124,19 @@
   ;; 'rest "`lib/rest"
    })
 
+(def ast-arity-aliasing
+  {'str {1 'str
+         2 `lib/concat-str
+         :default `lib/concat-str}
+   'minus {1 'neg
+           2 'sub}
+   })
 
-;; int-pow does not work because tag is a double, 
-;; potentially a reason to change find type to check tags
-;; instead of the type of val
+
 ;; Concat does not work yet because it is supposed to 
 ;; return a lazySeq
 (def ast-namespace-qualified-type-aliasing
   {'pow "pow"
-  ;;  'ceil "ceil"
-  ;;  'floor "floor"
    'rest "rest" 
   ;;  'concat "concat"
    })
@@ -126,12 +145,24 @@
   "Finds the CBGP function name for this ast-fn-name"
   [ast-fn-name tag args]
   (cond
-    ;;; note: we might need this: (or (= "long" (str tag)) (= java.lang.Long tag))
+    ;; functions with multiple arities to support
+    (contains? ast-arity-aliasing ast-fn-name)
+    (let [arity-map (get ast-arity-aliasing ast-fn-name)
+          fn-symbol (get arity-map
+                         (count args)
+                         (get arity-map :default))]
+      (if (contains? ast-number-aliasing fn-symbol)
+        (get-fn-symbol fn-symbol tag args)
+        fn-symbol))
+
+    ;; numbers
     (contains? ast-number-aliasing ast-fn-name)
     (symbol (str (if (= (str tag) "double")
                    "double-"
                    "int-")
                  (get ast-number-aliasing ast-fn-name)))
+
+    ;; Vector stuff
     (contains? ast-str-vec-aliasing ast-fn-name)
     (symbol (str (get ast-str-vec-aliasing ast-fn-name)
                  (if (= (:tag (first args)) java.lang.String)
@@ -140,6 +171,8 @@
                  (if (= 'empty? ast-fn-name)
                    "?"
                    "")))
+
+    ;; rest only right now?
     (contains? ast-namespace-qualified-type-aliasing ast-fn-name)
     (symbol "erp12.cbgp-lite.lang.lib" (cond (get ast-namespace-qualified-type-aliasing ast-fn-name)
                                              (cond
@@ -149,13 +182,14 @@
                                                (= (:tag (first args)) java.lang.String)
                                                (str (get ast-namespace-qualified-type-aliasing ast-fn-name) "-str")
 
-                                               (= (:tag (first args)) clojure.lang.PersistentVector) 
+                                               (= (:tag (first args)) clojure.lang.PersistentVector)
                                                (str (get ast-namespace-qualified-type-aliasing ast-fn-name) "v")
 
                                                :else (str "int-" (get ast-namespace-qualified-type-aliasing ast-fn-name)))))
+
+;; main aliasing
     (contains? ast-aliasing ast-fn-name)
     (get ast-aliasing ast-fn-name)
-    
 
     :else ast-fn-name))
 
@@ -227,7 +261,6 @@
              :type (find-type the-vector (assoc ast :type :vector))}))
 
     ;; Handle if
-    ; could be merged w/ the static/invoke handling?
     (= op :if)
     (let [ast-fn-name 'if
           raw-decompiled-args (map decompile-ast (map ast children))
@@ -241,13 +274,10 @@
       (println "not handled yet AST op:" op)
       nil)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Testing
+
 (comment
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(or true false)))
-                     {:type 'boolean?})
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(< 4 5 8)))
-                     {:type 'boolean?})
-
 ;;;; Works with empty vectors (and empty maps!)
   (=
    '({:gene :lit, :type {:child {:sym T, :type :s-var}, :type :vector}, :val []})
@@ -292,16 +322,50 @@
   (compile-debugging (decompile-ast (ana.jvm/analyze '(abs 1000.0)))
                      {:type 'double?})
 
-  ;; NEW STUFF - Sydney
-  ; testing abs
-  (decompile-ast (ana.jvm/analyze '(abs -10)))
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(abs -10))) {:type 'int?})
+;;;; ADD THESE AS TESTS concat
+  (decompile-ast (ana.jvm/analyze '(concat [1 2] [3 4])))
 
-  (decompile-ast (ana.jvm/analyze '(abs -10.5)))
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(abs -10.5))) {:type 'double?})
+  (compile-debugging
+   (decompile-ast (ana.jvm/analyze '(concat [1 2] [3 4])))
+   {:child {:type 'int?} :type :vector})
 
-  ; testing sqrt 
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(Math/sqrt 9.0))) {:type 'double?})
+  (decompile-ast (ana.jvm/analyze '(concat (rest [1 2 3]) [3 4])))
+
+  (compile-debugging
+   (decompile-ast (ana.jvm/analyze '(concat (rest [1 2 3]) [3 4])))
+   {:child {:type 'int?} :type :vector})
+
+  ;;; ADD TESTS for str
+  (decompile-ast (ana.jvm/analyze '(str "hello" "world")))
+
+  (decompile-ast (ana.jvm/analyze '(str "hello" "world" "yay")))
+
+  (decompile-ast (ana.jvm/analyze '(str (+ 2 3))))
+
+  (ana.jvm/analyze '(str "hello" "world"))
+
+;; minus ADD TESTS
+  (decompile-ast (ana.jvm/analyze '(- 4 5)))
+
+  (decompile-ast (ana.jvm/analyze '(- 4)))
+
+  (decompile-ast (ana.jvm/analyze '(- 4.4)))
+
+  (decompile-ast (ana.jvm/analyze '(- 4.4 93.0)))
+
+  (decompile-ast (ana.jvm/analyze '(- 4 5 2)))
+
+  (decompile-ast (ana.jvm/analyze '(- 4 5 (- 2))))
+
+;;;; THESE DON'T WORK
+
+  (decompile-ast (ana.jvm/analyze '(nth [1 2 3] 2 5)))
+
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(or true false)))
+                     {:type 'boolean?})
+
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(< 4 5 8)))
+                     {:type 'boolean?})
 
   ;; testing if 
   ; !! does not work without the else condition 
@@ -314,8 +378,12 @@
      {:gene :var, :name if}
      {:gene :apply})
    {:type 'int?})
+
   (decompile-ast (ana.jvm/analyze '(if false 5 2)))
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(if false 5 2))) {:type 'int?})
+
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(if true 5 2)))
+                     {:type 'int?})
+
   ; problem: the above compile-decompile test does not compile correctly (defaults to true)
   ;          even though it gives the exact same (manually typed) genome as seen in the 
   ;          compile test (??? why.)
@@ -353,64 +421,10 @@
    {:type 'boolean?})
   ; also broken ;-;
 
-  (decompile-ast (ana.jvm/analyze '(if (= 0 1) true false)))
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(if (= 0 1) true false))) {:type 'boolean?})
+  (decompile-ast (ana.jvm/analyze '(if (= 0 1) false true)))
 
-;; String and Vector Functions
-  (ana.jvm/analyze '(first "Hello"))
-  (decompile-ast (ana.jvm/analyze '(rest "Hello")))
-  (decompile-ast (ana.jvm/analyze '(rest [1 2 3])))
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(rest [1 2 3])))
-                     {:child {:type 'int?} :type 'vector?})
-
-  (decompile-ast (ana.jvm/analyze '(empty? [])))
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(empty? "")))
-                     {:type 'boolean?})
-  (decompile-ast (ana.jvm/analyze '(empty? "")))
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(empty? [])))
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(if (= 0 1) false true)))
                      {:type 'boolean?})
 
-  (decompile-ast (ana.jvm/analyze '(last [1 2 3])))
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(last "String")))
-                     {:type 'char?})
-  (= (decompile-ast (ana.jvm/analyze '(last [1 2 3])))
-     '({:gene :lit, :type {:child {:type int?}, :type :vector}, :val [1 2 3]} {:gene :var, :name last} {:gene :apply}))
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(last [1 2 3]))) {:type 'int?})
-  (= (compile-debugging (decompile-ast (ana.jvm/analyze '(last [\C \a \t]))) {:type 'char?})
-     \t)
-
-  (decompile-ast (ana.jvm/analyze '(nth [1 2 3] 2 5)))
-  (decompile-ast (ana.jvm/analyze '(char 60)))
-  (ana.jvm/analyze '(print "Hello" "World"))
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(print "Hello" "World"))) {:type 'nil?})
-
-  (ana.jvm/analyze '(Math/pow 2 2))
-  (decompile-ast (ana.jvm/analyze '(Math/pow 2 3)))
-  (ana.jvm/analyze '(Math/pow 2.0 3.0))
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(Math/pow 2.0 3.0))) {:type 'double?})
-  (decompile-ast (ana.jvm/analyze '(rest [1 2 3])))
-  (ana.jvm/analyze '(rest [1 2 3]))
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(rest [1 2 3]))) {:child {:type 'int?} :type :vector})
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(- 0 1))) {:type 'int?})
-  (ana.jvm/analyze '(- 1))
-
-  (decompile-ast (ana.jvm/analyze '(concat [1 2] [3 4])))
-  (concat "Hello " "there")
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(concat "Hello " "there"))) {:child {:type 'char?} :type '?} true)
-  (decompile-ast (ana.jvm/analyze '(zero? 0)))
-  (decompile-ast (ana.jvm/analyze #{1 2 3}))
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze {[1 2] #{1 2} [3 4] #{3 4}}))
-                     '{:key {:child {:type int?}, :type :vector}, :type :map-of, :value {:child {:type int?}, :type :set}})
-  (ana.jvm/analyze {[1 2] #{1 2} {3 4} #{3 4}})
-
-  (=
-   (compile-debugging (decompile-ast (ana.jvm/analyze '(Math/ceil 4.5))) {:type 'double?})
-   5.0)
-  (= (compile-debugging (decompile-ast (ana.jvm/analyze '(Math/floor 4.5))) {:type 'double?})
-     4.0)
-
-  (Math/pow 2.5 2.5)
-;;;; Works with empty vectors (and empty maps!)
 
   )
