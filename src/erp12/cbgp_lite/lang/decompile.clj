@@ -1,5 +1,6 @@
 (ns erp12.cbgp-lite.lang.decompile
   (:require [clojure.tools.analyzer.jvm :as ana.jvm]
+            [clojure.walk :as walk]
             [erp12.cbgp-lite.lang.ast :as ast]
             [erp12.cbgp-lite.lang.compile :as co]
             [erp12.cbgp-lite.lang.lib :as lib]
@@ -162,7 +163,8 @@
    `lib/safe-log2
    `lib/double-square
    `lib/int-square
-   `lib/int-pow])
+   `lib/int-pow
+   'zero-double?])
 
 (def work-without-change
   ['not
@@ -272,15 +274,40 @@
   ;;  'concat "concat"
    })
 
+(defn find-local
+  "Takes a map or vec and recursively looks through it to find a map
+   with a key of :op and value of :local"
+  [map-or-vec]
+  (println (:tag map-or-vec))
+  (cond
+    (and (map? map-or-vec)
+         (= (:op map-or-vec) :local))
+    (do (println "local found! type whatever: " (:tag map-or-vec))
+      map-or-vec)
+
+    (map? map-or-vec)
+    (first (filter #(not (nil? %))
+                   (map find-local
+                        (vals map-or-vec))))
+
+    (vector? map-or-vec)
+    (first (filter #(not (nil? %))
+                   (map find-local
+                        map-or-vec)))
+
+    :else
+    nil))
+
 (defn get-fn-symbol
   "Finds the CBGP function name for this ast-fn-name"
-  [ast-fn-name tag args]
+  [ast-fn-name tag args task]
   (cond
     ;; Because of the phrasing, this needs to be hard coded
     (= ast-fn-name 'intCast)
     (if (= (str (:tag (first args))) "char")
       'char->int
       'int)
+    
     ;; functions with multiple arities to support
     (contains? ast-arity-aliasing ast-fn-name)
     (let [arity-map (get ast-arity-aliasing ast-fn-name)
@@ -288,14 +315,27 @@
                          (count args)
                          (get arity-map :default))]
       (if (contains? ast-number-aliasing fn-symbol)
-        (get-fn-symbol fn-symbol tag args)
+        (get-fn-symbol fn-symbol tag args task)
         fn-symbol))
 
     ;; numbers
     (contains? ast-number-aliasing ast-fn-name)
-    (symbol (str (if (= (str tag) "double")
-                   "double-" 
-                   "int-")
+    (symbol (str (cond
+                   (= (str tag) "double") "double-"
+                   (= (str tag) "long") "int-"
+                   (= tag java.lang.Long) "int-"
+                   (= tag java.lang.Integer) "int-"
+                   (= ast-fn-name 'div) "int-"
+
+                   ;; Handle local making it so we don't know the type
+                   ;; Note; defaults to int? even when the type isn't
+                   ;; double? or int? This may occasionally break things
+                   :else
+                   (if (= 'double?
+                          (:type (get (:input->type task)
+                                      (:form (find-local args)))))
+                     "double-"
+                     "int-"))
                  (get ast-number-aliasing ast-fn-name)))
 
     ;; Vector stuff
@@ -307,18 +347,18 @@
                  (if (= 'empty? ast-fn-name)
                    "?"
                    "")))
-    
+
     ;;Vector-set-map
     (contains? ast-collection-aliasing ast-fn-name)
     (symbol (str (get ast-collection-aliasing ast-fn-name)
-                 (cond 
+                 (cond
                    (vector? (:val (first args)))
                    "-vec"
                    (set? (:val (first args)))
                    "-set"
                    (map? (:val (first args)))
                    "-map")))
-    
+
     ;; rest only right now?
     (contains? ast-namespace-qualified-type-aliasing ast-fn-name)
     (symbol "erp12.cbgp-lite.lang.lib" (cond (get ast-namespace-qualified-type-aliasing ast-fn-name)
@@ -333,8 +373,8 @@
                                                (str (get ast-namespace-qualified-type-aliasing ast-fn-name) "v")
 
                                                :else (str "int-" (get ast-namespace-qualified-type-aliasing ast-fn-name)))))
-
-;; main aliasing
+    
+    ;; main aliasing
     (contains? ast-aliasing ast-fn-name)
     (get ast-aliasing ast-fn-name)
 
@@ -404,7 +444,7 @@
            raw-decompiled-args (map decompile-ast args)
            decompiled-args (flatten (reverse raw-decompiled-args))]
        (concat decompiled-args
-               (list {:gene :var :name (get-fn-symbol ast-fn-name tag args)}
+               (list {:gene :var :name (get-fn-symbol ast-fn-name tag args task)}
                      {:gene :apply})))
 
     ;; Handle quote for lists; translate into vector
@@ -420,7 +460,7 @@
            raw-decompiled-args (map decompile-ast (map ast children))
            decompiled-args (flatten (reverse raw-decompiled-args))]
        (concat decompiled-args
-               (list {:gene :var :name (get-fn-symbol ast-fn-name tag args)}
+               (list {:gene :var :name (get-fn-symbol ast-fn-name tag args task)}
                      {:gene :apply})))
 
     ;; Handle anonymous function abstraction
@@ -447,7 +487,7 @@
 (comment
 
 ;;;; THESE DON'T WORK 
-  
+
   (decompile-ast (ana.jvm/analyze '(nth [1 2 3] 2 5)))
 
   (compile-debugging (decompile-ast (ana.jvm/analyze '(or true false)))
@@ -457,7 +497,7 @@
                      {:type 'boolean?})
 
   ;;; misc stuff
-  
+
   (ana.jvm/analyze '(fn [x] (+ x 1)))
 
   (map (fn [x] (+ x 1))
@@ -471,7 +511,7 @@
     :methods
     first
     :body))
-  
+
   (->
    (ana.jvm/analyze '(defn help [input1 input2 input3] (+ input3 input2)))
    :init
@@ -480,26 +520,62 @@
    first
    :body)
 
-
   (macroexpand-1 '(defn help [input1] (inc input1)))
 
   (decompile-ast
    (ana.jvm/analyze '(defn help [input1] (inc input1)))
    {:input->type {'input1 {:type 'int?}}
     :ret-type {:type 'int?}})
-  
+
   (decompile-ast
    (ana.jvm/analyze '(defn help [input1 input2] (+ input1 input2)))
+   {:input->type {'input1 {:type 'int?}
+                  'input2 {:type 'int?}}
+    :ret-type {:type 'int?}})
+
+  ;;; strangely broken - because it needs to call find-local since it doesn't know the type of input2
+  ;;; but it finds input1 first
+  (decompile-ast
+   (ana.jvm/analyze '(defn help [input1 input2] (+ (int input1) input2)))
+   {:input->type {'input1 {:type 'double?}
+                  'input2 {:type 'int?}}
+    :ret-type {:type 'int?}})
+
+  ;; this works
+  (decompile-ast
+   (ana.jvm/analyze '(defn help [input1 input2] (+ (int input1) (int input2))))
    {:input->type {'input1 {:type 'double?}
                   'input2 {:type 'double?}}
-    :ret-type {:type 'double?}})
+    :ret-type {:type 'int?}})
   
+  (decompile-ast
+   (ana.jvm/analyze '(defn help [input1 input2] (+ (count input1) input2)))
+   {:input->type {'input1 {:type 'string?}
+                  'input2 {:type 'int?}}
+    :ret-type {:type 'int?}})
+
+  (compile-debugging2 (decompile-ast
+                       (ana.jvm/analyze '(defn help [input1 input2] (+ input1 input2)))
+                       {:input->type {'input1 {:type 'double?}
+                                      'input2 {:type 'double?}}
+                        :ret-type {:type 'double?}})
+                      {:input->type {'input1 {:type 'double?}
+                                     'input2 {:type 'double?}}
+                       :ret-type {:type 'double?}}
+                      [5.2 10.0])
 
   '(+ (+ input1 input2) (- input1 input2))
 
   (decompile-ast (ana.jvm/analyze '(+ (+ 2.2 3.3) (+ 4.4 5.5))))
 
   (ana.jvm/analyze '(+ (+ 2.2 3.3) (+ 4.4 5.5)))
+
+  (ana.jvm/analyze '(defn my-first [x] (first x)))
+
+  (ana.jvm/analyze '(defn my-first [x] (+ (/ x 2) 5.5)))
+
+  (ana.jvm/analyze '(defn what [input1zzz] (map (fn [xzzz] (inc xzzz))
+                                                input1zzz)))
 
   '{:children [:meta :init],
     :meta
@@ -848,6 +924,58 @@
      :tag java.lang.Number,
      :validated? true,
      :raw-forms ((do (inc input1)) (inc input1))}}
-  
+
+  ;;; passed recursively
+  (def the-body
+    '{:args
+      [{:children [],
+        :name input1__#0,
+        :op :local,
+        :env
+        {:loop-locals 1,
+         :locals {input1 {:form input1, :name input1, :variadic? false, :op :binding, :arg-id 0, :local :arg}},
+         :ns erp12.cbgp-lite.lang.decompile,
+         :loop-id loop_19913,
+         :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
+         :column 42,
+         :line 455,
+         :once false,
+         :context :ctx/expr},
+        :o-tag java.lang.Object,
+        :variadic? false,
+        :arg-id 0,
+        :form input1,
+        :tag java.lang.Object,
+        :atom :f ; #<Atom@719d22ab: {:tag java.lang.Object}>,
+        :local :arg,
+        :assignable? false}],
+      :children [:args],
+      :body? true,
+      :method inc,
+      :op :static-call,
+      :env
+      {:loop-locals 1,
+       :locals {input1 {:form input1, :name input1, :variadic? false, :op :binding, :arg-id 0, :local :arg}},
+       :ns erp12.cbgp-lite.lang.decompile,
+       :loop-id loop_19913,
+       :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
+       :column 42,
+       :line 455,
+       :once false,
+       :context :ctx/return},
+      :o-tag java.lang.Number,
+      :class clojure.lang.Numbers,
+      :form (. clojure.lang.Numbers (inc input1)),
+      :tag java.lang.Number,
+      :validated? true,
+      :raw-forms ((do (inc input1)) (inc input1))})
+
+
+  (find-local the-body)
+
+  (find-local (ana.jvm/analyze '(defn help [input1 input2] (+ input2 input1))))
 
   )
+
+
+
