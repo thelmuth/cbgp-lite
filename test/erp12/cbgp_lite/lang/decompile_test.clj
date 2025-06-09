@@ -1074,6 +1074,62 @@
                                {:type 'nil?})
          nil)))
   
+
+(deftest decompile-locals-collection-test
+  ;; first w/ locals
+  (is (= (de/decompile-ast (ana.jvm/analyze '(defn my-first [input1] (first input1)))
+                        {:input->type {'input1 {:type 'string?}}
+                         :ret-type {:type 'char?}})
+         '({:gene :local, :idx 0} {:gene :var, :name first-str} {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(defn my-first [input1] (first input1))) 
+                           {:input->type {'input1 {:type :vector :child {:type 'int?}}} 
+                            :ret-type {:type 'int?}}) 
+         '({:gene :local, :idx 0} {:gene :var, :name first} {:gene :apply}))) 
+  
+  ;; last w/ locals
+  (is (= (de/decompile-ast (ana.jvm/analyze '(defn my-first [input1] (last input1)))
+                           {:input->type {'input1 {:type 'string?}}
+                            :ret-type {:type 'char?}})
+         '({:gene :local, :idx 0} {:gene :var, :name last-str} {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(defn my-first [input1] (last input1)))
+                           {:input->type {'input1 {:type :vector :child {:type 'int?}}}
+                            :ret-type {:type 'int?}})
+         '({:gene :local, :idx 0} {:gene :var, :name last} {:gene :apply}))) 
+  )
+
+(deftest decompile-recompile-locals-collection-test
+  ;; first w/ locals
+  (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn my-first [input1] (first input1))) 
+                                                  {:input->type {'input1 {:type 'string?}}
+                                                   :ret-type {:type 'char?}})
+                                {:input->type {'input1 {:type 'string?}}
+                                 :ret-type {:type 'char?}}
+                                ["Hello"])
+         \H))
+  (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn my-first [input1] (first input1)))
+                                                  {:input->type {'input1 {:type :vector :child {:type 'double?}}}
+                                                   :ret-type {:type 'int?}})
+                                {:input->type {'input1 {:type :vector :child {:type 'double?}}}
+                                 :ret-type {:type 'double?}}
+                                [[1.6 3.2 6.4 12.8]])
+         1.6))
+  
+  ;; last w/ locals
+  (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn my-first [input1] (last input1)))
+                                                  {:input->type {'input1 {:type 'string?}}
+                                                   :ret-type {:type 'char?}})
+                                {:input->type {'input1 {:type 'string?}}
+                                 :ret-type {:type 'char?}}
+                                ["Hello"])
+         \o))
+  (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn my-first [input1] (last input1)))
+                                                  {:input->type {'input1 {:type :vector :child {:type 'double?}}}
+                                                   :ret-type {:type 'int?}})
+                                {:input->type {'input1 {:type :vector :child {:type 'double?}}}
+                                 :ret-type {:type 'double?}}
+                                [[1.6 3.2 6.4 12.8]])
+         12.8))
+  )
   
 
   
