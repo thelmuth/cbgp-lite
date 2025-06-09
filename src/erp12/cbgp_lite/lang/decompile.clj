@@ -443,11 +443,10 @@
 ;;; Testing
 
 (comment
-  
+
   (compile-debugging (decompile-ast (ana.jvm/analyze '(nth [1.0 2.0 3.0] 10 4.04)))
                      {:type 'double?})
 ;;;; THESE DON'T WORK
-  
   
   (decompile-ast (ana.jvm/analyze '(nth [1 2 3] 2 5)))
 
@@ -472,7 +471,7 @@
     :methods
     first
     :body))
-  
+
   (->
    (ana.jvm/analyze '(defn help [input1 input2 input3] (+ input3 input2)))
    :init
@@ -481,20 +480,18 @@
    first
    :body)
 
-
   (macroexpand-1 '(defn help [input1] (inc input1)))
 
   (decompile-ast
    (ana.jvm/analyze '(defn help [input1] (inc input1)))
    {:input->type {'input1 {:type 'int?}}
     :ret-type {:type 'int?}})
-  
+
   (decompile-ast
    (ana.jvm/analyze '(defn help [input1 input2] (+ input1 input2)))
    {:input->type {'input1 {:type 'double?}
                   'input2 {:type 'double?}}
     :ret-type {:type 'double?}})
-  
 
   '(+ (+ input1 input2) (- input1 input2))
 
@@ -849,19 +846,41 @@
      :tag java.lang.Number,
      :validated? true,
      :raw-forms ((do (inc input1)) (inc input1))}}
-  
-
-
-
 
   (compile-debugging (decompile-ast (ana.jvm/analyze '(nth [1 2 3 4] 6 10)))
                      {:type 'int?})
-  
 
   (->
    (ana.jvm/analyze '(defn help [input1] (inc input1)))
    :init
    :expr
    :methods)
+  (->
+   (ana.jvm/analyze '(defn help [input1] (inc (+ 1 input1))))
+   :init
+   :expr
+   :methods
+   first
+   :body
+   :args)
+
+  (defn example [x] (+ (/ x 2) 5.0))
+  (example 3)
+  
+  
+
+
+  (ana.jvm/analyze '(defn help [input1 input2]
+    (+ (int input1) input2)))
+  
+  (-> (ana.jvm/analyze '(defn help [input1 input2]
+                      (+ (int input1) input2)))
+      :init
+      :expr
+      :methods
+      first
+      :body
+      :args
+      first)
   )
 
