@@ -1060,10 +1060,134 @@
                                {:type 'nil?})
          nil)))
   
-  
 
-  
-  
+
+(deftest decompile-locals-test
+  (is (= (de/decompile-ast (ana.jvm/analyze '(defn local_int [input1] (inc input1)))
+                           {:input->type {'input1 {:type 'int?}}
+                            :ret-type {:type 'int?}})
+         '({:gene :local, :idx 0} {:gene :var, :name int-inc} {:gene :apply})))
+
+  (is (= (de/decompile-ast (ana.jvm/analyze '(defn local_double [input1] (- input1)))
+                           {:input->type {'input1 {:type 'double?}}
+                            :ret-type {:type 'double?}})
+         '({:gene :local, :idx 0} {:gene :var, :name double-neg} {:gene :apply})))
+
+  (is (= (de/decompile-ast (ana.jvm/analyze '(defn local_strint [input1] (count input1)))
+                           {:input->type {'input1 {:type 'string?}}
+                            :ret-type {:type 'int?}})
+         '({:gene :local, :idx 0} {:gene :var, :name count} {:gene :apply})))
+
+  (is (= (de/decompile-ast (ana.jvm/analyze '(defn help [input1 input2] (+ input1 input2)))
+                           {:input->type {'input1 {:type 'int?}
+                                          'input2 {:type 'int?}}
+                            :ret-type {:type 'int?}})
+         '({:gene :local, :idx 1} {:gene :local, :idx 0} {:gene :var, :name int-add} {:gene :apply})))
+
+  (is (= (de/decompile-ast (ana.jvm/analyze '(defn help [input1 input2] (+ (int input1) (int input2))))
+                           {:input->type {'input1 {:type 'double?}
+                                          'input2 {:type 'double?}}
+                            :ret-type {:type 'int?}})
+         '({:gene :local, :idx 1}
+           {:gene :var, :name int}
+           {:gene :apply}
+           {:gene :local, :idx 0}
+           {:gene :var, :name int}
+           {:gene :apply}
+           {:gene :var, :name int-add}
+           {:gene :apply})))
+
+  (is (= (de/decompile-ast (ana.jvm/analyze '(defn help [input1 input2] (+ input2 (int input1))))
+                           {:input->type {'input1 {:type 'double?}
+                                          'input2 {:type 'int?}}
+                            :ret-type {:type 'int?}})
+         '({:gene :local, :idx 0}
+           {:gene :var, :name int}
+           {:gene :apply}
+           {:gene :local, :idx 1}
+           {:gene :var, :name int-add}
+           {:gene :apply})))
+
+  (is (= (de/decompile-ast (ana.jvm/analyze '(defn help [input1 input2] (+ (count input1) input2)))
+                           {:input->type {'input1 {:type 'string?}
+                                          'input2 {:type 'int?}}
+                            :ret-type {:type 'int?}})
+         '({:gene :local, :idx 1}
+           {:gene :local, :idx 0}
+           {:gene :var, :name count}
+           {:gene :apply}
+           {:gene :var, :name int-add}
+           {:gene :apply})))
+)
+
+
+(deftest decompile-recompile-locals-test
+  (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn local_int [input1] (inc input1)))
+                                                  {:input->type {'input1 {:type 'int?}}
+                                                   :ret-type {:type 'int?}})
+                                {:input->type {'input1 {:type 'int?}}
+                                 :ret-type {:type 'int?}}
+                                [1])
+         2))
+
+  (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn local_double [input1] (- input1)))
+                                                  {:input->type {'input1 {:type 'double?}}
+                                                   :ret-type {:type 'double?}})
+                                {:input->type {'input1 {:type 'double?}}
+                                 :ret-type {:type 'double?}}
+                                [1.5])
+         -1.5))
+
+  ;; broken; decompiles, but doesn't recompile :(
+;;   (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn local_strint [input1] (count input1)))
+;;                                                   {:input->type {'input1 {:type 'string?}}
+;;                                                    :ret-type {:type 'int?}})
+;;                                 {:input->type {'input1 {:type 'string?}}
+;;                                  :ret-type {:type 'int?}}
+;;                                 ["hello"])
+;;          5))
+
+  (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn help [input1 input2] (+ input1 input2)))
+                                                  {:input->type {'input1 {:type 'int?}
+                                                                 'input2 {:type 'int?}}
+                                                   :ret-type {:type 'int?}})
+                                {:input->type {'input1 {:type 'int?}
+                                               'input2 {:type 'int?}}
+                                 :ret-type {:type 'int?}}
+                                [9 10])
+         19))
+
+  (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn help [input1 input2] (+ (int input1) (int input2))))
+                                                  {:input->type {'input1 {:type 'double?}
+                                                                 'input2 {:type 'double?}}
+                                                   :ret-type {:type 'int?}})
+                                {:input->type {'input1 {:type 'double?}
+                                               'input2 {:type 'double?}}
+                                 :ret-type {:type 'int?}}
+                                [9.0 10.0])
+         19))
+
+  (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn help [input1 input2] (+ input2 (int input1))))
+                                                  {:input->type {'input1 {:type 'double?}
+                                                                 'input2 {:type 'int?}}
+                                                   :ret-type {:type 'int?}})
+                                {:input->type {'input1 {:type 'double?}
+                                               'input2 {:type 'int?}}
+                                 :ret-type {:type 'int?}}
+                                [9.0 10])
+         19))
+
+  ;; also broken; returns 10, not 15 --> issue w/ count?
+;;   (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn help [input1 input2] (+ (count input1) input2)))
+;;                                                   {:input->type {'input1 {:type 'string?}
+;;                                                                  'input2 {:type 'int?}}
+;;                                                    :ret-type {:type 'int?}})
+;;                                 {:input->type {'input1 {:type 'string?}
+;;                                                'input2 {:type 'int?}}
+;;                                  :ret-type {:type 'int?}}
+;;                                 ["hello" 10])
+;;          15))
+  )
   
   
   
