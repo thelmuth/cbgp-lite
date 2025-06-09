@@ -82,14 +82,13 @@
                      {:gene :var
                       :name 'count-vec} ;; count the filtered vector
                      {:gene :apply}) ;; apply count
-                     ]
+        ]
     (compile-debugging2 genome
                         task
                         [[8 3 2 5 7 0 11]]
                         true))
 
-  
-  ;;; Test for  Smallest problem 
+;;; Test for  Smallest problem 
   (let [task {:input->type {'input1 {:type 'int?}
                             'input2 {:type 'int?}
                             'input3 {:type 'int?}
@@ -111,13 +110,12 @@
                  :idx 3}
                 {:gene :var
                  :name `lib/min'}
-                {:gene :apply}]
-        ]
+                {:gene :apply}]]
     (compile-debugging2 genome
                         task
                         [5 6 -33 9]
                         true))
-  
+
   ;; Test for Number IO
   (let [task {:input->type {'input1 {:type 'double?}
                             'input2 {:type 'int?}}
@@ -138,11 +136,7 @@
     (compile-debugging2 genome
                         task
                         [100.23 33]
-                        true))
-
-
-  )
-
+                        true)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;; Below here is work on decompiling
@@ -162,16 +156,16 @@
    `lib/safe-log2
    `lib/double-square
    `lib/int-square
-   `lib/int-pow
-
-  ]
-  
-  )
+   `lib/int-pow])
 
 (def work-without-change
   ['not
    'not=
-   'if])
+   'if
+   'print
+   'println
+   'assoc
+   'merge])
 
 (def ast-aliasing
   {'lt `lib/<'
@@ -186,13 +180,14 @@
 
    'isZero 'zero-int?
    'sqrt `lib/safe-sqrt
+   'pow `lib/double-pow
    'sin `lib/sin
    'cos `lib/cos
    'tan `lib/tan
    'asin `lib/safe-asin
    'acos `lib/safe-acos
    'atan `lib/atan
-   'log10 `lib/log10
+   'log10 `lib/safe-log10
    'ceil `lib/ceil
    'floor `lib/floor
    ;; CBGP has log2 and square, which don't exist in clojure
@@ -203,7 +198,10 @@
    'isLetter `lib/letter?
 
    'concat `lib/concatv
-   })
+   'vals `lib/vals-vec
+   ;; There is a keys-set, which returns as a set
+   ;; but I don't think Clojure has this functionality
+   'keys `lib/keys-vec})
 
 (def ast-number-aliasing
   {'add "add"
@@ -213,7 +211,7 @@
    'quotient "quot"
    'mod "mod"
    'inc "inc"
-   'dec "dec" 
+   'dec "dec"
    'neg "neg" ; minus w/ one arg
    'abs "abs"
 
@@ -224,7 +222,7 @@
    ; 'floor "floor", implemented for doubles
 
    ;;; other adhoc polymorphic methods
-   ; 'intCast 'int
+   'intCast 'int
    ; 'intCast 'char->int
    })
 
@@ -244,20 +242,27 @@
   ;; 'rest "`lib/rest"
    })
 
+(def ast-collection-aliasing
+  {'count "count"
+  ;;  'reduce "reduce"
+  ;;  'fold "fold"
+   })
+
 (def ast-arity-aliasing
   {'str {1 'str
          2 `lib/concat-str
          :default `lib/concat-str}
    'minus {1 'neg
-           2 'sub}
+           2 'sub
+           :default 'sub}
+  ;;  'reduce {2 'reduce
+  ;;           3 'fold}
    })
-
 
 ;; Concat does not work yet because it is supposed to 
 ;; return a lazySeq
 (def ast-namespace-qualified-type-aliasing
-  {'pow "pow"
-   'rest "rest" 
+  {'rest "rest"
   ;;  'concat "concat"
    })
 
@@ -265,6 +270,11 @@
   "Finds the CBGP function name for this ast-fn-name"
   [ast-fn-name tag args]
   (cond
+    ;; Because of the phrasing, this needs to be hard coded
+    (= ast-fn-name 'intCast)
+    (if (= (str (:tag (first args))) "char")
+      'char->int
+      'int)
     ;; functions with multiple arities to support
     (contains? ast-arity-aliasing ast-fn-name)
     (let [arity-map (get ast-arity-aliasing ast-fn-name)
@@ -292,6 +302,16 @@
                    "?"
                    "")))
 
+    ;;Vector-set-map
+    (contains? ast-collection-aliasing ast-fn-name)
+    (symbol (str (get ast-collection-aliasing ast-fn-name)
+                 (cond
+                   (vector? (:val (first args)))
+                   "-vec"
+                   (set? (:val (first args)))
+                   "-set"
+                   (map? (:val (first args)))
+                   "-map")))
     ;; rest only right now?
     (contains? ast-namespace-qualified-type-aliasing ast-fn-name)
     (symbol "erp12.cbgp-lite.lang.lib" (cond (get ast-namespace-qualified-type-aliasing ast-fn-name)
@@ -324,6 +344,7 @@
     (string? val) {:type 'string?}
     (char? val) {:type 'char?}
     (keyword? val) {:type 'keyword?}
+    (symbol? val) {:type 'symbol?}
     (nil? val) {:type 'nil?}
 
     ;; Vectors and sets
@@ -347,9 +368,9 @@
                                 (ana.jvm/analyze (second (first val)))))]
       {:type :map-of :key key-type :value val-type})
 
-              :else (throw (Exception.
-                            (str "AST contains a type that shouldn't be possible: "
-                                 ast)))))
+    :else (throw (Exception.
+                  (str "AST contains a type that shouldn't be possible: "
+                       ast)))))
 
 (defn decompile-ast
   "Decompiles AST into a CBGP genome."
@@ -402,9 +423,9 @@
 ;;; Testing
 
 (comment
-;;;; THESE DON'T WORK
-  
-  
+
+;;;; THESE DON'T WORK 
+
   (decompile-ast (ana.jvm/analyze '(nth [1 2 3] 2 5)))
 
   (compile-debugging (decompile-ast (ana.jvm/analyze '(or true false)))
@@ -413,4 +434,5 @@
   (compile-debugging (decompile-ast (ana.jvm/analyze '(< 4 5 8)))
                      {:type 'boolean?})
 
-  )
+  ;;; misc stuff
+  (ana.jvm/analyze '(defn help [x] (println x))))
