@@ -690,13 +690,13 @@
            {:gene :var, :name erp12.cbgp-lite.lang.lib/safe-log10}
            {:gene :apply})))
   
-  (is (= (de/decompile-ast (ana.jvm/analyze '(Math/sqrt 16)))
-         '({:gene :lit, :type {:type int?}, :val 16}
+  (is (= (de/decompile-ast (ana.jvm/analyze '(Math/sqrt 16.0)))
+         '({:gene :lit, :type {:type double?}, :val 16.0}
            {:gene :var, :name erp12.cbgp-lite.lang.lib/safe-sqrt}
            {:gene :apply})))
   
-  (is (= (de/decompile-ast (ana.jvm/analyze '(Math/sqrt -1)))
-         '({:gene :lit, :type {:type int?}, :val -1}
+  (is (= (de/decompile-ast (ana.jvm/analyze '(Math/sqrt -1.0)))
+         '({:gene :lit, :type {:type double?}, :val -1.0}
            {:gene :var, :name erp12.cbgp-lite.lang.lib/safe-sqrt}
            {:gene :apply})))
 
@@ -904,7 +904,15 @@
            {:gene :var, :name int-add}
            {:gene :apply}
            {:gene :var, :name str}
-           {:gene :apply}))))
+           {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(nth [1.0 2.0 3.0] 10 4.04)))
+         '({:gene :lit, :type {:type double?}, :val 4.04}
+          {:gene :lit, :type {:type int?}, :val 10}
+          {:gene :lit, :type {:child {:type double?}, :type :vector}, :val [1.0 2.0 3.0]}
+          {:gene :var, :name nth-or-else}
+          {:gene :apply})))
+  
+  )
   
 
 (deftest decompile-recompile-collections-test
@@ -998,8 +1006,6 @@
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(merge {"a" 1} {"b" 2})))
          '{:type :map-of :key {:type string?} :value {:type int?}})
          {"a" 1 "b" 2}))
-  
-  )
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(str "hello" "world")))
                                {:type 'string?})
          "helloworld"))
@@ -1009,7 +1015,15 @@
            "helloworldyay"))
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(str (+ 2 3))))
                                {:type 'string?})
-         "5"))
+         "5")) 
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(nth ["Hi" "Hey" "Hello"] 1)))
+                            {:type 'string?})
+         "Hey"))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(nth [1 2 3 4] 5 404)))
+                               {:type 'int?})
+         404))
+  )
+  
   
 (deftest decompile-misc-test 
   ; if

@@ -4,7 +4,8 @@
             [erp12.cbgp-lite.lang.compile :as co]
             [erp12.cbgp-lite.lang.lib :as lib]
             [erp12.cbgp-lite.search.plushy :as pl]
-            [erp12.cbgp-lite.task :as tsk]))
+            [erp12.cbgp-lite.task :as tsk]
+            [clojure.tools.analyzer :as ana]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;; Compilation testing
@@ -82,12 +83,11 @@
                      {:gene :var
                       :name 'count-vec} ;; count the filtered vector
                      {:gene :apply}) ;; apply count
-                     ]
+        ]
     (compile-debugging2 genome
                         task
                         [[8 3 2 5 7 0 11]]
                         true))
-
   
   ;;; Test for  Smallest problem 
   (let [task {:input->type {'input1 {:type 'int?}
@@ -138,9 +138,7 @@
     (compile-debugging2 genome
                         task
                         [100.23 33]
-                        true))
-
-
+                        true)) 
   )
 
 
@@ -234,10 +232,8 @@
 
 (def ast-str-vec-aliasing
   {'first "first"
-   'last "last"
-  ;; nth has strange naming conventions, 
-  ;; nth-str and nth-or-else.
-  ;;'nth
+   'last "last" 
+   'nth 'nth
    'empty? "empty"
 
   ;; Same Namespace issues as in ast-number-aliasing
@@ -261,12 +257,14 @@
    'minus {1 'neg
            2 'sub
            :default 'sub}
+   ; Does not work on strings
+   'nth {2 `lib/safe-nth
+         3 'nth-or-else}
+   
   ;;  'reduce {2 'reduce
   ;;           3 'fold}
    })
 
-;; Concat does not work yet because it is supposed to 
-;; return a lazySeq
 (def ast-namespace-qualified-type-aliasing
   {'rest "rest"
   ;;  'concat "concat"
@@ -429,6 +427,9 @@
 ;;; Testing
 
 (comment
+  
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(nth [1.0 2.0 3.0] 10 4.04)))
+                     {:type 'double?})
 ;;;; THESE DON'T WORK
   
   
@@ -442,4 +443,17 @@
   
   ;;; misc stuff
   (ana.jvm/analyze '(defn help [x] (println x)))
+
+
+
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(nth [1 2 3 4] 6 10)))
+                     {:type 'int?})
+  
+
+  (->
+   (ana.jvm/analyze '(defn help [input1] (inc input1)))
+   :init
+   :expr
+   :methods)
   )
+
