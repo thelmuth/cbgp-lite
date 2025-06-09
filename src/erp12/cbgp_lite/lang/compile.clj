@@ -364,6 +364,10 @@
   [{:keys [push locals ret-type type-env dealiases state-output-fn record-sketch?]
     :or   {dealiases      lib/dealiases
            record-sketch? false}}]
+  
+  ;; (println "----")
+  ;; (println "starting!!!")
+  ;; (println "--------")
   (let [state-output-fn (or state-output-fn default-state-output-fn)]
     (loop [state (assoc empty-state
                    ;; Ensure a list
@@ -380,6 +384,12 @@
           ast)
         (let [{:keys [push-unit state]} (pop-push-unit state)]
           (log/trace "Current:" push-unit (state->log state))
+          ;; (println)
+          ;; (println "GENE:" push-unit)
+          ;; (println "LOCALS:" (:locals state))
+          ;; (println "ASTs:" (:asts state))
+          ;; (println "RET-TYPE:" (:ret-type state))
+          
           (recur (compile-step {:push-unit push-unit
                                 :type-env  type-env
                                 :state     state})))))))

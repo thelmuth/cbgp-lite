@@ -3,7 +3,8 @@
             [erp12.cbgp-lite.lang.ast :as ast]
             [erp12.cbgp-lite.lang.compile :as co]
             [erp12.cbgp-lite.lang.lib :as lib]
-            [erp12.cbgp-lite.search.plushy :as pl]))
+            [erp12.cbgp-lite.search.plushy :as pl]
+            [erp12.cbgp-lite.task :as tsk]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;; Compilation testing
@@ -23,6 +24,125 @@
          _ (when verbose (println "FORM:" form))
          func (ast/form->fn [] form)]
      (func))))
+
+(defn compile-debugging2
+  ([genome task]
+   (compile-debugging2 genome task []))
+
+  ([genome task args]
+   (compile-debugging2 genome task args false))
+
+  ([genome task args verbose]
+   (let [enhanced-task (tsk/enhance-task task)
+         locals (:arg-symbols enhanced-task)
+         _ (when verbose (println "PLUSHY:" genome))
+         push (pl/plushy->push genome)
+         _ (when verbose (println "PUSH:" push))
+         ast (::co/ast (co/push->ast
+                        (assoc
+                         enhanced-task
+                         :locals locals
+                         :push push
+                         :type-env (merge (:type-env enhanced-task)
+                                          lib/type-env))))
+         _ (when verbose (println "AST:" ast))
+         form (ast/ast->form ast)
+         _ (when verbose (println "FORM:" form))
+         func (ast/form->fn locals form)]
+     (apply func args))))
+
+(comment
+
+  ;;; Test for Count Odds problem
+  (let [task {:input->type {'input1 {:type :vector :child {:type 'int?}}}
+              :ret-type {:type 'int?}}
+        genome (list {:gene :local ;; arg to the function (vec)
+                      :idx 0}
+                     {:gene :fn    ;; create an anon fn
+                      :arg-types [lib/INT]
+                      :ret-type lib/BOOLEAN}
+                     {:gene :lit   ;; 2 (in anon fn)
+                      :val 2
+                      :type {:type 'int?}}
+                     {:gene :local ;; arg to the anon fn (int)
+                      :idx 1}
+                     {:gene :var   ;; mod in anon fn
+                      :name 'int-mod}
+                     {:gene :apply} ;; apply mod
+                     {:gene :lit ;;; 1
+                      :val 1
+                      :type {:type 'int?}}
+                     {:gene :var  ;; = (of modded input and 1)
+                      :name '=}
+                     {:gene :apply} ;; apply =
+                     {:gene :close} ;; end anon fn
+                     {:gene :var
+                      :name 'filterv} ;; call filter on anon fn and vector input
+                     {:gene :apply} ;; apply filter
+                     {:gene :var
+                      :name 'count-vec} ;; count the filtered vector
+                     {:gene :apply}) ;; apply count
+                     ]
+    (compile-debugging2 genome
+                        task
+                        [[8 3 2 5 7 0 11]]
+                        true))
+
+  
+  ;;; Test for  Smallest problem 
+  (let [task {:input->type {'input1 {:type 'int?}
+                            'input2 {:type 'int?}
+                            'input3 {:type 'int?}
+                            'input4 {:type 'int?}}
+              :ret-type {:type 'int?}}
+        genome [{:gene :local
+                 :idx 0}
+                {:gene :local
+                 :idx 1}
+                {:gene :var
+                 :name `lib/min'}
+                {:gene :apply}
+                {:gene :local
+                 :idx 2}
+                {:gene :var
+                 :name `lib/min'}
+                {:gene :apply}
+                {:gene :local
+                 :idx 3}
+                {:gene :var
+                 :name `lib/min'}
+                {:gene :apply}]
+        ]
+    (compile-debugging2 genome
+                        task
+                        [5 6 -33 9]
+                        true))
+  
+  ;; Test for Number IO
+  (let [task {:input->type {'input1 {:type 'double?}
+                            'input2 {:type 'int?}}
+              :ret-type {:type 'string?}}
+        genome (list {:gene :local
+                      :idx 1}
+                     {:gene :var
+                      :name 'double}
+                     {:gene :apply}
+                     {:gene :local
+                      :idx 0}
+                     {:gene :var
+                      :name 'double-add}
+                     {:gene :apply}
+                     {:gene :var
+                      :name 'str}
+                     {:gene :apply})]
+    (compile-debugging2 genome
+                        task
+                        [100.23 33]
+                        true))
+
+
+  )
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;; Below here is work on decompiling
@@ -269,6 +389,10 @@
               (list {:gene :var :name (get-fn-symbol ast-fn-name tag args)}
                     {:gene :apply})))
 
+    ;; Handle anonymous function abstraction
+    (= op :fn)
+    nil
+
     :else
     (do
       (println "not handled yet AST op:" op)
@@ -363,6 +487,7 @@
 
 
 ;;;; THESE DON'T WORK
+  
   
   (decompile-ast (ana.jvm/analyze '(nth [1 2 3] 2 5)))
 
