@@ -690,13 +690,13 @@
            {:gene :var, :name erp12.cbgp-lite.lang.lib/safe-log10}
            {:gene :apply})))
   
-  (is (= (de/decompile-ast (ana.jvm/analyze '(Math/sqrt 16)))
-         '({:gene :lit, :type {:type int?}, :val 16}
+  (is (= (de/decompile-ast (ana.jvm/analyze '(Math/sqrt 16.0)))
+         '({:gene :lit, :type {:type double?}, :val 16.0}
            {:gene :var, :name erp12.cbgp-lite.lang.lib/safe-sqrt}
            {:gene :apply})))
   
-  (is (= (de/decompile-ast (ana.jvm/analyze '(Math/sqrt -1)))
-         '({:gene :lit, :type {:type int?}, :val -1}
+  (is (= (de/decompile-ast (ana.jvm/analyze '(Math/sqrt -1.0)))
+         '({:gene :lit, :type {:type double?}, :val -1.0}
            {:gene :var, :name erp12.cbgp-lite.lang.lib/safe-sqrt}
            {:gene :apply})))
 
@@ -904,7 +904,15 @@
            {:gene :var, :name int-add}
            {:gene :apply}
            {:gene :var, :name str}
-           {:gene :apply}))))
+           {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(nth [1.0 2.0 3.0] 10 4.04)))
+         '({:gene :lit, :type {:type double?}, :val 4.04}
+          {:gene :lit, :type {:type int?}, :val 10}
+          {:gene :lit, :type {:child {:type double?}, :type :vector}, :val [1.0 2.0 3.0]}
+          {:gene :var, :name nth-or-else}
+          {:gene :apply})))
+  
+  )
   
 
 (deftest decompile-recompile-collections-test
@@ -998,8 +1006,6 @@
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(merge {"a" 1} {"b" 2})))
          '{:type :map-of :key {:type string?} :value {:type int?}})
          {"a" 1 "b" 2}))
-  
-  )
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(str "hello" "world")))
                                {:type 'string?})
          "helloworld"))
@@ -1009,7 +1015,15 @@
            "helloworldyay"))
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(str (+ 2 3))))
                                {:type 'string?})
-         "5"))
+         "5")) 
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(nth ["Hi" "Hey" "Hello"] 1)))
+                            {:type 'string?})
+         "Hey"))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(nth [1 2 3 4] 5 404)))
+                               {:type 'int?})
+         404))
+  )
+  
   
 (deftest decompile-misc-test 
   ; if
@@ -1061,6 +1075,62 @@
          nil)))
   
 
+(deftest decompile-locals-collection-test
+  ;; first w/ locals
+  (is (= (de/decompile-ast (ana.jvm/analyze '(defn my-first [input1] (first input1)))
+                        {:input->type {'input1 {:type 'string?}}
+                         :ret-type {:type 'char?}})
+         '({:gene :local, :idx 0} {:gene :var, :name first-str} {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(defn my-first [input1] (first input1))) 
+                           {:input->type {'input1 {:type :vector :child {:type 'int?}}} 
+                            :ret-type {:type 'int?}}) 
+         '({:gene :local, :idx 0} {:gene :var, :name first} {:gene :apply}))) 
+  
+  ;; last w/ locals
+  (is (= (de/decompile-ast (ana.jvm/analyze '(defn my-first [input1] (last input1)))
+                           {:input->type {'input1 {:type 'string?}}
+                            :ret-type {:type 'char?}})
+         '({:gene :local, :idx 0} {:gene :var, :name last-str} {:gene :apply})))
+  (is (= (de/decompile-ast (ana.jvm/analyze '(defn my-first [input1] (last input1)))
+                           {:input->type {'input1 {:type :vector :child {:type 'int?}}}
+                            :ret-type {:type 'int?}})
+         '({:gene :local, :idx 0} {:gene :var, :name last} {:gene :apply}))) 
+  )
+
+(deftest decompile-recompile-locals-collection-test
+  ;; first w/ locals
+  (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn my-first [input1] (first input1))) 
+                                                  {:input->type {'input1 {:type 'string?}}
+                                                   :ret-type {:type 'char?}})
+                                {:input->type {'input1 {:type 'string?}}
+                                 :ret-type {:type 'char?}}
+                                ["Hello"])
+         \H))
+  (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn my-first [input1] (first input1)))
+                                                  {:input->type {'input1 {:type :vector :child {:type 'double?}}}
+                                                   :ret-type {:type 'int?}})
+                                {:input->type {'input1 {:type :vector :child {:type 'double?}}}
+                                 :ret-type {:type 'double?}}
+                                [[1.6 3.2 6.4 12.8]])
+         1.6))
+  
+  ;; last w/ locals
+  (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn my-first [input1] (last input1)))
+                                                  {:input->type {'input1 {:type 'string?}}
+                                                   :ret-type {:type 'char?}})
+                                {:input->type {'input1 {:type 'string?}}
+                                 :ret-type {:type 'char?}}
+                                ["Hello"])
+         \o))
+  (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn my-first [input1] (last input1)))
+                                                  {:input->type {'input1 {:type :vector :child {:type 'double?}}}
+                                                   :ret-type {:type 'int?}})
+                                {:input->type {'input1 {:type :vector :child {:type 'double?}}}
+                                 :ret-type {:type 'double?}}
+                                [[1.6 3.2 6.4 12.8]])
+         12.8))
+  )
+  
 
 (deftest decompile-locals-test
   (is (= (de/decompile-ast (ana.jvm/analyze '(defn local_int [input1] (inc input1)))
