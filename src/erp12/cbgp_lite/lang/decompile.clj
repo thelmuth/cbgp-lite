@@ -193,7 +193,7 @@
    'asin `lib/safe-asin
    'acos `lib/safe-acos
    'atan `lib/atan
-   'log10 `lib/log10
+   'log10 `lib/safe-log10
    'ceil `lib/ceil
    'floor `lib/floor
    ;; CBGP has log2 and square, which don't exist in clojure
