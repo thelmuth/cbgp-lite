@@ -1,12 +1,10 @@
 (ns erp12.cbgp-lite.lang.decompile
-  (:require [clojure.tools.analyzer.jvm :as ana.jvm]
-            [clojure.walk :as walk]
+  (:require [clojure.tools.analyzer.jvm :as ana.jvm] 
             [erp12.cbgp-lite.lang.ast :as ast]
             [erp12.cbgp-lite.lang.compile :as co]
             [erp12.cbgp-lite.lang.lib :as lib]
             [erp12.cbgp-lite.search.plushy :as pl]
-            [erp12.cbgp-lite.task :as tsk]
-            [clojure.tools.analyzer :as ana]))
+            [erp12.cbgp-lite.task :as tsk]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;; Compilation testing
@@ -356,14 +354,22 @@
     
     ;;Vector-set-map
     (contains? ast-collection-aliasing ast-fn-name)
-    (symbol (str (get ast-collection-aliasing ast-fn-name)
+    (symbol (let [symb (str (get ast-collection-aliasing ast-fn-name)
                  (cond
                    (vector? (:val (first args)))
                    "-vec"
                    (set? (:val (first args)))
                    "-set"
                    (map? (:val (first args)))
-                   "-map")))
+                   "-map"
+                   :else 
+                   "-str"
+                   ))]
+              ;; I didn't want to do this but CBGP naming 
+              ;; "conventions" forced my hand
+              (if (= symb "count-str")
+                "length"
+                symb)))
 
     ;; rest only right now?
     (contains? ast-namespace-qualified-type-aliasing ast-fn-name)
@@ -985,5 +991,9 @@
                       {:input->type {'input1 {:type :vector :child {:type 'int?}}}
                        :ret-type {:type 'int?}} 
                       [[5 4 3 6 81]])
+  
+
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(count "hello")))
+                     {:type 'int?})
   )
 

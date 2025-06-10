@@ -1206,16 +1206,14 @@
                                 {:input->type {'input1 {:type 'double?}}
                                  :ret-type {:type 'double?}}
                                 [1.5])
-         -1.5))
-
-  ;; broken; decompiles, but doesn't recompile :(
-;;   (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn local_strint [input1] (count input1)))
-;;                                                   {:input->type {'input1 {:type 'string?}}
-;;                                                    :ret-type {:type 'int?}})
-;;                                 {:input->type {'input1 {:type 'string?}}
-;;                                  :ret-type {:type 'int?}}
-;;                                 ["hello"])
-;;          5))
+         -1.5)) 
+  (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn local_strint [input1] (count input1)))
+                                                  {:input->type {'input1 {:type 'string?}}
+                                                   :ret-type {:type 'int?}})
+                                {:input->type {'input1 {:type 'string?}}
+                                 :ret-type {:type 'int?}}
+                                ["hello"])
+         5))
 
   (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn help [input1 input2] (+ input1 input2)))
                                                   {:input->type {'input1 {:type 'int?}
