@@ -1,12 +1,10 @@
 (ns erp12.cbgp-lite.lang.decompile
   (:require [clojure.tools.analyzer.jvm :as ana.jvm]
-            [clojure.walk :as walk]
             [erp12.cbgp-lite.lang.ast :as ast]
             [erp12.cbgp-lite.lang.compile :as co]
             [erp12.cbgp-lite.lang.lib :as lib]
             [erp12.cbgp-lite.search.plushy :as pl]
-            [erp12.cbgp-lite.task :as tsk]
-            [clojure.tools.analyzer :as ana]))
+            [erp12.cbgp-lite.task :as tsk]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;; Compilation testing
@@ -949,10 +947,7 @@
    :args)
 
   (defn example [x] (+ (/ x 2) 5.0))
-  (example 3)
-  
-  
-
+  (example 3) 
 
   (ana.jvm/analyze '(defn help [input1 input2]
     (+ (int input1) input2)))
@@ -984,4 +979,3 @@
                        :ret-type {:type 'int?}} 
                       [[5 4 3 6 81]])
   )
-
