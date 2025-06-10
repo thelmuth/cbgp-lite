@@ -836,16 +836,12 @@
          '({:gene :lit, :type {:type string?}, :val "Hello"} {:gene :var, :name first-str} {:gene :apply})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(last "String")))
          '({:gene :lit, :type {:type string?}, :val "String"} {:gene :var, :name last-str} {:gene :apply})))
-<<<<<<< HEAD
-
-=======
   
-   (is (= (de/decompile-ast (ana.jvm/analyze '(count "Hamilton")))
-         '({:gene :lit, :type {:type string?}, :val "Hamilton"} 
-           {:gene :var, :name length} 
+  (is (= (de/decompile-ast (ana.jvm/analyze '(count "Hamilton")))
+         '({:gene :lit, :type {:type string?}, :val "Hamilton"}
+           {:gene :var, :name length}
            {:gene :apply})))
-  
->>>>>>> sydney/llmgp/hacking
+
   (is (= (de/decompile-ast (ana.jvm/analyze '(count [1 2 3 4])))
          '({:gene :lit,
             :type {:child {:type int?}, :type :vector}, :val [1 2 3 4]}
@@ -909,12 +905,10 @@
            {:gene :apply})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(nth [1.0 2.0 3.0] 10 4.04)))
          '({:gene :lit, :type {:type double?}, :val 4.04}
-          {:gene :lit, :type {:type int?}, :val 10}
-          {:gene :lit, :type {:child {:type double?}, :type :vector}, :val [1.0 2.0 3.0]}
-          {:gene :var, :name nth-or-else}
-          {:gene :apply})))
-  
-  )
+           {:gene :lit, :type {:type int?}, :val 10}
+           {:gene :lit, :type {:child {:type double?}, :type :vector}, :val [1.0 2.0 3.0]}
+           {:gene :var, :name nth-or-else}
+           {:gene :apply}))))
   
 
 (deftest decompile-recompile-collections-test
@@ -1250,16 +1244,15 @@
                                 [9.0 10])
          19))
 
-  ;; also broken; returns 10, not 15 --> issue w/ count?
-;;   (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn help [input1 input2] (+ (count input1) input2)))
-;;                                                   {:input->type {'input1 {:type 'string?}
-;;                                                                  'input2 {:type 'int?}}
-;;                                                    :ret-type {:type 'int?}})
-;;                                 {:input->type {'input1 {:type 'string?}
-;;                                                'input2 {:type 'int?}}
-;;                                  :ret-type {:type 'int?}}
-;;                                 ["hello" 10])
-;;          15))
+  (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn help [input1 input2] (+ (count input1) input2)))
+                                                  {:input->type {'input1 {:type 'string?}
+                                                                 'input2 {:type 'int?}}
+                                                   :ret-type {:type 'int?}})
+                                {:input->type {'input1 {:type 'string?}
+                                               'input2 {:type 'int?}}
+                                 :ret-type {:type 'int?}}
+                                ["hello" 10])
+         15))
   )
   
   
