@@ -836,7 +836,16 @@
          '({:gene :lit, :type {:type string?}, :val "Hello"} {:gene :var, :name first-str} {:gene :apply})))
   (is (= (de/decompile-ast (ana.jvm/analyze '(last "String")))
          '({:gene :lit, :type {:type string?}, :val "String"} {:gene :var, :name last-str} {:gene :apply})))
+<<<<<<< HEAD
 
+=======
+  
+   (is (= (de/decompile-ast (ana.jvm/analyze '(count "Hamilton")))
+         '({:gene :lit, :type {:type string?}, :val "Hamilton"} 
+           {:gene :var, :name length} 
+           {:gene :apply})))
+  
+>>>>>>> sydney/llmgp/hacking
   (is (= (de/decompile-ast (ana.jvm/analyze '(count [1 2 3 4])))
          '({:gene :lit,
             :type {:child {:type int?}, :type :vector}, :val [1 2 3 4]}
@@ -975,6 +984,10 @@
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(rest "String")))
                                {:type 'string?})
          "tring"))
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(count "Hamilton")))
+                               {:type 'int?})
+         8))
+  
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(rest [1 2 3 4])))
                                {:type :vector :child {:type 'int?}})
          [2 3 4]))
@@ -1138,7 +1151,7 @@
   (is (= (de/decompile-ast (ana.jvm/analyze '(defn local_strint [input1] (count input1)))
                            {:input->type {'input1 {:type 'string?}}
                             :ret-type {:type 'int?}})
-         '({:gene :local, :idx 0} {:gene :var, :name count} {:gene :apply})))
+         '({:gene :local, :idx 0} {:gene :var, :name length} {:gene :apply})))
 
   (is (= (de/decompile-ast (ana.jvm/analyze '(defn help [input1 input2] (+ input1 input2)))
                            {:input->type {'input1 {:type 'int?}
@@ -1176,7 +1189,7 @@
                             :ret-type {:type 'int?}})
          '({:gene :local, :idx 1}
            {:gene :local, :idx 0}
-           {:gene :var, :name count}
+           {:gene :var, :name length}
            {:gene :apply}
            {:gene :var, :name int-add}
            {:gene :apply})))
@@ -1198,16 +1211,14 @@
                                 {:input->type {'input1 {:type 'double?}}
                                  :ret-type {:type 'double?}}
                                 [1.5])
-         -1.5))
-
-  ;; broken; decompiles, but doesn't recompile :(
-;;   (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn local_strint [input1] (count input1)))
-;;                                                   {:input->type {'input1 {:type 'string?}}
-;;                                                    :ret-type {:type 'int?}})
-;;                                 {:input->type {'input1 {:type 'string?}}
-;;                                  :ret-type {:type 'int?}}
-;;                                 ["hello"])
-;;          5))
+         -1.5)) 
+  (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn local_strint [input1] (count input1)))
+                                                  {:input->type {'input1 {:type 'string?}}
+                                                   :ret-type {:type 'int?}})
+                                {:input->type {'input1 {:type 'string?}}
+                                 :ret-type {:type 'int?}}
+                                ["hello"])
+         5))
 
   (is (= (de/compile-debugging2 (de/decompile-ast (ana.jvm/analyze '(defn help [input1 input2] (+ input1 input2)))
                                                   {:input->type {'input1 {:type 'int?}
