@@ -422,36 +422,36 @@
            {:gene :apply}
            {:gene :var, :name double-mult}
            {:gene :apply})))
-  
+
    ;; other math (sin, cos, tan, etc)
-  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/sin 0.5))) 
+  (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/sin 0.5)))
                                {:type 'double?})
          0.479425538604203))
-  
+
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/cos 0.5)))
                                {:type 'double?})
          0.8775825618903728))
-  
+
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/tan 0.5)))
                                {:type 'double?})
          0.5463024898437905))
-  
+
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/asin 0.5)))
                                {:type 'double?})
          0.5235987755982989))
-  
+
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/acos 0.5)))
                                {:type 'double?})
          1.0471975511965979))
-  
+
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/atan 0.5)))
                                {:type 'double?})
          0.4636476090008061))
-         
+
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(Math/log10 100.0)))
                                {:type 'double?})
-         2.0)) 
-  
+         2.0))
+
   (is (= (de/decompile-ast (ana.jvm/analyze '(- 1.1 2.2 3.3 4.4)))
          '({:gene :lit, :type {:type double?}, :val 4.4}
            {:gene :lit, :type {:type double?}, :val 3.3}
@@ -648,48 +648,48 @@
   (is (= (de/compile-debugging (de/decompile-ast (ana.jvm/analyze '(not (< 4 5))))
                                {:type 'boolean?})
          false))
-  
+
   ;other math (sin, cos, tan, etc)
   (is (= (de/decompile-ast (ana.jvm/analyze '(Math/sin 0.5)))
          '({:gene :lit, :type {:type double?}, :val 0.5}
            {:gene :var, :name erp12.cbgp-lite.lang.lib/sin}
            {:gene :apply})))
-  
+
   (is (= (de/decompile-ast (ana.jvm/analyze '(Math/cos 0.5)))
          '({:gene :lit, :type {:type double?}, :val 0.5}
            {:gene :var, :name erp12.cbgp-lite.lang.lib/cos}
            {:gene :apply})))
-  
+
   (is (= (de/decompile-ast (ana.jvm/analyze '(Math/tan 0.5)))
          '({:gene :lit, :type {:type double?}, :val 0.5}
            {:gene :var, :name erp12.cbgp-lite.lang.lib/tan}
            {:gene :apply})))
-  
+
   (is (= (de/decompile-ast (ana.jvm/analyze '(Math/asin 0.5)))
          '({:gene :lit, :type {:type double?}, :val 0.5}
            {:gene :var, :name erp12.cbgp-lite.lang.lib/safe-asin}
            {:gene :apply})))
-  
+
   (is (= (de/decompile-ast (ana.jvm/analyze '(Math/acos 0.5)))
          '({:gene :lit, :type {:type double?}, :val 0.5}
            {:gene :var, :name erp12.cbgp-lite.lang.lib/safe-acos}
            {:gene :apply})))
-  
+
   (is (= (de/decompile-ast (ana.jvm/analyze '(Math/atan 0.5)))
          '({:gene :lit, :type {:type double?}, :val 0.5}
            {:gene :var, :name erp12.cbgp-lite.lang.lib/atan}
            {:gene :apply})))
-  
+
   (is (= (de/decompile-ast (ana.jvm/analyze '(Math/log10 100)))
          '({:gene :lit, :type {:type int?}, :val 100}
            {:gene :var, :name erp12.cbgp-lite.lang.lib/safe-log10}
            {:gene :apply})))
-  
+
   (is (= (de/decompile-ast (ana.jvm/analyze '(Math/sqrt 16)))
          '({:gene :lit, :type {:type int?}, :val 16}
            {:gene :var, :name erp12.cbgp-lite.lang.lib/safe-sqrt}
            {:gene :apply})))
-  
+
   (is (= (de/decompile-ast (ana.jvm/analyze '(Math/sqrt -1)))
          '({:gene :lit, :type {:type int?}, :val -1}
            {:gene :var, :name erp12.cbgp-lite.lang.lib/safe-sqrt}
@@ -1050,4 +1050,3 @@
                                {:type 'nil?})
          nil)))
   
- 

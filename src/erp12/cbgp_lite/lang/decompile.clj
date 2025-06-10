@@ -89,8 +89,7 @@
                         [[8 3 2 5 7 0 11]]
                         true))
 
-  
-  ;;; Test for  Smallest problem 
+;;; Test for  Smallest problem 
   (let [task {:input->type {'input1 {:type 'int?}
                             'input2 {:type 'int?}
                             'input3 {:type 'int?}
@@ -191,7 +190,6 @@
    'acos `lib/safe-acos
    'atan `lib/atan
    'log10 `lib/safe-log10
-   'log10 `lib/safe-log10
    'ceil `lib/ceil
    'floor `lib/floor
    ;; CBGP has log2 and square, which don't exist in clojure
@@ -279,7 +277,7 @@
     (and (map? map-or-vec)
          (= (:op map-or-vec) :local))
     (do (println "local found! type whatever: " (:tag map-or-vec))
-      map-or-vec)
+        map-or-vec)
 
     (map? map-or-vec)
     (first (filter #(not (nil? %))
@@ -303,7 +301,7 @@
     (if (= (str (:tag (first args))) "char")
       'char->int
       'int)
-    
+
     ;; functions with multiple arities to support
     (contains? ast-arity-aliasing ast-fn-name)
     (let [arity-map (get ast-arity-aliasing ast-fn-name)
@@ -369,7 +367,7 @@
                                                (str (get ast-namespace-qualified-type-aliasing ast-fn-name) "v")
 
                                                :else (str "int-" (get ast-namespace-qualified-type-aliasing ast-fn-name)))))
-    
+
     ;; main aliasing
     (contains? ast-aliasing ast-fn-name)
     (get ast-aliasing ast-fn-name)
@@ -428,7 +426,7 @@
 
      ;; Handle locals
      (= :local op)
-     (list {:gene :local 
+     (list {:gene :local
             :idx (:arg-id ast)})
 
     ;; Handle static method or invoke
@@ -543,7 +541,7 @@
    {:input->type {'input1 {:type 'double?}
                   'input2 {:type 'double?}}
     :ret-type {:type 'int?}})
-  
+
   (decompile-ast
    (ana.jvm/analyze '(defn help [input1 input2] (+ (count input1) input2)))
    {:input->type {'input1 {:type 'string?}
@@ -966,12 +964,8 @@
       :validated? true,
       :raw-forms ((do (inc input1)) (inc input1))})
 
-
   (find-local the-body)
 
-  (find-local (ana.jvm/analyze '(defn help [input1 input2] (+ input2 input1))))
-
-  )
-
+  (find-local (ana.jvm/analyze '(defn help [input1 input2] (+ input2 input1)))))
 
 
