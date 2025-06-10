@@ -83,8 +83,8 @@
                      {:gene :apply} ;; apply filter
                      {:gene :var
                       :name 'count-vec} ;; count the filtered vector
-                     {:gene :apply}) ;; apply count
-        ]
+                     {:gene :apply})] ;; apply count
+        
     (compile-debugging2 genome
                         task
                         [[8 3 2 5 7 0 11]]
@@ -112,8 +112,8 @@
                  :idx 3}
                 {:gene :var
                  :name `lib/min'}
-                {:gene :apply}]
-        ]
+                {:gene :apply}]]
+        
     (compile-debugging2 genome
                         task
                         [5 6 -33 9]
@@ -139,8 +139,8 @@
     (compile-debugging2 genome
                         task
                         [100.23 33]
-                        true)) 
-  )
+                        true))) 
+  
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -221,22 +221,15 @@
    'neg "neg" ; minus w/ one arg
    'abs "abs"
 
-   ;;; below methods need `lib/ (eg. `lib/int-pow)
-   ; 'pow "pow" 
-   ; 'pow "square" ; square is just (Math/pow x 2)
-   ; 'ceil "ceil", implemented for doubles
-   ; 'floor "floor", implemented for doubles
-
    ;;; other adhoc polymorphic methods
-   'intCast 'int
+   'intCast 'int})
    ; 'intCast 'char->int
-   })
-
+   
 (def ast-str-vec-aliasing
   {'first "first"
    'last "last" 
    'nth 'nth
-   'empty? "empty"
+   'empty? "empty"})
 
   ;; Same Namespace issues as in ast-number-aliasing
   ;; Make a new dictionary for namespace qualified (ns-q)
@@ -244,13 +237,13 @@
   ;; because ns-q vector symbols append v
   ;; whereas other non-ns-q append nothing or vec 
   ;; 'rest "`lib/rest"
-   })
+   
 
 (def ast-collection-aliasing
-  {'count "count"
+  {'count "count"})
   ;;  'reduce "reduce"
   ;;  'fold "fold"
-   })
+   
 
 (def ast-arity-aliasing
   {'str {1 'str
@@ -262,15 +255,37 @@
    ; Does not work on strings
    'nth {2 `lib/safe-nth
          3 'nth-or-else}
-   
+
+   ; TO-DO:
   ;;  'reduce {2 'reduce
   ;;           3 'fold}
+
+   'vector {1 '->vector1
+            2 '->vector2
+            3 '->vector3
+            :default '->vector1}
+   ; TO-DO: add check for vec->set and map->set
+   'set {1 '->set1
+         2 '->set2
+         3 '->set3
+         :default '->set1}
+   ; TO-DO: add check for vec->map and set->map
+   'map {2 '->map1
+         4 '->map2
+         6 '->map3
+         :default '->map1}
+   'range {1 'range1
+           2 'range2
+           3 'range3
+           :default 'range1}
    })
+   
+   
 
 (def ast-namespace-qualified-type-aliasing
-  {'rest "rest"
+  {'rest "rest"})
   ;;  'concat "concat"
-   })
+   
 
 (defn find-local
   "Takes a map or vec and recursively looks through it to find a map
@@ -348,8 +363,8 @@
                           (:type (get (:input->type task)
                                       (:form (find-local args)))))
                      "-str"
-                     "")
-                   )
+                     ""))
+                   
                  (if (= 'empty? ast-fn-name)
                    "?"
                    "")))
@@ -584,6 +599,21 @@
 
   (ana.jvm/analyze '(defn what [input1zzz] (map (fn [xzzz] (inc xzzz))
                                                 input1zzz)))
+  (compile-debugging (decompile-ast
+                      (ana.jvm/analyze '(vector 0 1))) {:type :vector :child {:type 'int?}})
+  
+  (compile-debugging (decompile-ast
+                      (ana.jvm/analyze '(map 0 1))) 
+                     '{:type :map-of :key {:type int?} :value {:type int?}} true)
+  
+  
+  (compile-debugging2 (decompile-ast (ana.jvm/analyze '(defn local_strint [input1] (count input1)))
+                                     {:input->type {'input1 {:type 'string?}}
+                                      :ret-type {:type 'int?}})
+                      {:input->type {'input1 {:type 'string?}}
+                       :ret-type {:type 'int?}}
+                      ["hello"]
+                      true)
 
   '{:children [:meta :init],
     :meta
@@ -957,10 +987,10 @@
 
 
   (ana.jvm/analyze '(defn help [input1 input2]
-    (+ (int input1) input2)))
+                     (+ (int input1) input2)))
   
   (-> (ana.jvm/analyze '(defn help [input1 input2]
-                      (+ (int input1) input2)))
+                         (+ (int input1) input2)))
       :init
       :expr
       :methods
@@ -971,8 +1001,8 @@
   
 
   (compile-debugging2 (decompile-ast (ana.jvm/analyze '(defn my-first [input1] (first input1)))
-                 {:input->type {'input1 {:type 'string?}}
-                  :ret-type {:type 'char?}})
+                       {:input->type {'input1 {:type 'string?}}
+                        :ret-type {:type 'char?}})
                       {:input->type {'input1 {:type 'string?}}
                        :ret-type {:type 'char?}}
                       ["Hello"])
@@ -982,8 +1012,8 @@
    (decompile-ast (ana.jvm/analyze '(defn my-first [input1] (first input1)))
                  {:input->type {'input1 {:type :vector :child {:type 'int?}}}
                   :ret-type {:type 'int?}}) 
-                      {:input->type {'input1 {:type :vector :child {:type 'int?}}}
-                       :ret-type {:type 'int?}} 
-                      [[5 4 3 6 81]])
-  )
+   {:input->type {'input1 {:type :vector :child {:type 'int?}}}
+    :ret-type {:type 'int?}} 
+   [[5 4 3 6 81]]))
+  
 
