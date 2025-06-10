@@ -5,7 +5,8 @@
             [erp12.cbgp-lite.lang.compile :as co]
             [erp12.cbgp-lite.lang.lib :as lib]
             [erp12.cbgp-lite.search.plushy :as pl]
-            [erp12.cbgp-lite.task :as tsk]))
+            [erp12.cbgp-lite.task :as tsk]
+            [clojure.tools.analyzer :as ana]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;; Compilation testing
@@ -88,7 +89,6 @@
                         task
                         [[8 3 2 5 7 0 11]]
                         true))
-
 ;;; Test for  Smallest problem 
   (let [task {:input->type {'input1 {:type 'int?}
                             'input2 {:type 'int?}
@@ -137,7 +137,9 @@
     (compile-debugging2 genome
                         task
                         [100.23 33]
-                        true)))
+                        true)) 
+  )
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;; Below here is work on decompiling
@@ -230,10 +232,8 @@
 
 (def ast-str-vec-aliasing
   {'first "first"
-   'last "last"
-  ;; nth has strange naming conventions, 
-  ;; nth-str and nth-or-else.
-  ;;'nth
+   'last "last" 
+   'nth 'nth
    'empty? "empty"
 
   ;; Same Namespace issues as in ast-number-aliasing
@@ -257,12 +257,14 @@
    'minus {1 'neg
            2 'sub
            :default 'sub}
+   ; Does not work on strings
+   'nth {2 `lib/safe-nth
+         3 'nth-or-else}
+   
   ;;  'reduce {2 'reduce
   ;;           3 'fold}
    })
 
-;; Concat does not work yet because it is supposed to 
-;; return a lazySeq
 (def ast-namespace-qualified-type-aliasing
   {'rest "rest"
   ;;  'concat "concat"
@@ -272,12 +274,13 @@
   "Takes a map or vec and recursively looks through it to find a map
    with a key of :op and value of :local"
   [map-or-vec]
-  (println (:tag map-or-vec))
+  ;; (println (:tag map-or-vec))
   (cond
     (and (map? map-or-vec)
          (= (:op map-or-vec) :local))
-    (do (println "local found! type whatever: " (:tag map-or-vec))
-        map-or-vec)
+    (do 
+      ;; (println "local found! type whatever: " (:tag map-or-vec))
+      map-or-vec)
 
     (map? map-or-vec)
     (first (filter #(not (nil? %))
@@ -335,13 +338,20 @@
     ;; Vector stuff
     (contains? ast-str-vec-aliasing ast-fn-name)
     (symbol (str (get ast-str-vec-aliasing ast-fn-name)
-                 (if (= (:tag (first args)) java.lang.String)
-                   "-str"
-                   "")
+                 (cond 
+                   (= (:tag (first args)) java.lang.String) "-str"
+                   (= (:tag (first args)) clojure.lang.APersistentVector) ""
+                   :else 
+                   (if (= 'string?
+                          (:type (get (:input->type task)
+                                      (:form (find-local args)))))
+                     "-str"
+                     "")
+                   )
                  (if (= 'empty? ast-fn-name)
                    "?"
                    "")))
-
+    
     ;;Vector-set-map
     (contains? ast-collection-aliasing ast-fn-name)
     (symbol (str (get ast-collection-aliasing ast-fn-name)
@@ -480,7 +490,9 @@
 
 (comment
 
-;;;; THESE DON'T WORK 
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(nth [1.0 2.0 3.0] 10 4.04)))
+                     {:type 'double?})
+;;;; THESE DON'T WORK
 
   (decompile-ast (ana.jvm/analyze '(nth [1 2 3] 2 5)))
 
@@ -919,53 +931,57 @@
      :validated? true,
      :raw-forms ((do (inc input1)) (inc input1))}}
 
-  ;;; passed recursively
-  (def the-body
-    '{:args
-      [{:children [],
-        :name input1__#0,
-        :op :local,
-        :env
-        {:loop-locals 1,
-         :locals {input1 {:form input1, :name input1, :variadic? false, :op :binding, :arg-id 0, :local :arg}},
-         :ns erp12.cbgp-lite.lang.decompile,
-         :loop-id loop_19913,
-         :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
-         :column 42,
-         :line 455,
-         :once false,
-         :context :ctx/expr},
-        :o-tag java.lang.Object,
-        :variadic? false,
-        :arg-id 0,
-        :form input1,
-        :tag java.lang.Object,
-        :atom :f ; #<Atom@719d22ab: {:tag java.lang.Object}>,
-        :local :arg,
-        :assignable? false}],
-      :children [:args],
-      :body? true,
-      :method inc,
-      :op :static-call,
-      :env
-      {:loop-locals 1,
-       :locals {input1 {:form input1, :name input1, :variadic? false, :op :binding, :arg-id 0, :local :arg}},
-       :ns erp12.cbgp-lite.lang.decompile,
-       :loop-id loop_19913,
-       :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
-       :column 42,
-       :line 455,
-       :once false,
-       :context :ctx/return},
-      :o-tag java.lang.Number,
-      :class clojure.lang.Numbers,
-      :form (. clojure.lang.Numbers (inc input1)),
-      :tag java.lang.Number,
-      :validated? true,
-      :raw-forms ((do (inc input1)) (inc input1))})
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(nth [1 2 3 4] 6 10)))
+                     {:type 'int?})
 
-  (find-local the-body)
+  (->
+   (ana.jvm/analyze '(defn help [input1] (inc input1)))
+   :init
+   :expr
+   :methods)
+  (->
+   (ana.jvm/analyze '(defn help [input1] (inc (+ 1 input1))))
+   :init
+   :expr
+   :methods
+   first
+   :body
+   :args)
 
-  (find-local (ana.jvm/analyze '(defn help [input1 input2] (+ input2 input1)))))
+  (defn example [x] (+ (/ x 2) 5.0))
+  (example 3)
+  
+  
 
+
+  (ana.jvm/analyze '(defn help [input1 input2]
+    (+ (int input1) input2)))
+  
+  (-> (ana.jvm/analyze '(defn help [input1 input2]
+                      (+ (int input1) input2)))
+      :init
+      :expr
+      :methods
+      first
+      :body
+      :args
+      first)
+  
+
+  (compile-debugging2 (decompile-ast (ana.jvm/analyze '(defn my-first [input1] (first input1)))
+                 {:input->type {'input1 {:type 'string?}}
+                  :ret-type {:type 'char?}})
+                      {:input->type {'input1 {:type 'string?}}
+                       :ret-type {:type 'char?}}
+                      ["Hello"])
+  
+
+  (compile-debugging2 
+   (decompile-ast (ana.jvm/analyze '(defn my-first [input1] (first input1)))
+                 {:input->type {'input1 {:type :vector :child {:type 'int?}}}
+                  :ret-type {:type 'int?}}) 
+                      {:input->type {'input1 {:type :vector :child {:type 'int?}}}
+                       :ret-type {:type 'int?}} 
+                      [[5 4 3 6 81]])
+  )
 
