@@ -364,7 +364,7 @@
   [{:keys [push locals ret-type type-env dealiases state-output-fn record-sketch?]
     :or   {dealiases      lib/dealiases
            record-sketch? false}}]
-  
+
   ;; (println "----")
   ;; (println "starting!!!")
   ;; (println "--------")
@@ -389,7 +389,7 @@
           ;; (println "LOCALS:" (:locals state))
           ;; (println "ASTs:" (:asts state))
           ;; (println "RET-TYPE:" (:ret-type state))
-          
+
           (recur (compile-step {:push-unit push-unit
                                 :type-env  type-env
                                 :state     state})))))))

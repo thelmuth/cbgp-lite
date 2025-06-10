@@ -87,8 +87,7 @@
                         task
                         [[8 3 2 5 7 0 11]]
                         true))
-  
-  ;;; Test for  Smallest problem 
+;;; Test for  Smallest problem 
   (let [task {:input->type {'input1 {:type 'int?}
                             'input2 {:type 'int?}
                             'input3 {:type 'int?}
@@ -110,13 +109,12 @@
                  :idx 3}
                 {:gene :var
                  :name `lib/min'}
-                {:gene :apply}]
-        ]
+                {:gene :apply}]]
     (compile-debugging2 genome
                         task
                         [5 6 -33 9]
                         true))
-  
+
   ;; Test for Number IO
   (let [task {:input->type {'input1 {:type 'double?}
                             'input2 {:type 'int?}}
@@ -304,7 +302,7 @@
     (if (= (str (:tag (first args))) "char")
       'char->int
       'int)
-    
+
     ;; functions with multiple arities to support
     (contains? ast-arity-aliasing ast-fn-name)
     (let [arity-map (get ast-arity-aliasing ast-fn-name)
@@ -385,7 +383,7 @@
                                                (str (get ast-namespace-qualified-type-aliasing ast-fn-name) "v")
 
                                                :else (str "int-" (get ast-namespace-qualified-type-aliasing ast-fn-name)))))
-    
+
     ;; main aliasing
     (contains? ast-aliasing ast-fn-name)
     (get ast-aliasing ast-fn-name)
@@ -444,7 +442,7 @@
 
      ;; Handle locals
      (= :local op)
-     (list {:gene :local 
+     (list {:gene :local
             :idx (:arg-id ast)})
 
     ;; Handle static method or invoke
@@ -561,7 +559,7 @@
    {:input->type {'input1 {:type 'double?}
                   'input2 {:type 'double?}}
     :ret-type {:type 'int?}})
-  
+
   (decompile-ast
    (ana.jvm/analyze '(defn help [input1 input2] (+ (count input1) input2)))
    {:input->type {'input1 {:type 'string?}
