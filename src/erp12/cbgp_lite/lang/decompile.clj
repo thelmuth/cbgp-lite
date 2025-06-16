@@ -4,7 +4,8 @@
             [erp12.cbgp-lite.lang.compile :as co]
             [erp12.cbgp-lite.lang.lib :as lib]
             [erp12.cbgp-lite.search.plushy :as pl]
-            [erp12.cbgp-lite.task :as tsk]))
+            [erp12.cbgp-lite.task :as tsk]
+            ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;; Compilation testing
@@ -81,8 +82,8 @@
                      {:gene :apply} ;; apply filter
                      {:gene :var
                       :name 'count-vec} ;; count the filtered vector
-                     {:gene :apply}) ;; apply count
-        ]
+                     {:gene :apply})] ;; apply count
+        
     (compile-debugging2 genome
                         task
                         [[8 3 2 5 7 0 11]]
@@ -135,8 +136,8 @@
     (compile-debugging2 genome
                         task
                         [100.23 33]
-                        true)) 
-  )
+                        true))) 
+  
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -217,22 +218,15 @@
    'neg "neg" ; minus w/ one arg
    'abs "abs"
 
-   ;;; below methods need `lib/ (eg. `lib/int-pow)
-   ; 'pow "pow" 
-   ; 'pow "square" ; square is just (Math/pow x 2)
-   ; 'ceil "ceil", implemented for doubles
-   ; 'floor "floor", implemented for doubles
-
    ;;; other adhoc polymorphic methods
-   'intCast 'int
+   'intCast 'int})
    ; 'intCast 'char->int
-   })
-
+   
 (def ast-str-vec-aliasing
   {'first "first"
    'last "last" 
    'nth 'nth
-   'empty? "empty"
+   'empty? "empty"})
 
   ;; Same Namespace issues as in ast-number-aliasing
   ;; Make a new dictionary for namespace qualified (ns-q)
@@ -240,13 +234,13 @@
   ;; because ns-q vector symbols append v
   ;; whereas other non-ns-q append nothing or vec 
   ;; 'rest "`lib/rest"
-   })
+   
 
 (def ast-collection-aliasing
-  {'count "count"
+  {'count "count"})
   ;;  'reduce "reduce"
   ;;  'fold "fold"
-   })
+   
 
 (def ast-arity-aliasing
   {'str {1 'str
@@ -258,15 +252,37 @@
    ; Does not work on strings
    'nth {2 `lib/safe-nth
          3 'nth-or-else}
-   
+
+   ; TO-DO:
   ;;  'reduce {2 'reduce
   ;;           3 'fold}
+
+   'vector {1 '->vector1
+            2 '->vector2
+            3 '->vector3
+            :default '->vector1}
+   ; TO-DO: add check for vec->set and map->set
+   'hash-set {1 '->set1
+         2 '->set2
+         3 '->set3
+         :default '->set1}
+   ; TO-DO: add check for vec->map and set->map
+   'hash-map {2 '->map1
+         4 '->map2
+         6 '->map3
+         :default '->map1}
+   'range {1 'range1
+           2 'range2
+           3 'range3
+           :default 'range1}
    })
+   
+   
 
 (def ast-namespace-qualified-type-aliasing
-  {'rest "rest"
+  {'rest "rest"})
   ;;  'concat "concat"
-   })
+   
 
 (defn find-local
   "Takes a map or vec and recursively looks through it to find a map
@@ -277,7 +293,7 @@
     (and (map? map-or-vec)
          (= (:op map-or-vec) :local))
     (do 
-      ;; (println "local found! type whatever: " (:tag map-or-vec))
+      ;; (println "local found! type whatever: " (:tag map-or-vec) (:form map-or-vec))
       map-or-vec)
 
     (map? map-or-vec)
@@ -296,6 +312,7 @@
 (defn get-fn-symbol
   "Finds the CBGP function name for this ast-fn-name"
   [ast-fn-name tag args task]
+  ;; (println "Firstp Task: " task ast-fn-name)
   (cond
     ;; Because of the phrasing, this needs to be hard coded
     (= ast-fn-name 'intCast)
@@ -344,8 +361,8 @@
                           (:type (get (:input->type task)
                                       (:form (find-local args)))))
                      "-str"
-                     "")
-                   )
+                     ""))
+                   
                  (if (= 'empty? ast-fn-name)
                    "?"
                    "")))
@@ -353,16 +370,35 @@
     ;;Vector-set-map
     (contains? ast-collection-aliasing ast-fn-name)
     (symbol (let [symb (str (get ast-collection-aliasing ast-fn-name)
-                 (cond
-                   (vector? (:val (first args)))
-                   "-vec"
-                   (set? (:val (first args)))
-                   "-set"
-                   (map? (:val (first args)))
-                   "-map"
-                   :else 
-                   "-str"
-                   ))]
+                            (cond
+                              (string? (:val (first args)))
+                              "-str"
+                              (set? (:val (first args)))
+                              "-set"
+                              (map? (:val (first args)))
+                              "-map"
+                              (vector? (:val (first args)))
+                              "-vec"
+                              :else
+                              (cond
+                                (= 'string?
+                                   (:type (get (:input->type task)
+                                               (:form (find-local args)))))
+                                "-str"
+                                (= :set
+                                   (:type (get (:input->type task)
+                                               (:form (find-local args)))))
+                                "-set"
+                                (= :map
+                                   (:type (get (:input->type task)
+                                               (:form (find-local args)))))
+                                "-map"
+                                (= :vector
+                                   (:type (get (:input->type task)
+                                               (:form (find-local args)))))
+                                "-vec"
+                                :else
+                                "-BAD")))]
               ;; I didn't want to do this but CBGP naming 
               ;; "conventions" forced my hand
               (if (= symb "count-str")
@@ -433,6 +469,7 @@
   "Decompiles AST into a CBGP genome."
   ([ast] (decompile-ast ast {}))
   ([{:keys [op val tag args children] :as ast} task]
+  ;;  (println "Decomp Task: " task)
    (cond
     ;; Handle constants
      (= :const op)
@@ -451,7 +488,7 @@
      (let [ast-fn-name (if (= op :static-call)
                          (:method ast)
                          (-> ast :fn :form))
-           raw-decompiled-args (map decompile-ast args)
+           raw-decompiled-args (map #(decompile-ast % task) args )
            decompiled-args (flatten (reverse raw-decompiled-args))]
        (concat decompiled-args
                (list {:gene :var :name (get-fn-symbol ast-fn-name tag args task)}
@@ -467,7 +504,7 @@
     ;; Handle if
      (= op :if)
      (let [ast-fn-name 'if
-           raw-decompiled-args (map decompile-ast (map ast children))
+           raw-decompiled-args (map #(decompile-ast % task) (map ast children))
            decompiled-args (flatten (reverse raw-decompiled-args))]
        (concat decompiled-args
                (list {:gene :var :name (get-fn-symbol ast-fn-name tag args task)}
@@ -484,7 +521,7 @@
                         :methods
                         first
                         :body)
-                    task)
+                    task) 
 
      :else
      (do
@@ -534,464 +571,10 @@
 
   (macroexpand-1 '(defn help [input1] (inc input1)))
 
-  (decompile-ast
-   (ana.jvm/analyze '(defn help [input1] (inc input1)))
-   {:input->type {'input1 {:type 'int?}}
-    :ret-type {:type 'int?}})
+  (decompile-ast (ana.jvm/analyze '(map inc [1 2 3])))
 
-  (decompile-ast
-   (ana.jvm/analyze '(defn help [input1 input2] (+ input1 input2)))
-   {:input->type {'input1 {:type 'int?}
-                  'input2 {:type 'int?}}
-    :ret-type {:type 'int?}})
+  (ana.jvm/analyze '(hash-map "a" 1))
 
-  ;;; strangely broken - because it needs to call find-local since it doesn't know the type of input2
-  ;;; but it finds input1 first
-  (decompile-ast
-   (ana.jvm/analyze '(defn help [input1 input2] (+ (int input1) input2)))
-   {:input->type {'input1 {:type 'double?}
-                  'input2 {:type 'int?}}
-    :ret-type {:type 'int?}})
-
-  ;; this works
-  (decompile-ast
-   (ana.jvm/analyze '(defn help [input1 input2] (+ (int input1) (int input2))))
-   {:input->type {'input1 {:type 'double?}
-                  'input2 {:type 'double?}}
-    :ret-type {:type 'int?}})
-
-  (decompile-ast
-   (ana.jvm/analyze '(defn help [input1 input2] (+ (count input1) input2)))
-   {:input->type {'input1 {:type 'string?}
-                  'input2 {:type 'int?}}
-    :ret-type {:type 'int?}})
-
-  (compile-debugging2 (decompile-ast
-                       (ana.jvm/analyze '(defn help [input1 input2] (+ input1 input2)))
-                       {:input->type {'input1 {:type 'double?}
-                                      'input2 {:type 'double?}}
-                        :ret-type {:type 'double?}})
-                      {:input->type {'input1 {:type 'double?}
-                                     'input2 {:type 'double?}}
-                       :ret-type {:type 'double?}}
-                      [5.2 10.0])
-
-  '(+ (+ input1 input2) (- input1 input2))
-
-  (decompile-ast (ana.jvm/analyze '(+ (+ 2.2 3.3) (+ 4.4 5.5))))
-
-  (ana.jvm/analyze '(+ (+ 2.2 3.3) (+ 4.4 5.5)))
-
-  (ana.jvm/analyze '(defn my-first [x] (first x)))
-
-  (ana.jvm/analyze '(defn my-first [x] (+ (/ x 2) 5.5)))
-
-  (ana.jvm/analyze '(defn what [input1zzz] (map (fn [xzzz] (inc xzzz))
-                                                input1zzz)))
-
-  '{:children [:meta :init],
-    :meta
-    {:op :const,
-     :env
-     {:context :ctx/expr,
-      :locals {},
-      :ns erp12.cbgp-lite.lang.decompile,
-      :column 21,
-      :line 450,
-      :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj"},
-     :form
-     {:arglists '([input1]),
-      :column 21,
-      :line 450,
-      :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj"},
-     :val
-     {:arglists '([input1]),
-      :column 21,
-      :line 450,
-      :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj"},
-     :type :map,
-     :literal? true,
-     :o-tag clojure.lang.PersistentArrayMap,
-     :tag clojure.lang.PersistentArrayMap},
-    :return-tag java.lang.Number,
-    :init
-    {:children [:meta :expr],
-     :meta
-     {:op :const,
-      :env
-      {:context :ctx/expr,
-       :locals {},
-       :ns erp12.cbgp-lite.lang.decompile,
-       :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
-       :column 21,
-       :line 450},
-      :form {:rettag nil},
-      :val {:rettag nil},
-      :type :map,
-      :literal? true,
-      :o-tag clojure.lang.PersistentArrayMap,
-      :tag clojure.lang.PersistentArrayMap},
-     :return-tag java.lang.Number,
-     :op :with-meta,
-     :env
-     {:context :ctx/expr,
-      :locals {},
-      :ns erp12.cbgp-lite.lang.decompile,
-      :column 21,
-      :line 450,
-      :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj"},
-     :o-tag java.lang.Object,
-     :expr
-     {:children [:methods],
-      :return-tag java.lang.Number,
-      :op :fn,
-      :env
-      {:context :ctx/expr,
-       :locals {},
-       :ns erp12.cbgp-lite.lang.decompile,
-       :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
-       :column 21,
-       :line 450},
-      :o-tag clojure.lang.AFunction,
-      :variadic? false,
-      :methods
-      [{:children [:params :body],
-        :loop-id loop_19137,
-        :arglist [input1],
-        :params
-        [{:name input1__#0,
-          :op :binding,
-          :env
-          {:context :ctx/expr,
-           :locals {},
-           :ns erp12.cbgp-lite.lang.decompile,
-           :once false,
-           :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
-           :column 21,
-           :line 450},
-          :o-tag java.lang.Object,
-          :variadic? false,
-          :arg-id 0,
-          :form input1,
-          :tag java.lang.Object,
-          :atom :FAIL ; #<Atom@35523300: {:tag java.lang.Object}>,
-          :local :arg}],
-        :fixed-arity 1,
-        :op :fn-method,
-        :env
-        {:context :ctx/expr,
-         :locals {},
-         :ns erp12.cbgp-lite.lang.decompile,
-         :once false,
-         :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
-         :column 21,
-         :line 450},
-        :o-tag java.lang.Object,
-        :variadic? false,
-        :form ([input1] (inc input1)),
-        :tag java.lang.Object,
-        :body
-        {:args
-         [{:children [],
-           :name input1__#0,
-           :op :local,
-           :env
-           {:loop-locals 1,
-            :locals {input1 {:form input1, :name input1, :variadic? false, :op :binding, :arg-id 0, :local :arg}},
-            :ns erp12.cbgp-lite.lang.decompile,
-            :loop-id loop_19137,
-            :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
-            :column 41,
-            :line 450,
-            :once false,
-            :context :ctx/expr},
-           :o-tag java.lang.Object,
-           :variadic? false,
-           :arg-id 0,
-           :form input1,
-           :tag java.lang.Object,
-           :atom :FAIL ; #<Atom@35523300: {:tag java.lang.Object}>,
-           :local :arg,
-           :assignable? false}],
-         :children [:args],
-         :body? true,
-         :method inc,
-         :op :static-call,
-         :env
-         {:loop-locals 1,
-          :locals {input1 {:form input1, :name input1, :variadic? false, :op :binding, :arg-id 0, :local :arg}},
-          :ns erp12.cbgp-lite.lang.decompile,
-          :loop-id loop_19137,
-          :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
-          :column 41,
-          :line 450,
-          :once false,
-          :context :ctx/return},
-         :o-tag java.lang.Number,
-         :class clojure.lang.Numbers,
-         :form (. clojure.lang.Numbers (inc input1)),
-         :tag java.lang.Number,
-         :validated? true,
-         :raw-forms ((do (inc input1)) (inc input1))}}],
-      :once false,
-      :max-fixed-arity 1,
-      :form (fn* ([input1] (inc input1))),
-      :tag clojure.lang.AFunction,
-      :arglists ([input1])},
-     :form (fn* ([input1] (inc input1))),
-     :tag clojure.lang.AFunction,
-     :arglists ([input1]),
-     :raw-forms ((clojure.core/fn ([input1] (inc input1))))},
-    :name help,
-    :op :def,
-    :env
-    {:context :ctx/expr,
-     :locals {},
-     :ns erp12.cbgp-lite.lang.decompile,
-     :column 21,
-     :line 450,
-     :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj"},
-    :o-tag clojure.lang.Var,
-    :var #'erp12.cbgp-lite.lang.decompile/help,
-    :top-level true,
-    :form (def help (clojure.core/fn ([input1] (inc input1)))),
-    :tag clojure.lang.Var,
-    :arglists ([input1]),
-    :raw-forms ((defn help [input1] (inc input1)))}
-
-  ;; :int :expr
-  '{:children [:methods],
-    :return-tag java.lang.Number,
-    :op :fn,
-    :env
-    {:context :ctx/expr,
-     :locals {},
-     :ns erp12.cbgp-lite.lang.decompile,
-     :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
-     :column 22,
-     :line 455},
-    :o-tag clojure.lang.AFunction,
-    :variadic? false,
-    :methods
-    [{:children [:params :body],
-      :loop-id loop_19896,
-      :arglist [input1],
-      :params
-      [{:name input1__#0,
-        :op :binding,
-        :env
-        {:context :ctx/expr,
-         :locals {},
-         :ns erp12.cbgp-lite.lang.decompile,
-         :once false,
-         :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
-         :column 22,
-         :line 455},
-        :o-tag java.lang.Object,
-        :variadic? false,
-        :arg-id 0,
-        :form input1,
-        :tag java.lang.Object,
-        :atom :FAIL ; #<Atom@f7f4d65: {:tag java.lang.Object}>,
-        :local :arg}],
-      :fixed-arity 1,
-      :op :fn-method,
-      :env
-      {:context :ctx/expr,
-       :locals {},
-       :ns erp12.cbgp-lite.lang.decompile,
-       :once false,
-       :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
-       :column 22,
-       :line 455},
-      :o-tag java.lang.Object,
-      :variadic? false,
-      :form ([input1] (inc input1)),
-      :tag java.lang.Object,
-      :body
-      {:args
-       [{:children [],
-         :name input1__#0,
-         :op :local,
-         :env
-         {:loop-locals 1,
-          :locals {input1 {:form input1, :name input1, :variadic? false, :op :binding, :arg-id 0, :local :arg}},
-          :ns erp12.cbgp-lite.lang.decompile,
-          :loop-id loop_19896,
-          :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
-          :column 42,
-          :line 455,
-          :once false,
-          :context :ctx/expr},
-         :o-tag java.lang.Object,
-         :variadic? false,
-         :arg-id 0,
-         :form input1,
-         :tag java.lang.Object,
-         :atom :FAIL ;#<Atom@f7f4d65: {:tag java.lang.Object}>,
-         :local :arg,
-         :assignable? false}],
-       :children [:args],
-       :body? true,
-       :method inc,
-       :op :static-call,
-       :env
-       {:loop-locals 1,
-        :locals {input1 {:form input1, :name input1, :variadic? false, :op :binding, :arg-id 0, :local :arg}},
-        :ns erp12.cbgp-lite.lang.decompile,
-        :loop-id loop_19896,
-        :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
-        :column 42,
-        :line 455,
-        :once false,
-        :context :ctx/return},
-       :o-tag java.lang.Number,
-       :class clojure.lang.Numbers,
-       :form (. clojure.lang.Numbers (inc input1)),
-       :tag java.lang.Number,
-       :validated? true,
-       :raw-forms ((do (inc input1)) (inc input1))}}],
-    :once false,
-    :max-fixed-arity 1,
-    :form (fn* ([input1] (inc input1))),
-    :tag clojure.lang.AFunction,
-    :arglists ([input1])}
-
-  ;; :init :expr :methods first
-  '{:children [:params :body],
-    :loop-id loop_19913,
-    :arglist [input1],
-    :params
-    [{:name input1__#0,
-      :op :binding,
-      :env
-      {:context :ctx/expr,
-       :locals {},
-       :ns erp12.cbgp-lite.lang.decompile,
-       :once false,
-       :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
-       :column 22,
-       :line 455},
-      :o-tag java.lang.Object,
-      :variadic? false,
-      :arg-id 0,
-      :form input1,
-      :tag java.lang.Object,
-      :atom :f ;#<Atom@719d22ab: {:tag java.lang.Object}>,
-      :local :arg}],
-    :fixed-arity 1,
-    :op :fn-method,
-    :env
-    {:context :ctx/expr,
-     :locals {},
-     :ns erp12.cbgp-lite.lang.decompile,
-     :once false,
-     :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
-     :column 22,
-     :line 455},
-    :o-tag java.lang.Object,
-    :variadic? false,
-    :form ([input1] (inc input1)),
-    :tag java.lang.Object,
-    :body
-    {:args
-     [{:children [],
-       :name input1__#0,
-       :op :local,
-       :env
-       {:loop-locals 1,
-        :locals {input1 {:form input1, :name input1, :variadic? false, :op :binding, :arg-id 0, :local :arg}},
-        :ns erp12.cbgp-lite.lang.decompile,
-        :loop-id loop_19913,
-        :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
-        :column 42,
-        :line 455,
-        :once false,
-        :context :ctx/expr},
-       :o-tag java.lang.Object,
-       :variadic? false,
-       :arg-id 0,
-       :form input1,
-       :tag java.lang.Object,
-       :atom :f ; #<Atom@719d22ab: {:tag java.lang.Object}>,
-       :local :arg,
-       :assignable? false}],
-     :children [:args],
-     :body? true,
-     :method inc,
-     :op :static-call,
-     :env
-     {:loop-locals 1,
-      :locals {input1 {:form input1, :name input1, :variadic? false, :op :binding, :arg-id 0, :local :arg}},
-      :ns erp12.cbgp-lite.lang.decompile,
-      :loop-id loop_19913,
-      :file "/Users/thelmuth/Documents/Clojure/cbgp-lite/src/erp12/cbgp_lite/lang/decompile.clj",
-      :column 42,
-      :line 455,
-      :once false,
-      :context :ctx/return},
-     :o-tag java.lang.Number,
-     :class clojure.lang.Numbers,
-     :form (. clojure.lang.Numbers (inc input1)),
-     :tag java.lang.Number,
-     :validated? true,
-     :raw-forms ((do (inc input1)) (inc input1))}}
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(nth [1 2 3 4] 6 10)))
-                     {:type 'int?})
-
-  (->
-   (ana.jvm/analyze '(defn help [input1] (inc input1)))
-   :init
-   :expr
-   :methods)
-  (->
-   (ana.jvm/analyze '(defn help [input1] (inc (+ 1 input1))))
-   :init
-   :expr
-   :methods
-   first
-   :body
-   :args)
-
-  (defn example [x] (+ (/ x 2) 5.0))
-  (example 3)
-  
-  
-
-
-  (ana.jvm/analyze '(defn help [input1 input2]
-    (+ (int input1) input2)))
-  
-  (-> (ana.jvm/analyze '(defn help [input1 input2]
-                      (+ (int input1) input2)))
-      :init
-      :expr
-      :methods
-      first
-      :body
-      :args
-      first)
-  
-
-  (compile-debugging2 (decompile-ast (ana.jvm/analyze '(defn my-first [input1] (first input1)))
-                 {:input->type {'input1 {:type 'string?}}
-                  :ret-type {:type 'char?}})
-                      {:input->type {'input1 {:type 'string?}}
-                       :ret-type {:type 'char?}}
-                      ["Hello"])
-  
-
-  (compile-debugging2 
-   (decompile-ast (ana.jvm/analyze '(defn my-first [input1] (first input1)))
-                 {:input->type {'input1 {:type :vector :child {:type 'int?}}}
-                  :ret-type {:type 'int?}}) 
-                      {:input->type {'input1 {:type :vector :child {:type 'int?}}}
-                       :ret-type {:type 'int?}} 
-                      [[5 4 3 6 81]])
-  
-
-  (compile-debugging (decompile-ast (ana.jvm/analyze '(count "hello")))
-                     {:type 'int?})
+  (ana.jvm/analyze 'count) 
   )
 
