@@ -1,8 +1,10 @@
 {:path     ["src"]
  :deps     {com.taoensso/timbre              {:mvn/version "6.0.4"}
-            io.github.erp12/schema-inference {:git/sha "9c52bef1a8235f11071f6ed8a44fa6d492a4949e"}
+            io.github.erp12/schema-inference {:local/root "../schema-inference"} ;; referencing local schema-inference for testing. Used to be {:git/sha "9c52bef1a8235f11071f6ed8a44fa6d492a4949e"}
             clj-fuzzy/clj-fuzzy              {:mvn/version "0.4.1"}
-            org.clojure/tools.analyzer.jvm {:mvn/version "1.3.2"}}
+            org.clojure/tools.analyzer.jvm {:mvn/version "1.3.2"}
+            ;; org.typedclojure/typed.clj.analyzer {:mvn/version "1.2.1"}
+            }
  :jvm-opts ["-XX:CompressedClassSpaceSize=2g"]
  :aliases  {:test       {:extra-paths ["test"]
                          :extra-deps  {io.github.metabase/hawk   {:sha "9c97bcb6d4de116325e651b40973fd0a75b7ae21"}
