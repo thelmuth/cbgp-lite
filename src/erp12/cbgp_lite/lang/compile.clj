@@ -230,7 +230,7 @@
   ;; If one or more arguments have :s-var types, incrementally bind them.
   (let [{boxed-ast :ast state-fn-popped :state} (pop-function-ast state)]
     (log/trace "Applying function:" boxed-ast)
-    (if (= :none boxed-ast)
+    (if (= :none boxed-ast) 
       state
       (let [{fn-ast ::ast fn-type ::type} boxed-ast]
         (loop [remaining-arg-types (schema/fn-arg-schemas fn-type)
