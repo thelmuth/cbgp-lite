@@ -181,6 +181,224 @@
                   (c/compile-step {:push-unit {:gene :local :idx 3}
                                    :state     (assoc c/empty-state :locals ['x])
                                    :type-env  {'x {:type 'int?}}}))))
+  ;;math testing
+  (testing "compile apply math"
+    (is (partial= {:asts   (list {::c/ast  {:op   :invoke
+                                            :fn   {:op :var :var `lib/>'}
+                                            :args [{:op :const :val 2}
+                                                   {:op :const :val 1}]}
+                                  ::c/type {:type 'boolean?}})
+                   :push   []
+                   :locals []}
+                  (c/compile-step {:push-unit {:gene :apply}
+                                   :state     (assoc c/empty-state
+                                                     :asts (list {::c/ast  {:op :const :val 2}
+                                                                  ::c/type {:type 'int?}}
+                                                                 {::c/ast  {:op :const :val 1}
+                                                                  ::c/type {:type 'int?}}
+                                                                 {::c/ast  {:op :var :var `lib/>'}
+                                                                  ::c/type (schema/instantiate (lib/type-env `lib/>'))}))
+                                   :type-env  lib/type-env})))
+    (is (partial= {:asts   (list {::c/ast  {:op   :invoke
+                                            :fn   {:op :var :var '+}
+                                            :args [{:op :const :val 2.0}
+                                                   {:op :const :val 1.87}]}
+                                  ::c/type {:type 'double?}})
+                   :push   []
+                   :locals []}
+                  (c/compile-step {:push-unit {:gene :apply}
+                                   :state     (assoc c/empty-state
+                                                     :asts (list {::c/ast  {:op :const :val 2.0}
+                                                                  ::c/type {:type 'double?}}
+                                                                 {::c/ast  {:op :const :val 1.87}
+                                                                  ::c/type {:type 'double?}}
+                                                                 {::c/ast  {:op :var :var '+}
+                                                                  ::c/type (schema/instantiate (lib/type-env '+))}))
+                                   :type-env  lib/type-env})))
+    (is (partial= {:asts   (list {::c/ast  {:op   :invoke
+                                            :fn   {:op :var :var '+}
+                                            :args [{:op :const :val 2}
+                                                   {:op :const :val 1}]}
+                                  ::c/type {:type 'int?}})
+                   :push   []
+                   :locals []}
+                  (c/compile-step {:push-unit {:gene :apply}
+                                   :state     (assoc c/empty-state
+                                                     :asts (list {::c/ast  {:op :const :val 2}
+                                                                  ::c/type {:type 'int?}}
+                                                                 {::c/ast  {:op :const :val 1}
+                                                                  ::c/type {:type 'int?}}
+                                                                 {::c/ast  {:op :var :var '+}
+                                                                  ::c/type (schema/instantiate (lib/type-env '+))}))
+                                   :type-env  lib/type-env})))
+    (is (partial= {:asts   (list {::c/ast  {:op   :invoke
+                                            :fn   {:op :var :var 'dec}
+                                            :args [{:op :const :val 2.0}]}
+                                  ::c/type {:type 'double?}})
+                   :push   []
+                   :locals []}
+                  (c/compile-step {:push-unit {:gene :apply}
+                                   :state     (assoc c/empty-state
+                                                     :asts (list {::c/ast  {:op :const :val 2.0}
+                                                                  ::c/type {:type 'double?}} 
+                                                                 {::c/ast  {:op :var :var 'dec}
+                                                                  ::c/type (schema/instantiate (lib/type-env 'dec))}))
+                                   :type-env  lib/type-env})))
+    (is (partial= {:asts   (list {::c/ast  {:op   :invoke
+                                            :fn   {:op :var :var 'inc}
+                                            :args [{:op :const :val 3}]}
+                                  ::c/type {:type 'int?}})
+                   :push   []
+                   :locals []}
+                  (c/compile-step {:push-unit {:gene :apply}
+                                   :state     (assoc c/empty-state
+                                                     :asts (list {::c/ast  {:op :const :val 3}
+                                                                  ::c/type {:type 'int?}}
+                                                                 {::c/ast  {:op :var :var 'inc}
+                                                                  ::c/type (schema/instantiate (lib/type-env 'inc))}))
+                                   :type-env  lib/type-env})))
+    (is (partial= {:asts   (list {::c/ast  {:op   :invoke
+                                            :fn   {:op :var :var '*}
+                                            :args [{:op :const :val 2.0}
+                                                   {:op :const :val 3.0}]}
+                                  ::c/type {:type 'double?}})
+                   :push   []
+                   :locals []}
+                  (c/compile-step {:push-unit {:gene :apply}
+                                   :state     (assoc c/empty-state
+                                                     :asts (list {::c/ast  {:op :const :val 2.0}
+                                                                  ::c/type {:type 'double?}}
+                                                                 {::c/ast  {:op :const :val 3.0}
+                                                                  ::c/type {:type 'double?}}
+                                                                 {::c/ast  {:op :var :var '*}
+                                                                  ::c/type (schema/instantiate (lib/type-env '*))}))
+                                   :type-env  lib/type-env})))
+    (is (partial= {:asts   (list {::c/ast  {:op   :invoke
+                                            :fn   {:op :var :var 'quot}
+                                            :args [{:op :const :val 2.0}
+                                                   {:op :const :val 3.0}]}
+                                  ::c/type {:type 'double?}})
+                   :push   []
+                   :locals []}
+                  (c/compile-step {:push-unit {:gene :apply}
+                                   :state     (assoc c/empty-state
+                                                     :asts (list {::c/ast  {:op :const :val 2.0}
+                                                                  ::c/type {:type 'double?}}
+                                                                 {::c/ast  {:op :const :val 3.0}
+                                                                  ::c/type {:type 'double?}}
+                                                                 {::c/ast  {:op :var :var 'quot}
+                                                                  ::c/type (schema/instantiate (lib/type-env 'quot))}))
+                                   :type-env  lib/type-env})))
+    (is (partial= {:asts   (list {::c/ast  {:op   :invoke
+                                            :fn   {:op :var :var '/}
+                                            :args [{:op :const :val 2.0}
+                                                   {:op :const :val 2.0}]}
+                                  ::c/type {:type 'double?}})
+                   :push   []
+                   :locals []}
+                  (c/compile-step {:push-unit {:gene :apply}
+                                   :state     (assoc c/empty-state
+                                                     :asts (list {::c/ast  {:op :const :val 2.0}
+                                                                  ::c/type {:type 'double?}}
+                                                                 {::c/ast  {:op :const :val 2.0}
+                                                                  ::c/type {:type 'double?}}
+                                                                 {::c/ast  {:op :var :var '/}
+                                                                  ::c/type (schema/instantiate (lib/type-env '/))}))
+                                   :type-env  lib/type-env})))
+     (is (partial= {:asts   (list {::c/ast  {:op   :invoke
+                                            :fn   {:op :var :var '/}
+                                            :args [{:op :const :val 2}
+                                                   {:op :const :val 3}]}
+                                  ::c/type {:type 'double?}})
+                   :push   []
+                   :locals []}
+                  (c/compile-step {:push-unit {:gene :apply}
+                                   :state     (assoc c/empty-state
+                                                     :asts (list {::c/ast  {:op :const :val 2}
+                                                                  ::c/type {:type 'int?}}
+                                                                 {::c/ast  {:op :const :val 3}
+                                                                  ::c/type {:type 'int?}}
+                                                                 {::c/ast  {:op :var :var '/}
+                                                                  ::c/type (schema/instantiate (lib/type-env '/))}))
+                                   :type-env  lib/type-env})))
+     (is (partial= {:asts   (list {::c/ast  {:op   :invoke
+                                             :fn   {:op :var :var `lib/>'}
+                                             :args [{:op :const :val 2}
+                                                    {:op :const :val 3}]}
+                                   ::c/type {:type 'boolean?}})
+                    :push   []
+                    :locals []}
+                   (c/compile-step {:push-unit {:gene :apply}
+                                    :state     (assoc c/empty-state
+                                                      :asts (list {::c/ast  {:op :const :val 2}
+                                                                   ::c/type {:type 'int?}}
+                                                                  {::c/ast  {:op :const :val 3}
+                                                                   ::c/type {:type 'int?}}
+                                                                  {::c/ast  {:op :var :var `lib/>'}
+                                                                   ::c/type (schema/instantiate (lib/type-env `lib/>'))}))
+                                    :type-env  lib/type-env})))
+     
+      (is (partial= {:asts   (list {::c/ast  {:op   :invoke
+                                             :fn   {:op :var :var `lib/min'}
+                                             :args [{:op :const :val 2}
+                                                    {:op :const :val 3}]}
+                                   ::c/type {:type 'int?}})
+                    :push   []
+                    :locals []}
+                   (c/compile-step {:push-unit {:gene :apply}
+                                    :state     (assoc c/empty-state
+                                                      :asts (list {::c/ast  {:op :const :val 2}
+                                                                   ::c/type {:type 'int?}}
+                                                                  {::c/ast  {:op :const :val 3}
+                                                                   ::c/type {:type 'int?}}
+                                                                  {::c/ast  {:op :var :var `lib/min'}
+                                                                   ::c/type (schema/instantiate (lib/type-env `lib/min'))}))
+                                    :type-env  lib/type-env})))
+       (is (partial= {:asts   (list {::c/ast  {:op   :invoke
+                                              :fn   {:op :var :var `lib/max'}
+                                              :args [{:op :const :val 2.0}
+                                                     {:op :const :val 3.4}]}
+                                    ::c/type {:type 'double?}})
+                     :push   []
+                     :locals []}
+                    (c/compile-step {:push-unit {:gene :apply}
+                                     :state     (assoc c/empty-state
+                                                       :asts (list {::c/ast  {:op :const :val 2.0}
+                                                                    ::c/type {:type 'double?}}
+                                                                   {::c/ast  {:op :const :val 3.4}
+                                                                    ::c/type {:type 'double?}}
+                                                                   {::c/ast  {:op :var :var `lib/max'}
+                                                                    ::c/type (schema/instantiate (lib/type-env `lib/max'))}))
+                                     :type-env  lib/type-env})))
+          #_(is (partial= {:asts   (list {::c/ast  {:op   :invoke
+                                               :fn   {:op :var :var 'int}
+                                               :args [{:op :const :val 5.4}]}
+                                     ::c/type {:type 'int?}})
+                      :push   []
+                      :locals []}
+                     (c/compile-step {:push-unit {:gene :apply}
+                                      :state     (assoc c/empty-state
+                                                        :asts (list {::c/ast  {:op :const :val 5.4}
+                                                                     ::c/type {:type 'double?}} 
+                                                                    {::c/ast  {:op :var :var 'int}
+                                                                     ::c/type (schema/instantiate (lib/type-env 'int))}))
+                                      :type-env  lib/type-env})))
+          
+          #_(is (partial= {:asts   (list {::c/ast  {:op   :invoke
+                                                    :fn   {:op :var :var 'int}
+                                                    :args [{:op :const :val \g }]}
+                                          ::c/type {:type 'int?}})
+                           :push   []
+                           :locals []}
+                          (c/compile-step {:push-unit {:gene :apply}
+                                           :state     (assoc c/empty-state
+                                                             :asts (list {::c/ast  {:op :const :val \g}
+                                                                          ::c/type {:type 'char?}}
+                                                                         {::c/ast  {:op :var :var 'int}
+                                                                          ::c/type (schema/instantiate (lib/type-env 'int))}))
+                                           :type-env  lib/type-env})))
+    )
+
   (testing "compile apply"
     (is (partial= {:asts   (list {::c/ast  {:op   :invoke
                                             :fn   {:op :var :var '-}
@@ -196,8 +414,10 @@
                                                                  {::c/ast  {:op :var :var '-}
                                                                   ::c/type (schema/instantiate (lib/type-env '-))}
                                                                  {::c/ast  {:op :const :val 1}
-                                                                  ::c/type {:type 'int?}}))
-                                   :type-env  lib/type-env})))
+                                                                  ::c/type {:type 'int?}}
+                                                                 {::c/ast  {:op :var :var '-}
+                                                                  ::c/type (schema/instantiate (lib/type-env '-))}))
+                                   :type-env  lib/type-env}))) 
     (is (partial= {:asts   (list {::c/ast  {:op   :invoke
                                             :fn   {:op :var :var 'if}
                                             :args [{:op :local :name 'x}
