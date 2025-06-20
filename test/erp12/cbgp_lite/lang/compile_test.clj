@@ -194,7 +194,7 @@
                                                      :asts (list {::c/ast  {:op :const :val 2}
                                                                   ::c/type {:type 'int?}}
                                                                  {::c/ast  {:op :var :var '-}
-                                                                  ::c/type (lib/type-env '-)}
+                                                                  ::c/type (schema/instantiate (lib/type-env '-))}
                                                                  {::c/ast  {:op :const :val 1}
                                                                   ::c/type {:type 'int?}}))
                                    :type-env  lib/type-env})))

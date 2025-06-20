@@ -118,13 +118,13 @@
                                  {:gene :var :name 'input2}
                                  {:gene :var :name 'double}
                                  {:gene :apply}
-                                 {:gene :var :name 'double-add}
+                                 {:gene :var :name '+}
                                  {:gene :apply})
               :push        [{:gene :var :name 'input1}
                             {:gene :var :name 'input2}
                             {:gene :var :name 'double}
                             {:gene :apply}
-                            {:gene :var :name 'double-add}
+                            {:gene :var :name '+}
                             {:gene :apply}]
               :total-error 0.0
               :cases-used  3
@@ -134,7 +134,7 @@
                             {:gene :var :name 'input2}
                             {:gene :var :name 'double}
                             {:gene :apply}
-                            {:gene :var :name 'double-add}
+                            {:gene :var :name '+}
                             {:gene :apply})]
                (-> {:individual           (assoc (evaluator gn {:cases cases}) :genome gn)
                     :context              {:cases cases}
