@@ -49,6 +49,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Math
 
+(defn neg
+  [n]
+  (- n))
+
 (defn safe-div
   [n d]
   (if (zero? d) 0 (/ n d)))
@@ -75,28 +79,44 @@
   [x]
   (Math/tan x))
 
-(defn safe-pow
+
+;; We've decided to make safe-pow => pow, and have it test arguments
+;; to see if they're integers (if so, cast to long) or not (return double)
+;; We could instead just leave int-pow and double-pow as monomorphized and,
+;; when decompiling, only use the double version
+;; Same with square (and maybe others)
+(defn pow
   [x y]
   (let [result (Math/pow x y)]
-    (if (or (NaN? result) (infinite? result))
+    (cond
+      (or (NaN? result) (infinite? result))
       (throw (ex-info "Pow resulting in undefined value." {:base x :exponent y}))
+      
+      (and (integer? x) (integer? y))
+      (long result)
+      
+      :else
       result)))
 
-(defn int-pow
-  [x y]
-  (long (safe-pow x y)))
+;; (defn int-pow
+;;   [x y]
+;;   (long (safe-pow x y)))
 
-(defn double-pow
-  [x y]
-  (safe-pow x y))
+;; (defn double-pow
+;;   [x y]
+;;   (safe-pow x y))
 
-(defn int-square
+(defn square
   [x]
-  (long (safe-pow x 2)))
+  (pow x 2))
 
-(defn double-square
-  [x]
-  (safe-pow x 2))
+;; (defn int-square
+;;   [x]
+;;   (long (safe-pow x 2)))
+
+;; (defn double-square
+;;   [x]
+;;   (safe-pow x 2))
 
 (defn safe-sqrt
   [x]
@@ -401,7 +421,19 @@
   [& els]
   {:type :tuple :children (vec els)})
 
-(defn scheme [schema] (schema/generalize {} schema))
+(defn scheme
+  "Optional second argument is a map from symbols to the typeclasses they should
+   have in the resulting scheme"
+  ([schema]
+   (schema/generalize {} schema))
+  ([schema typeclasses-of-s-vars]
+   (let [result-scheme (schema/generalize {} schema)
+         s-vars (:s-vars result-scheme)
+         s-vars-with-tcs (mapv #(cond-> %
+                                  (contains? typeclasses-of-s-vars (:sym %))
+                                  (assoc :typeclasses (get typeclasses-of-s-vars (:sym %))))
+                               s-vars)]
+     (assoc result-scheme :s-vars s-vars-with-tcs))))
 
 (def type-env
   {;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -438,12 +470,8 @@
                                        (s-var 'a))}
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Common
-   '=                  {:type   :scheme
-                        :s-vars ['a]
-                        :body   (fn-of [(s-var 'a) (s-var 'a)] BOOLEAN)}
-   'not=               {:type   :scheme
-                        :s-vars ['a]
-                        :body   (fn-of [(s-var 'a) (s-var 'a)] BOOLEAN)}
+   '=                  (scheme (fn-of [(s-var 'a) (s-var 'a)] BOOLEAN))
+   'not=               (scheme (fn-of [(s-var 'a) (s-var 'a)] BOOLEAN))
    `<'                 (scheme (fn-of [(s-var 'a) (s-var 'a)] BOOLEAN))
    `<='                (scheme (fn-of [(s-var 'a) (s-var 'a)] BOOLEAN))
    `>'                 (scheme (fn-of [(s-var 'a) (s-var 'a)] BOOLEAN))
@@ -452,59 +480,75 @@
    `min'               (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)))
    `max'               (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)))
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   ;; Numeric
-   'int-add            (binary-transform INT)
-   'int-sub            (binary-transform INT)
-   'int-mult           (binary-transform INT)
-   'int-div            (fn-of [INT INT] DOUBLE)
-   'int-quot           (binary-transform INT)
-   'int-mod            (binary-transform INT)
-   'int-inc            (unary-transform INT)
-   'int-dec            (unary-transform INT)
-   'int-neg            (unary-transform INT)
-   'int-abs            (unary-transform INT)
-   `int-pow            (binary-transform INT)
-   `int-square         (unary-transform INT)
+   ;; Numeric 
+   '+                  (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
+   '-                  (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
+   '*                  (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
+   'quot               (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
+   '/                  (scheme (fn-of [(s-var 'a) (s-var 'a)] DOUBLE) {'a #{:number}})     ;; does this work
+   'mod                (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
+   'inc                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
+   'dec                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
+   `neg                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
+   'abs                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
+   `pow                (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
+   `square             (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
+  ;;  'int-add            (binary-transform INT)
+  ;;  'int-sub            (binary-transform INT)
+  ;;  'int-mult           (binary-transform INT)
+  ;;  'int-div            (fn-of [INT INT] DOUBLE)
+  ;;  'int-quot           (binary-transform INT)
+  ;;  'int-mod            (binary-transform INT)
+  ;;  'int-inc            (unary-transform INT)
+  ;;  'int-dec            (unary-transform INT)
+  ;;  'int-neg            (unary-transform INT)
+  ;;  'int-abs            (unary-transform INT)
+  ;;  `int-pow            (binary-transform INT)
+  ;;  `int-square         (unary-transform INT)
    `int-ceil           (fn-of [DOUBLE] INT)
    `int-floor          (fn-of [DOUBLE] INT)
    ;'int-lt              (binary-pred INT)
    ;'int-gt              (binary-pred INT)
    ;'int-le              (binary-pred INT)
    ;'int-ge              (binary-pred INT)
-   'double-add         (binary-transform DOUBLE)
-   'double-sub         (binary-transform DOUBLE)
-   'double-mult        (binary-transform DOUBLE)
-   'double-div         (binary-transform DOUBLE)
-   'double-quot        (binary-transform DOUBLE)
-   'double-mod         (binary-transform DOUBLE)
-   'double-inc         (unary-transform DOUBLE)
-   'double-dec         (unary-transform DOUBLE)
-   'double-neg         (unary-transform DOUBLE)
-   'double-abs         (unary-transform DOUBLE)
-   `double-pow         (binary-transform DOUBLE)
-   `double-square      (unary-transform DOUBLE)
+  ;;  'double-add         (binary-transform DOUBLE)
+  ;;  'double-sub         (binary-transform DOUBLE)
+  ;;  'double-mult        (binary-transform DOUBLE)
+  ;;  'double-div         (binary-transform DOUBLE)
+  ;;  'double-quot        (binary-transform DOUBLE)
+  ;;  'double-mod         (binary-transform DOUBLE)
+  ;;  'double-inc         (unary-transform DOUBLE)
+  ;;  'double-dec         (unary-transform DOUBLE)
+  ;;  'double-neg         (unary-transform DOUBLE)
+  ;;  'double-abs         (unary-transform DOUBLE)
+  ;;  `double-pow         (binary-transform DOUBLE)
+  ;;  `double-square      (unary-transform DOUBLE)
    ;'double-lt           (binary-pred DOUBLE)
    ;'double-gt           (binary-pred DOUBLE)
    ;'double-le           (binary-pred DOUBLE)
    ;'double-ge           (binary-pred DOUBLE)
-   'int                (fn-of [DOUBLE] INT)
+   'int                (scheme (fn-of [(s-var 'a)] INT) {'a #{:intable}})
+  ;;  'int                (fn-of [DOUBLE] INT)
    'double             (fn-of [INT] DOUBLE)
-   'char->int          (fn-of [CHAR] INT)
+  ;;  'char->int          (fn-of [CHAR] INT)
    ;'min-int             (binary-transform INT)
    ;'min-double          (binary-transform DOUBLE)
    ;'max-int             (binary-transform INT)
    ;'max-double          (binary-transform DOUBLE)
-   `safe-sqrt          (unary-transform DOUBLE)
+   `safe-sqrt          (scheme (fn-of [(s-var 'a)] DOUBLE) {'a #{:number}})
    `sin                (unary-transform DOUBLE)
    `cos                (unary-transform DOUBLE)
    `tan                (unary-transform DOUBLE)
    `safe-asin          (unary-transform DOUBLE)
    `safe-acos          (unary-transform DOUBLE)
    `atan               (unary-transform DOUBLE)
-   `safe-log2          (unary-transform DOUBLE)
-   `safe-log10         (unary-transform DOUBLE)
+   `safe-log2          (scheme (fn-of [(s-var 'a)] DOUBLE) {'a #{:number}})
+   `safe-log10         (scheme (fn-of [(s-var 'a)] DOUBLE) {'a #{:number}})
    `ceil               (unary-transform DOUBLE)
    `floor              (unary-transform DOUBLE)
+  ;;  'zero-int?          (fn-of [INT] BOOLEAN)
+  ;;  'zero-double?       (fn-of [DOUBLE] BOOLEAN)
+   'zero?              (scheme (fn-of [(s-var 'a)] BOOLEAN) {'a #{:number}})
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Text
    'str                {:type   :scheme
@@ -566,8 +610,6 @@
    `and                (binary-transform BOOLEAN)
    `or                 (binary-transform BOOLEAN)
    'not                (unary-transform BOOLEAN)
-   'zero-int?          (fn-of [INT] BOOLEAN)
-   'zero-double?       (fn-of [DOUBLE] BOOLEAN)
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Vector
    '->vector1          (scheme (fn-of [(s-var 'a)]
@@ -849,7 +891,7 @@
     ->vector2         vector
     ->vector3         vector
     append-str        str
-    char->int         int
+    ;; char->int         int
     char-occurrences  erp12.cbgp-lite.lang.lib/occurrences-of
     comp2-fn1         comp
     comp2-fn2         comp
@@ -860,16 +902,16 @@
     count-vec         count
     do2               do
     do3               do
-    double-abs        abs
-    double-add        +
-    double-dec        dec
-    double-div        erp12.cbgp-lite.lang.lib/safe-div
-    double-inc        inc
-    double-mod        erp12.cbgp-lite.lang.lib/safe-mod
-    double-mult       *
-    double-quot       erp12.cbgp-lite.lang.lib/safe-quot
-    double-sub        -
-    double-neg        -
+    ;; double-abs        abs
+    ;; double-add        +
+    ;; double-dec        dec
+    ;; double-div        erp12.cbgp-lite.lang.lib/safe-div
+    ;; double-inc        inc
+    ;; double-mod        erp12.cbgp-lite.lang.lib/safe-mod
+    ;; double-mult       *
+    ;; double-quot       erp12.cbgp-lite.lang.lib/safe-quot
+    ;; double-sub        -
+    ;; double-neg        -
     empty-str?        empty?
     first-str         first
     fold-vec          reduce
@@ -878,16 +920,16 @@
     get-or-else       get
     index-of-char     clojure.string/index-of
     index-of-str      clojure.string/index-of
-    int-abs           abs
-    int-add           +
-    int-dec           dec
-    int-div           erp12.cbgp-lite.lang.lib/safe-div
-    int-inc           inc
-    int-mod           erp12.cbgp-lite.lang.lib/safe-mod
-    int-mult          *
-    int-quot          erp12.cbgp-lite.lang.lib/safe-quot
-    int-sub           -
-    int-neg           -
+    ;; int-abs           abs
+    ;; int-add           +
+    ;; int-dec           dec
+    ;; int-div           erp12.cbgp-lite.lang.lib/safe-div
+    ;; int-inc           inc
+    ;; int-mod           erp12.cbgp-lite.lang.lib/safe-mod
+    ;; int-mult          *
+    ;; int-quot          erp12.cbgp-lite.lang.lib/safe-quot
+    ;; int-sub           -
+    ;; int-neg           -
     join-chars        clojure.string/join
     last-str          last
     left              first
@@ -920,8 +962,9 @@
     string->chars     vec
     vec->map          erp12.cbgp-lite.lang.lib/->map
     vec->set          set
-    zero-double?      zero?
-    zero-int?         zero?})
+    ;; zero-double?      zero?
+    ;; zero-int?         zero?
+    })
 
 (def macros
   #{'if 'do2 'do3})

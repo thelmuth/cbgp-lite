@@ -183,7 +183,7 @@
                                    :type-env  {'x {:type 'int?}}}))))
   (testing "compile apply"
     (is (partial= {:asts   (list {::c/ast  {:op   :invoke
-                                            :fn   {:op :var :var 'int-sub}
+                                            :fn   {:op :var :var '-}
                                             :args [{:op :const :val 2}
                                                    {:op :const :val 1}]}
                                   ::c/type {:type 'int?}})
@@ -193,8 +193,8 @@
                                    :state     (assoc c/empty-state
                                                      :asts (list {::c/ast  {:op :const :val 2}
                                                                   ::c/type {:type 'int?}}
-                                                                 {::c/ast  {:op :var :var 'int-sub}
-                                                                  ::c/type (lib/type-env 'int-sub)}
+                                                                 {::c/ast  {:op :var :var '-}
+                                                                  ::c/type (lib/type-env '-)}
                                                                  {::c/ast  {:op :const :val 1}
                                                                   ::c/type {:type 'int?}}))
                                    :type-env  lib/type-env})))
@@ -352,19 +352,37 @@
   ;; Add 100 to input.
   (let [{::c/keys [ast type]} (c/push->ast {:push      [{:gene :lit :val 100 :type {:type 'int?}}
                                                         {:gene :local :idx 0}
-                                                        {:gene :var :name 'int-add}
+                                                        {:gene :var :name '+}
                                                         {:gene :apply}]
                                             :locals    ['in1]
                                             :ret-type  {:type 'int?}
                                             :type-env  (assoc lib/type-env
                                                               'in1 {:type 'int?})
                                             :dealiases lib/dealiases})
-        _ (is (= type {:type 'int?}))
+        _ (is (= type {:type 'int? :typeclasses #{:number}}))
         form (a/ast->form ast)
         _ (is (= form '(+ in1 100)))
         func (eval `(fn [~'in1] ~form))]
     (is (= 100 (func 0)))
     (is (= 101 (func 1)))))
+
+(deftest simple-double-math-test
+  ;; Add 100.0 to input.
+  (let [{::c/keys [ast type]} (c/push->ast {:push      [{:gene :lit :val 100.0 :type {:type 'double?}}
+                                                        {:gene :local :idx 0}
+                                                        {:gene :var :name '+}
+                                                        {:gene :apply}]
+                                            :locals    ['in1]
+                                            :ret-type  {:type 'double?}
+                                            :type-env  (assoc lib/type-env
+                                                              'in1 {:type 'double?})
+                                            :dealiases lib/dealiases})
+        _ (is (= type {:type 'double? :typeclasses #{:number}}))
+        form (a/ast->form ast)
+        _ (is (= form '(+ in1 100.0)))
+        func (eval `(fn [~'in1] ~form))]
+    (is (= 100.0 (func 0.0)))
+    (is (= 101.0 (func 1.0)))))
 
 (deftest conditional-logic-test
   ;; If input < 1000, return "small" else "large".
@@ -389,23 +407,46 @@
     (is (= (func 1000) "large"))
     (is (= (func 2000) "large"))))
 
+(deftest conditional-eq-logic-test
+  ;; If input == 1000, return "same" else "different".
+  (let [{::c/keys [ast type]} (c/push->ast {:push      [{:gene :lit :val "different" :type {:type 'string?}}
+                                                        {:gene :lit :val "same" :type {:type 'string?}}
+                                                        {:gene :lit :val 1000 :type {:type 'int?}}
+                                                        {:gene :local :idx 0}
+                                                        {:gene :var :name '=}
+                                                        {:gene :apply}
+                                                        {:gene :var :name 'if}
+                                                        {:gene :apply}]
+                                            :locals    ['in1]
+                                            :ret-type  {:type 'string?}
+                                            :type-env  (assoc lib/type-env
+                                                              'in1 {:type 'int?})
+                                            :dealiases lib/dealiases})
+        _ (is (= type {:type 'string?}))
+        form (a/ast->form ast)
+        _ (is (= form '(if (= in1 1000) "same" "different")))
+        func (eval `(fn [~'in1] ~form))]
+    (is (= (func 0) "different"))
+    (is (= (func 1000) "same"))
+    (is (= (func 2000) "different"))))
+
 (deftest let-binding-test
   ;; Square and then double the input.
   (let [{::c/keys [ast type]} (c/push->ast {:push      [{:gene :local :idx 0}
                                                         {:gene :local :idx 0}
-                                                        {:gene :var :name 'int-mult}
+                                                        {:gene :var :name '*}
                                                         {:gene :apply}
                                                         {:gene :let}
                                                         [{:gene :local :idx 1}
                                                          {:gene :local :idx 1}
-                                                         {:gene :var :name 'int-add}
+                                                         {:gene :var :name '+}
                                                          {:gene :apply}]]
                                             :locals    ['in1]
                                             :ret-type  {:type 'int?}
                                             :type-env  (assoc lib/type-env
                                                               'in1 {:type 'int?})
                                             :dealiases lib/dealiases})
-        _ (is (= type {:type 'int?}))
+        _ (is (= type {:type 'int? :typeclasses #{:number}}))
         form (a/ast->form ast)
         _ (is
            #_{:clj-kondo/ignore [:unresolved-symbol]}
@@ -422,7 +463,7 @@
   (let [{::c/keys [ast type]} (c/push->ast {:push      [{:gene :lit :val [1 2 3] :type {:type :vector :child {:type 'int?}}}
                                                         {:gene :fn :arg-types [lib/INT] :ret-type lib/INT}
                                                         [{:gene :local :idx 0}
-                                                         {:gene :var :name 'int-inc}
+                                                         {:gene :var :name 'inc}
                                                          {:gene :apply}]
                                                         {:gene :var :name 'map-vec}
                                                         {:gene :apply}]
@@ -430,7 +471,7 @@
                                             :ret-type  {:type :vector :child {:type 'int?}}
                                             :type-env  lib/type-env
                                             :dealiases lib/dealiases})
-        _ (is (= type {:type :vector :child {:type 'int?}}))
+        _ (is (= type {:type :vector :child {:type 'int? :typeclasses #{:number}}}))
         form (a/ast->form ast)
         _ (is (matches? (mapv (fn [?a] (inc ?a)) [1 2 3])
                         form))
