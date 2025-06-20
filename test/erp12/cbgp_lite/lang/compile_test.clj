@@ -257,6 +257,32 @@
                                                                  {::c/ast  {:op :var :var 'inc}
                                                                   ::c/type (schema/instantiate (lib/type-env 'inc))}))
                                    :type-env  lib/type-env})))
+     (is (partial= {:asts   (list {::c/ast  {:op   :invoke
+                                            :fn   {:op :var :var `lib/neg}
+                                            :args [{:op :const :val -3}]}
+                                  ::c/type {:type 'int?}})
+                   :push   []
+                   :locals []}
+                  (c/compile-step {:push-unit {:gene :apply}
+                                   :state     (assoc c/empty-state
+                                                     :asts (list {::c/ast  {:op :const :val -3}
+                                                                  ::c/type {:type 'int?}}
+                                                                 {::c/ast  {:op :var :var `lib/neg}
+                                                                  ::c/type (schema/instantiate (lib/type-env `lib/neg))}))
+                                   :type-env  lib/type-env})))
+      (is (partial= {:asts   (list {::c/ast  {:op   :invoke
+                                             :fn   {:op :var :var 'abs}
+                                             :args [{:op :const :val -3.4}]}
+                                   ::c/type {:type 'double?}})
+                    :push   []
+                    :locals []}
+                   (c/compile-step {:push-unit {:gene :apply}
+                                    :state     (assoc c/empty-state
+                                                      :asts (list {::c/ast  {:op :const :val -3.4}
+                                                                   ::c/type {:type 'double?}}
+                                                                  {::c/ast  {:op :var :var 'abs}
+                                                                   ::c/type (schema/instantiate (lib/type-env 'abs))}))
+                                    :type-env  lib/type-env}))) 
     (is (partial= {:asts   (list {::c/ast  {:op   :invoke
                                             :fn   {:op :var :var '*}
                                             :args [{:op :const :val 2.0}
