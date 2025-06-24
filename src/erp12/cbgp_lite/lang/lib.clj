@@ -568,7 +568,7 @@
    `rest-str           (unary-transform STRING)
    `butlast-str        (unary-transform STRING)
    'nth-str            (fn-of [STRING INT] CHAR)
-   'length             (fn-of [STRING] INT)
+  ;;  'length             (fn-of [STRING] INT)
    'map-str            {:type   :scheme
                         :s-vars ['a]
                         :body   (fn-of [(fn-of [CHAR] (s-var 'a))
@@ -974,46 +974,12 @@
 (def macros
   #{'if 'do2 'do3})
 
-;; (defn lib-for-types
-;;   [types]
-;;   (->> type-env
-;;        (filter (fn [[_ typ]]
-;;                  (core/or (= (:type typ) :scheme)
-;;                           (some #(schema/occurs? % typ) types))))
-;;        (into {})))
-
 (defn lib-for-type-ctors
-  [type-ctors]
-  (println "FINDME" type-ctors)
+  [type-ctors] 
   (->> type-env
        (filter (fn [[_ typ]]
-                 (->> (schema/schema-terms typ)
+                 (->> (schema/schema-terms typ) 
                       (remove #{:cat :s-var :scheme})
                       (set)
-                      (set/superset? type-ctors))))
+                      (set/superset? type-ctors)))) 
        (into {})))
-
-(comment
-
-  (type-env 'not)
-
-  (set/difference (set (keys (lib-for-type-ctors #{:=> 'boolean?})))
-                  (set (keys (lib-for-type-ctors #{:=>}))))
-  
-  (sort
-   (keys
-    (lib-for-type-ctors #{:=> 'int? :vector
-                          })))
-  
-  (let [typ (scheme (fn-of [{:type (s-var 'c) ;:child (s-var 'a) ;; maybe remove :child?
-                             }]INT) {'c #{:countable}})]
-    (->> (schema/schema-terms typ)
-         (remove #{:cat :s-var :scheme})
-         (set)
-         ))
-  
-  ;;; problem: lib-for-type-ctors doesn't include type constructors / typeclasses
-  ;;; need to have typeclasses passed throughout the fn
-  ;;; in the last superset, need to include things that are in the right typeclasses
-  
-  )

@@ -494,8 +494,7 @@
 
       "count-then-add-10"
       {:description    "Given a countable thing, count it, and return that plus 10"
-       :input->type    {'input1 ;{:type :vector :child {:type 'int?}}
-                        {:type {:type :s-var
+       :input->type    {'input1 {:type {:type :s-var
                                 :sym 'c
                                 :typeclasses #{:countable}}}}
        :ret-type       {:type 'int?}
@@ -505,7 +504,7 @@
        :case-generator (fn count-true-gen []
                          (let [coll (rand-vector 0 50 #(rand-int 100))]
                            {:inputs [coll]
-                            :output (+ 0 (count coll))}))
+                            :output (+ 10 (count coll))}))
        :loss-fns       [bu/absolute-distance]}}
 
 
