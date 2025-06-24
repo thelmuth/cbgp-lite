@@ -485,7 +485,7 @@
    '-                  (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
    '*                  (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
    'quot               (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
-   '/                  (scheme (fn-of [(s-var 'a) (s-var 'a)] DOUBLE) {'a #{:number}})     ;; does this work
+   '/                  (scheme (fn-of [(s-var 'a) (s-var 'a)] DOUBLE) {'a #{:number}})
    'mod                (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
    'inc                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
    'dec                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
