@@ -472,13 +472,13 @@
    ;; Common
    '=                  (scheme (fn-of [(s-var 'a) (s-var 'a)] BOOLEAN))
    'not=               (scheme (fn-of [(s-var 'a) (s-var 'a)] BOOLEAN))
-   `<'                 (scheme (fn-of [(s-var 'a) (s-var 'a)] BOOLEAN))
-   `<='                (scheme (fn-of [(s-var 'a) (s-var 'a)] BOOLEAN))
-   `>'                 (scheme (fn-of [(s-var 'a) (s-var 'a)] BOOLEAN))
-   `>='                (scheme (fn-of [(s-var 'a) (s-var 'a)] BOOLEAN))
+   `<'                 (scheme (fn-of [(s-var 'a) (s-var 'a)] BOOLEAN) {'a #{:comparable}})
+   `<='                (scheme (fn-of [(s-var 'a) (s-var 'a)] BOOLEAN) {'a #{:comparable}})
+   `>'                 (scheme (fn-of [(s-var 'a) (s-var 'a)] BOOLEAN) {'a #{:comparable}})
+   `>='                (scheme (fn-of [(s-var 'a) (s-var 'a)] BOOLEAN) {'a #{:comparable}})
    ;; @todo Multiple arity of min/max
-   `min'               (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)))
-   `max'               (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)))
+   `min'               (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:comparable}})
+   `max'               (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:comparable}})
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Numeric 
    '+                  (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
@@ -611,6 +611,11 @@
    `or                 (binary-transform BOOLEAN)
    'not                (unary-transform BOOLEAN)
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   ;; Polymorphic collection functions
+   'count              (scheme (fn-of [{:type (s-var 'c) ;:child (s-var 'a) ;; maybe remove :child?
+                                        }] INT) {'c #{:countable}})
+
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Vector
    '->vector1          (scheme (fn-of [(s-var 'a)]
                                       (vector-of (s-var 'a))))
@@ -693,7 +698,7 @@
    'range1             (scheme (fn-of [INT] (vector-of INT)))
    'range2             (scheme (fn-of [INT INT] (vector-of INT)))
    'range3             (scheme (fn-of [INT INT INT] (vector-of INT)))
-   'count-vec          (scheme (fn-of [(vector-of (s-var 'a))] INT))
+  ;;  'count-vec          (scheme (fn-of [(vector-of (s-var 'a))] INT))
    'map-vec            {:type   :scheme
                         :s-vars ['a 'b]
                         :body   (fn-of [(fn-of [(s-var 'a)] (s-var 'b))
@@ -794,7 +799,7 @@
                                       (set-of (s-var 'e))))
    'set-contains?      (scheme (fn-of [(set-of (s-var 'e)) (s-var 'e)]
                                       BOOLEAN))
-   'count-set          (scheme (fn-of [(set-of (s-var 'e))] INT))
+  ;;  'count-set          (scheme (fn-of [(set-of (s-var 'e))] INT))
    `map-set            (scheme (fn-of [(fn-of [(s-var 'a)] (s-var 'b))
                                        (set-of (s-var 'a))]
                                       (set-of (s-var 'b))))
@@ -846,8 +851,8 @@
    'merge              (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))
                                        (map-of (s-var 'k) (s-var 'v))]
                                       (map-of (s-var 'k) (s-var 'v))))
-   'count-map          (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
-                                      INT))
+  ;;  'count-map          (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
+  ;;                                     INT))
    'map-map            (scheme (fn-of [(fn-of [(tuple-of (s-var 'k) (s-var 'v))] (s-var 'e))
                                        (map-of (s-var 'k) (s-var 'v))]
                                       (vector-of (s-var 'e))))
@@ -897,9 +902,9 @@
     comp2-fn2         comp
     comp3-fn1         comp
     comp3-fn2         comp
-    count-map         count
-    count-set         count
-    count-vec         count
+    ;; count-map         count
+    ;; count-set         count
+    ;; count-vec         count
     do2               do
     do3               do
     ;; double-abs        abs
@@ -933,7 +938,7 @@
     join-chars        clojure.string/join
     last-str          last
     left              first
-    length            count
+    ;; length            count
     map->set          set
     map->vec          vec
     map-contains?     contains?
