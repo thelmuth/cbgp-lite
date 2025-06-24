@@ -379,7 +379,6 @@
                                                                  {::c/ast  {:op :var :var `lib/>'}
                                                                   ::c/type (schema/instantiate (lib/type-env `lib/>'))}))
                                    :type-env  lib/type-env})))
-
     (is (partial= {:asts   (list {::c/ast  {:op   :invoke
                                             :fn   {:op :var :var `lib/>'}
                                             :args [{:op :const :val "strawberry"}
@@ -396,7 +395,38 @@
                                                                  {::c/ast  {:op :var :var `lib/>'}
                                                                   ::c/type (schema/instantiate (lib/type-env `lib/>'))}))
                                    :type-env  lib/type-env})))
-
+    (is (partial= {:asts   (list {::c/ast  {:op   :invoke
+                                            :fn   {:op :var :var '=}
+                                            :args [{:op :const :val "strawberry"}
+                                                   {:op :const :val "banana"}]}
+                                  ::c/type {:type 'boolean?}})
+                   :push   []
+                   :locals []}
+                  (c/compile-step {:push-unit {:gene :apply}
+                                   :state     (assoc c/empty-state
+                                                     :asts (list {::c/ast  {:op :const :val "strawberry"}
+                                                                  ::c/type {:type 'string?}}
+                                                                 {::c/ast  {:op :const :val "banana"}
+                                                                  ::c/type {:type 'string?}}
+                                                                 {::c/ast  {:op :var :var '=}
+                                                                  ::c/type (schema/instantiate (lib/type-env '=))}))
+                                   :type-env  lib/type-env}))) 
+    (is (partial= {:asts   (list {::c/ast  {:op   :invoke
+                                            :fn   {:op :var :var 'not=}
+                                            :args [{:op :const :val 15}
+                                                   {:op :const :val 16}]}
+                                  ::c/type {:type 'boolean?}})
+                   :push   []
+                   :locals []}
+              (c/compile-step {:push-unit {:gene :apply}
+                               :state     (assoc c/empty-state
+                                                 :asts (list {::c/ast  {:op :const :val 15}
+                                                              ::c/type {:type 'int?}}
+                                                             {::c/ast  {:op :const :val 16}
+                                                              ::c/type {:type 'int?}}
+                                                             {::c/ast  {:op :var :var 'not=}
+                                                              ::c/type (schema/instantiate (lib/type-env 'not=))}))
+                               :type-env  lib/type-env})))
     (is (partial= {:asts   (list {::c/ast  {:op   :invoke
                                             :fn   {:op :var :var `lib/min'}
                                             :args [{:op :const :val 2}
@@ -510,9 +540,9 @@
                                                                   ::c/type {:type 'boolean?}})
                                                      :locals ['x])
                                    :type-env  (assoc lib/type-env
-                                                     'x {:type 'boolean?})})))
+                                                     'x {:type 'boolean?})}))))
     ;; @todo Test when args are missing
-    )
+    
   (testing "compile fn"
     #_{:clj-kondo/ignore [:invalid-arity :unresolved-symbol]}
     (is (matches? {:asts   ({::c/ast  {:op      :fn
@@ -821,6 +851,26 @@
     (binding [*out* s]
       (is (= (func) 0))
       (is (= (str s) "Hello world!\n")))))
+
+(deftest count-test
+  (let [{::c/keys [ast type]} (c/push->ast {:push      [{:gene :local :idx 0}
+                                                        {:gene :var :name 'count}
+                                                        {:gene :apply}]
+                                            :locals    ['in1]
+                                            :ret-type  {:type 'int?}
+                                            :type-env  (assoc lib/type-env
+                                                              'in1 {:type {:type :s-var :sym 'c}})
+                                            :dealiases lib/dealiases})
+        _ (is (= type {:type 'int?}))
+        form (a/ast->form ast)
+        func (eval `(fn [~'in1] ~form))]
+    (is (= (func ["a" "b" "c"]) 3))
+    (is (= (func [1 3 4 5 10]) 5))
+    (is (= (func []) 0))
+    (is (= (func #{1 2 3}) 3))
+    (is (= (func {1 "hi" 2 "world"}) 2))
+    (is (= (func "testing!") 8))
+    ))
 
 (deftest replace-space-with-newline-test
   (let [{::c/keys [ast type]} (c/push->ast {:push      [{:gene :lit :val \newline :type {:type 'char?}}
