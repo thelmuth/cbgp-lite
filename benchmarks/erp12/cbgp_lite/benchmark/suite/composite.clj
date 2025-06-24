@@ -16,13 +16,64 @@
   [low high]
   (+ low (rand (- high low))))
 
+(defn rand-string
+  "Returns a random string of length between low and high"
+  [low high]
+  (apply str
+         (repeatedly (rand-int-range low high)
+                     #(rand-nth (concat [\newline \tab]
+                                        (map char (range 32 127)))))))
+
 (defn rand-vector
   [min-size max-size element-gen]
-  (vec (repeatedly (rand-float-range min-size max-size)
+  (vec (repeatedly (rand-int-range min-size max-size)
                    element-gen)))
 
 (def names-100
   ["Abel" "Margaret" "Kimber" "Kase" "Cecelia" "Katalina" "Alianna" "Bode" "Cody" "Charles" "Kinsley" "Kaliyah" "Jon" "Salem" "Nora" "Brodie" "Davis" "Ares" "Andres" "Adrian" "Michael" "Mara" "Azariah" "Eileen" "Russell" "Royal" "Ricardo" "Andi" "Hank" "Annika" "Oaklyn" "Shepherd" "Killian" "Oakleigh" "Garrett" "Forest" "Daleyza" "Deacon" "Eden" "Oscar" "Lillie" "Cole" "Emberly" "Nathan" "Indie" "Elise" "Andy" "Brayan" "Brylee" "Princess" "Julie" "Raelyn" "Clay" "Georgia" "Manuel" "Cataleya" "Lian" "Krew" "Marceline" "Ryder" "Asa" "Beckham" "Emmy" "Piper" "Cal" "Isabella" "Blaine" "Peyton" "Jasiah" "Elon" "Kai" "Mariam" "Ryan" "Jamie" "Zavier" "Lee" "Declan" "Adalynn" "Griffin" "Bristol" "Colt" "Eva" "Erin" "Landry" "Maeve" "Finley" "Spencer" "Luciano" "Trevor" "Adelynn" "Everlee" "Damon" "Alexis" "Renata" "Layne" "Emerson" "Khari" "Gracelynn" "Ozzy" "Eve"])
+
+(defn rand-map
+  [min-size max-size key-type val-type]
+  (let [generator-types {'int? #(rand-int-range -100 100)
+                         'boolean? #(< (rand) 0.5)
+                         'string? #(rand-string 0 10)
+                         'double? rand}
+        key-generator (get generator-types key-type)
+        val-generator (get generator-types val-type)
+        length (rand-int-range min-size max-size)]
+    (zipmap (repeatedly length key-generator)
+            (repeatedly length val-generator))))
+
+(defn rand-collection
+  "Returns a random collection out of vector, set, map, string.
+   Contains random elements of the same type (except keys and vals
+   can be different types)"
+  [min-size max-size]
+  (let [generator (rand-nth [#(rand-int-range -100 100)
+                             rand
+                             #(rand-nth names-100)
+                             #(rand-string 0 10)
+                             #(< (rand) 0.5)])
+        coll-type (rand-nth [vec set zipmap str])
+        length (rand-int-range min-size max-size)]
+    (cond
+      (= zipmap coll-type)
+      (rand-map length length)
+      
+      (= str coll-type)
+      (rand-string length length)
+
+      :else
+      (coll-type (repeatedly length generator)))))
+
+(comment
+  
+  (rand-collection 2 10)
+  
+  (rand-vector 2 5 #(rand-nth names-100))
+  
+  
+  )
 
 (def int-predicates
   [zero?
@@ -491,18 +542,48 @@
                            {:inputs [the-maps the-key]
                             :output output}))
        :loss-fns       [lev/distance]}
+      
+      "count-vector-then-add-10"
+      {:description    "Given a vector, count it, and return that plus 10"
+       :input->type    {'input1 {:type :vector :child {:type 'int?}}}
+       :ret-type       {:type 'int?}
+       :other-types    []
+       :extra-genes    [{:gene :lit, :val 0, :type {:type 'int?}}
+                        {:gene :lit, :val 10, :type {:type 'int?}}
+                        {:gene :lit, :val ["hi" "there"], :type {:type :vector :child {:type 'string?}}}]
+       :case-generator (fn count-true-gen []
+                         (let [coll (rand-vector 0 50 #(rand-int 100))]
+                           {:inputs [coll]
+                            :output (+ 10 (count coll))}))
+       :loss-fns       [bu/absolute-distance]}
+      
+      "count-map-and-string-and-sum"
+      {:description    "Given a vector, count it, and return that plus 10"
+       :input->type    {'input1 {:type :map-of, :key {:type 'int?}, :value {:type 'boolean?}}
+                        'input2 {:type 'string?}}
+       :ret-type       {:type 'int?}
+       :other-types    []
+       :extra-genes    [{:gene :lit, :val 0, :type {:type 'int?}}
+                        {:gene :lit, :val ["hi" "there"], :type {:type :vector :child {:type 'string?}}}]
+       :case-generator (fn count-true-gen []
+                         (let [the-map (rand-map 0 50 'int? 'boolean?)
+                               the-string (rand-string 0 50)]
+                           {:inputs [the-map the-string]
+                            :output (+ (count the-map) (count the-string))}))
+       :loss-fns       [bu/absolute-distance]}
 
-      "count-then-add-10"
-      {:description    "Given a countable thing, count it, and return that plus 10"
+      "count-collection-then-add-10"
+      {:description    (str "Given a countable thing, count it, and return that plus 10"
+                            "BROKEN BECAUSE RETURN TYPE SOMETIMES ISN'T INT")
        :input->type    {'input1 {:type {:type :s-var
-                                :sym 'c
-                                :typeclasses #{:countable}}}}
+                                        :sym 'c
+                                        :typeclasses #{:countable}}}}
        :ret-type       {:type 'int?}
        :other-types    []
        :extra-genes    [{:gene :lit, :val 0, :type {:type 'int?}}
                         {:gene :lit, :val 10, :type {:type 'int?}}]
        :case-generator (fn count-true-gen []
-                         (let [coll (rand-vector 0 50 #(rand-int 100))]
+                         (let [coll (rand-collection 0 50)]
                            {:inputs [coll]
                             :output (+ 10 (count coll))}))
        :loss-fns       [bu/absolute-distance]}}
