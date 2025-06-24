@@ -490,7 +490,23 @@
                                output (mapv #(get % the-key) the-maps)]
                            {:inputs [the-maps the-key]
                             :output output}))
-       :loss-fns       [lev/distance]}}
+       :loss-fns       [lev/distance]}
+
+      "count-then-add-10"
+      {:description    "Given a countable thing, count it, and return that plus 10"
+       :input->type    {'input1 ;{:type :vector :child {:type 'int?}}
+                        {:type {:type :s-var
+                                :sym 'c
+                                :typeclasses #{:countable}}}}
+       :ret-type       {:type 'int?}
+       :other-types    []
+       :extra-genes    [{:gene :lit, :val 0, :type {:type 'int?}}
+                        {:gene :lit, :val 10, :type {:type 'int?}}]
+       :case-generator (fn count-true-gen []
+                         (let [coll (rand-vector 0 50 #(rand-int 100))]
+                           {:inputs [coll]
+                            :output (+ 0 (count coll))}))
+       :loss-fns       [bu/absolute-distance]}}
 
 
       ;; This adds nil penalties to all loss functions

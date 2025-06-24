@@ -984,6 +984,7 @@
 
 (defn lib-for-type-ctors
   [type-ctors]
+  (println "FINDME" type-ctors)
   (->> type-env
        (filter (fn [[_ typ]]
                  (->> (schema/schema-terms typ)
@@ -997,4 +998,22 @@
   (type-env 'not)
 
   (set/difference (set (keys (lib-for-type-ctors #{:=> 'boolean?})))
-                  (set (keys (lib-for-type-ctors #{:=>})))))
+                  (set (keys (lib-for-type-ctors #{:=>}))))
+  
+  (sort
+   (keys
+    (lib-for-type-ctors #{:=> 'int? :vector
+                          })))
+  
+  (let [typ (scheme (fn-of [{:type (s-var 'c) ;:child (s-var 'a) ;; maybe remove :child?
+                             }]INT) {'c #{:countable}})]
+    (->> (schema/schema-terms typ)
+         (remove #{:cat :s-var :scheme})
+         (set)
+         ))
+  
+  ;;; problem: lib-for-type-ctors doesn't include type constructors / typeclasses
+  ;;; need to have typeclasses passed throughout the fn
+  ;;; in the last superset, need to include things that are in the right typeclasses
+  
+  )
