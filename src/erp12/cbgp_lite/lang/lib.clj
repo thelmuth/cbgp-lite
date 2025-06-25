@@ -563,7 +563,7 @@
    `take-str           (fn-of [INT STRING] STRING)
    `safe-subs          (fn-of [STRING INT INT] STRING)
    `filter-str         (fn-of [(fn-of [CHAR] BOOLEAN) STRING] STRING)
-   'first-str          (fn-of [STRING] CHAR)
+  ;;  'first-str          (fn-of [STRING] CHAR)
    'last-str           (fn-of [STRING] CHAR)
    `rest-str           (unary-transform STRING)
    `butlast-str        (unary-transform STRING)
@@ -612,8 +612,8 @@
    'not                (unary-transform BOOLEAN)
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Polymorphic collection functions
-   'count              (scheme (fn-of [{:type (s-var 'c) ;:child (s-var 'a) ;; maybe remove :child?
-                                        }] INT) {'c #{:countable}})
+   'count              (scheme (fn-of [{:type (s-var 'c)}] INT)
+                               {'c #{:countable}})
 
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Vector
@@ -640,9 +640,12 @@
                         :s-vars ['a]
                         :body   (fn-of [(vector-of (s-var 'a)) INT INT]
                                        (vector-of (s-var 'a)))}
-   'first              {:type   :scheme
-                        :s-vars ['a]
-                        :body   (fn-of [(vector-of (s-var 'a))] (s-var 'a))}
+   'first              {:type :overloaded ;;; where does indexible go?
+                        ;:typeclasses #{:indexible}
+                        :alternatives [{:type   :scheme
+                                        :s-vars ['a]
+                                        :body   (fn-of [(vector-of (s-var 'a))] (s-var 'a))}
+                                       (fn-of [STRING] CHAR)]}
    'last               {:type   :scheme
                         :s-vars ['a]
                         :body   (fn-of [(vector-of (s-var 'a))] (s-var 'a))}
@@ -918,7 +921,7 @@
     ;; double-sub        -
     ;; double-neg        -
     empty-str?        empty?
-    first-str         first
+    ;; first-str         first
     fold-vec          reduce
     fold-map          reduce
     fold-set          reduce

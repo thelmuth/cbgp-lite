@@ -869,8 +869,54 @@
     (is (= (func []) 0))
     (is (= (func #{1 2 3}) 3))
     (is (= (func {1 "hi" 2 "world"}) 2))
-    (is (= (func "testing!") 8))
-    ))
+    (is (= (func "testing!") 8))))
+
+(deftest simpler-first-test
+  (let [{::c/keys [ast type]} (c/push->ast
+                               {:push      [{:gene :lit :val 42 :type {:type 'int?}}
+                                            {:gene :lit :val [55 66 77] :type {:type :vector :child {:type 'int?}}}
+                                            {:gene :var :name 'first}
+                                            {:gene :apply}]
+                                :locals    []
+                                :ret-type  {:type 'int?}
+                                :type-env  lib/type-env 
+                                :dealiases lib/dealiases})
+        _ (is (= type {:type 'int?}))
+        _ (println "REAL-AST: " ast)
+        form (a/ast->form ast)
+        _ (println "FORM: " form)
+        func (eval `(fn [] ~form))]
+    (is (= 55 (func)))))
+
+(deftest first-test
+  (let [{::c/keys [ast type]} (c/push->ast
+                               {:push      [{:gene :lit :val 2999 :type {:type 'int?}}
+                                            {:gene :local :idx 0}
+                                            {:gene :var :name 'first}
+                                            {:gene :apply}
+                                            #_{:gene :var :name 'int}
+                                            #_{:gene :apply}]
+                                :locals    ['in1]
+                                :ret-type  {:type 'int?}
+                                :type-env  (assoc lib/type-env
+                                                  'in1 {:type {:type :vector :child {:type 'int?}}
+                                                        #_{:type :s-var :sym 'c :typeclasses #{:indexable}
+                                                               }})
+                                :dealiases lib/dealiases})
+        _ (is (= type {:type 'int?}))
+        _ (println "REAL-AST: " ast)
+        form (a/ast->form ast)
+        _ (println "FORM: " form)
+        func (eval `(fn [~'in1] ~form))]
+    (is (= 72 (func [72 38 39 99 0 2 923212])))
+    (is (= 1 (func [1 3 4 5 10])))
+    (is (= 888 (func [888])))
+    (is (= nil (func []))) ;;; broken???
+    ;; first doesn't work on sets or maps, so these should return the int from
+    ;; the bottom of the stack
+    (is (= 2999 (func #{1 2 3})))
+    (is (= 2999 (func {1 "hi" 2 "world"})))
+    (is (= 116 (func "testing!")))))
 
 (deftest replace-space-with-newline-test
   (let [{::c/keys [ast type]} (c/push->ast {:push      [{:gene :lit :val \newline :type {:type 'char?}}
