@@ -2,7 +2,8 @@
   (:require [clojure.set :as st]
             [clojure.walk :as w]
             [erp12.cbgp-lite.lang.ast :as a]
-            [erp12.ga-clj.toolbox :as tb]))
+            [erp12.ga-clj.toolbox :as tb]
+            [clj-async-profiler.core :as prof]))
 
 (defn read-problem
   [{:keys [suite-ns problem] :as config}]
@@ -94,14 +95,18 @@
                                 [nil 0]))
            total-freq (second (last cfh))
            quart (int (/ (inc total-freq) 4))]
-       {:mean (float (/ (reduce + (map (fn [[x freq]] (* x freq)) x->freq))
-                        total-freq))
-        :min  (reduce min (keys x->freq))
-        :25%  (some (fn [[x c-freq]] (when (> c-freq quart) x)) cfh)
-        :50%  (some (fn [[x c-freq]] (when (> c-freq (* quart 2)) x)) cfh)
-        :75%  (some (fn [[x c-freq]] (when (> c-freq (* quart 3)) x)) cfh)
-        :max  (reduce max (keys x->freq))
-        :dont-include-in-stats dont-include}))
+
+       (if (zero? total-freq)
+         {:mean nil
+          :dont-include-in-stats dont-include}
+         {:mean (float (/ (reduce + (map (fn [[x freq]] (* x freq)) x->freq))
+                          total-freq))
+          :min  (reduce min (keys x->freq))
+          :25%  (some (fn [[x c-freq]] (when (> c-freq quart) x)) cfh)
+          :50%  (some (fn [[x c-freq]] (when (> c-freq (* quart 2)) x)) cfh)
+          :75%  (some (fn [[x c-freq]] (when (> c-freq (* quart 3)) x)) cfh)
+          :max  (reduce max (keys x->freq))
+          :dont-include-in-stats dont-include})))
     ;; Reduce
     ([acc el]
      (update acc (by el) (fn [i] (inc (or i 0)))))))
@@ -291,3 +296,13 @@
     (= actual expected) 0 ; if equal (including both empty), 0 loss
     :else (- 1.0 (/ (count (st/intersection actual expected))
                     (count (st/union actual expected))))))
+
+
+(comment
+  (prof/profile (dotimes [i 10000] (reduce + (range i))))
+  
+  ;; The resulting flamegraph will be stored in /tmp/clj-async-profiler/results/
+  ;; You can view the HTML file directly from there or start a local web UI:
+  
+  (prof/serve-ui 8080)
+  )
