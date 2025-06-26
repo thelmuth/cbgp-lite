@@ -1,6 +1,7 @@
 (ns erp12.cbgp-lite.benchmark.utils
   (:require [clojure.set :as st]
             [clojure.walk :as w]
+            [erp12.cbgp-lite.lang.ast :as a]
             [erp12.ga-clj.toolbox :as tb]))
 
 (defn read-problem
@@ -84,20 +85,27 @@
     ([] {})
     ;; Finalize
     ([x->freq]
-     (let [cfh (->> x->freq
+     (let [dont-include (get x->freq :dont-include-in-stats 0)
+           x->freq (dissoc x->freq :dont-include-in-stats) ;; TMH: I changed this to ignore :dont-include-in-stats keys, so that we can have the stat functions return :dont-include-in-stats if we don't want that ind counted
+           cfh (->> x->freq
                     (sort-by key)
                     (reductions (fn [[_ acc] [x freq]]
                                   [x (+ acc freq)])
                                 [nil 0]))
            total-freq (second (last cfh))
            quart (int (/ (inc total-freq) 4))]
-       {:mean (float (/ (reduce + (map (fn [[x freq]] (* x freq)) x->freq))
-                        total-freq))
-        :min  (reduce min (keys x->freq))
-        :25%  (some (fn [[x c-freq]] (when (> c-freq quart) x)) cfh)
-        :50%  (some (fn [[x c-freq]] (when (> c-freq (* quart 2)) x)) cfh)
-        :75%  (some (fn [[x c-freq]] (when (> c-freq (* quart 3)) x)) cfh)
-        :max  (reduce max (keys x->freq))}))
+
+       (if (zero? total-freq)
+         {:mean nil
+          :dont-include-in-stats dont-include}
+         {:mean (float (/ (reduce + (map (fn [[x freq]] (* x freq)) x->freq))
+                          total-freq))
+          :min  (reduce min (keys x->freq))
+          :25%  (some (fn [[x c-freq]] (when (> c-freq quart) x)) cfh)
+          :50%  (some (fn [[x c-freq]] (when (> c-freq (* quart 2)) x)) cfh)
+          :75%  (some (fn [[x c-freq]] (when (> c-freq (* quart 3)) x)) cfh)
+          :max  (reduce max (keys x->freq))
+          :dont-include-in-stats dont-include})))
     ;; Reduce
     ([acc el]
      (update acc (by el) (fn [i] (inc (or i 0)))))))
@@ -105,8 +113,20 @@
 (def total-error-stat
   (make-distribution-stat :total-error))
 
+(def applied-functions
+  (make-distribution-stat :fn-applied))
+
 (def genome-size-stat
   (make-distribution-stat #(count (:genome %))))
+
+(def applied-stat
+  (make-distribution-stat #(:fn-applied (:state %))))
+
+(def not-applied-stat
+  (make-distribution-stat #(:fn-not-applied (:state %))))
+
+(def not-func-so-not-apply-stat
+  (make-distribution-stat #(:fn-not-applied-because-no-functions (:state %))))
 
 (def code-size-stat
   (make-distribution-stat #(tb/tree-size (:code %))))
@@ -117,6 +137,71 @@
 (def code-depth-over-size-stat
   (make-distribution-stat #(/ (tb/tree-depth (:code %))
                               (tb/tree-size (:code %)))))
+
+(def dna-counter-stat
+  (make-distribution-stat #(:dna (:state %))))
+
+(def ast-stack-size-stat
+  (make-distribution-stat #(count (:asts (:state %)))))
+
+;; Returns the max tree size of any tree on the :asts stack, and if stack is
+;; empty returns :dont-include-in-stats
+(def ast-stack-max-tree-size
+  (make-distribution-stat (fn [ind]
+                            (if (empty? (:asts (:state ind)))
+                              :dont-include-in-stats ;; this :dont-include-in-stats is necessary because some individuals produce empty stacks, so we can use :dont-include-in-stats to mean "don't include this one in the stats"
+                              (apply max
+                                     (map (fn [ast]
+                                            (tb/tree-size
+                                             (a/ast->form (:erp12.cbgp-lite.lang.compile/ast ast))))
+                                          (:asts (:state ind))))))))
+
+(def ast-stack-median-tree-size
+  (make-distribution-stat (fn [ind]
+                            ;; JF TODO: make this a let statement for better efficiency.
+                            ;; use 
+                            (if (empty? (:asts (:state ind)))
+                              :dont-include-in-stats ;; this :dont-include-in-stats is necessary because some individuals produce empty stacks, so we can use :dont-include-in-stats to mean "don't include this one in the stats"
+                              
+                                (tb/median (map (fn [ast]
+                                       (tb/tree-size
+                                        (a/ast->form (:erp12.cbgp-lite.lang.compile/ast ast))))
+                                     (:asts (:state ind))))
+                               ))))
+
+
+(def ast-stack-max-tree-size-for-right-type
+  (make-distribution-stat (fn [ind]
+                            (let [filtered-by-same-type (filter #(= (:ret-type ind) (:erp12.cbgp-lite.lang.compile/type %)) (:asts (:state ind)))]
+                              (if (empty? filtered-by-same-type)
+                                :dont-include-in-stats ;; this :dont-include-in-stats is necessary because some individuals produce empty stacks, so we can use :dont-include-in-stats to mean "don't include this one in the stats"
+                                (apply max
+                                       (map (fn [ast]
+                                              (tb/tree-size
+                                               (a/ast->form (:erp12.cbgp-lite.lang.compile/ast ast))))
+                                            filtered-by-same-type)))))))
+
+(def ast-stack-max-tree-depth
+  (make-distribution-stat (fn [ind]
+                            (if (empty? (:asts (:state ind)))
+                              :dont-include-in-stats ;; this :dont-include-in-stats is necessary because some individuals produce empty stacks, so we can use :dont-include-in-stats to mean "don't include this one in the stats"
+                              (apply max
+                                     (map (fn [ast]
+                                            (tb/tree-depth
+                                             (a/ast->form (:erp12.cbgp-lite.lang.compile/ast ast))))
+                                          (:asts (:state ind))))))))
+
+
+(def ast-stack-max-tree-depth-for-right-type
+  (make-distribution-stat (fn [ind]
+                            (let [filtered-by-same-type (filter #(= (:ret-type ind) (:erp12.cbgp-lite.lang.compile/type %)) (:asts (:state ind)))]
+                              (if (empty? filtered-by-same-type)
+                                :dont-include-in-stats ;; this :dont-include-in-stats is necessary because some individuals produce empty stacks, so we can use :dont-include-in-stats to mean "don't include this one in the stats"
+                                (apply max
+                                       (map (fn [ast]
+                                              (tb/tree-depth
+                                               (a/ast->form (:erp12.cbgp-lite.lang.compile/ast ast))))
+                                            filtered-by-same-type)))))))
 
 (defn make-num-penalty-stat
   [penalty]

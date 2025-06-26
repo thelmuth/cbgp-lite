@@ -1,5 +1,6 @@
 (ns erp12.cbgp-lite.task
   (:require [clojure.set :as set]
+            [erp12.cbgp-lite.lang.compile :as compile]
             [erp12.cbgp-lite.lang.lib :as lib]
             [erp12.cbgp-lite.lang.schema :as schema]
             [erp12.cbgp-lite.search.plushy :as pl]
@@ -31,29 +32,49 @@
   (merge (lib/lib-for-type-ctors type-ctors)
          input->type))
 
-(def default-gene-distribution
+(defn default-gene-distribution
+  []
   ;; @todo Calibrate by analyzing real code.
   {:var           0.2
    :local         0.2
    :lit           0.2
    :lit-generator 0.1
-   :apply         0.2
+   :apply         (case @compile/app-type
+                    :original 0.2
+                    :dna 0.025
+                    :all 0
+                    :baked-in 0.025
+                    (throw (Exception. (str "Unrecognized Application Type of " @compile/app-type))))
    :fn            0.025
    :let           0.025
-   :close         0.05})
+   :close         0.05
+   :dna           (case @compile/app-type
+                    :original 0
+                    :dna 0.1
+                    :all 0
+                    :baked-in 0)})
 
 (defn default-genetic-source
-  [{:keys [vars extra-genes]}]
+  [{:keys [types vars extra-genes]}]
   (pl/make-genetic-source
-   (pl/prob-by-gene-kind (concat (map (fn [v] {:gene :var :name v}) vars)
-                                 ;; Task-specific genes
-                                 extra-genes
-                                 ;; Always used genes
-                                 [{:gene :local}
-                                  {:gene :apply}
-                                  {:gene :let}
-                                  {:gene :close}])
-                         default-gene-distribution)))
+    (pl/prob-by-gene-kind (concat (map (fn [v] {:gene :var :name v}) vars)
+                                  ;; Task-specific genes
+                                  extra-genes
+                                  ;; 1-arg functions
+                                  (for [arg types ret types]
+                                    {:gene :fn :arg-types [arg] :ret-type ret})
+                                  ;; 2-arg functions
+                                  (for [arg1 types
+                                        arg2 types
+                                        ret types]
+                                    {:gene :fn :arg-types [arg1 arg2] :ret-type ret})
+                                  ;; Always used genes
+                                  [{:gene :local}
+                                   {:gene :apply}
+                                   {:gene :dna}
+                                   {:gene :let}
+                                   {:gene :close}])
+                          (default-gene-distribution))))
 
 (defn enhance-task
   [opts]

@@ -77,6 +77,8 @@
                    (inc cases-used))))))))
 
 (defn evaluate-full-behavior
+  "Passes the actual function created. and compute everything about the function. Behavior is how it acted. Errors is how far off it is.
+  Total-error sum of all errors. Solution is if the func is correct. Cases used isnt too important. Exception is a list of the exceptions thrown."
   [{:keys [func cases loss-fns penalty]}]
   (if (nil? func)
     ;; If the compilation process did not produce any code
@@ -111,6 +113,8 @@
        :exception   (:output (first (filter #(instance? Exception (:output %)) behavior)))})))
 
 (defn make-evaluator
+  "Makes AST, then turns it into an AST, and then turns that into a clojure function 
+   that gets passed to the func above to test its correctness."
   [{:keys [evaluate-fn cases arg-symbols] :as opts}]
   (fn [gn context]
     (log/debug "Evaluating genome" gn)
@@ -121,16 +125,21 @@
           _ (log/debug "Push" push)
           ;; Compile the Push into a Clojure form that accepts and returns the
           ;; correct types.
-          ast (::c/ast (c/push->ast (assoc opts
-                                           :push push
-                                           :locals arg-symbols
-                                           ;; @todo Experimental - record final stack AST sizes and types.
-                                           ;; Disabled to reduce concurrent compilation coordination.
-                                           :record-sketch? false)))
+          ;Creates a push abstract syntax tree. Type safe. Put in the push code, and out comes the corresponding clojure AST.
+          {:keys [ast state]} (c/push->ast (assoc opts
+                                                  :push push
+                                                  :locals arg-symbols
+                                                  ;; @todo Experimental - record final stack AST sizes and types.
+                                                  ;; Disabled to reduce concurrent compilation coordination.
+                                                  :record-sketch? false))
+          ast (::c/ast ast) ;; un-namespace-qualify final ast for program
           _ (log/debug "AST" ast)
+          ; Translates the AST into form. Turns it into the lists seen in clojure that are code.
           form (when ast
                  (a/ast->form ast))
           _ (log/debug "Form" form)
+          ; Passes the code to clojure itself, and gives back a clojure function. Creates a function that much faster than PushGP.
+          ; Then we can call this func on some data to see if it is correct.
           func (when form
                  (a/form->fn (vec arg-symbols) form))
           _ (log/debug "Function compiled" func)
@@ -142,7 +151,9 @@
                                          e))))]
       (merge {:push push
               :code form
-              :func func}
+              :func func
+              :state state
+              :ret-type (:ret-type opts)}
              evaluation))))
 
 (defn simplify

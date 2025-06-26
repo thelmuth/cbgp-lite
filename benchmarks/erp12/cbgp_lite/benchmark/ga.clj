@@ -1,10 +1,11 @@
 (ns erp12.cbgp-lite.benchmark.ga
-  (:require [clojure.java.io :as io]
+  (:require [clj-async-profiler.core :as prof]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [erp12.cbgp-lite.benchmark.utils :as bu]
             [erp12.cbgp-lite.lang.compile :as c]
             [erp12.cbgp-lite.search.individual :as i]
-            [erp12.cbgp-lite.search.plushy :as pl]
+            [erp12.cbgp-lite.search.pluhsy :as pl]
             [erp12.cbgp-lite.task :as task]
             [erp12.ga-clj.search.ga :as ga]
             [erp12.ga-clj.toolbox :as tb]
@@ -52,6 +53,15 @@
                  (map (fn [[k v]] (str (pr-str k) "\t" (pr-str v))))
                  (str/join "\n")
                  (str "\n")))
+
+  ;opts is parameters
+  (when (:app-type opts)
+    (reset! c/app-type (:app-type opts)))
+  (when (:baked-in-apply-probability opts)
+    (reset! c/baked-in-apply-probability (:baked-in-apply-probability opts)))
+  (when (:backtracking opts)
+    (reset! c/backtracking (:backtracking opts)))
+
   (when type-counts-file
     (log/warn "Type counting enabled. This is slow!")
     (reset! c/collect-types? true)
@@ -80,15 +90,25 @@
                                        :post-eval       (fn [{:keys [individuals]}]
                                                           (doseq [[stat-name stat-val]
                                                                   (sort-by key
-                                                                           (bu/aggregate-stats {:code-depth            bu/code-depth-stat
+                                                                           (bu/aggregate-stats {:ast-final-stack-size  bu/ast-stack-size-stat
+                                                                                                :ast-stack-max-tree-size bu/ast-stack-max-tree-size
+                                                                                                :ast-stack-max-tree-size-right-type bu/ast-stack-max-tree-size-for-right-type
+                                                                                                :ast-stack-median-tree-size bu/ast-stack-median-tree-size
+                                                                                                :ast-stack-max-tree-depth bu/ast-stack-max-tree-depth
+                                                                                                :ast-stack-max-tree-depth-right-type bu/ast-stack-max-tree-depth-for-right-type
+                                                                                                :code-depth            bu/code-depth-stat
                                                                                                 :code-depth-over-size  bu/code-depth-over-size-stat
                                                                                                 :code-size             bu/code-size-stat
                                                                                                 :exceptions            bu/exception-messages-stat
                                                                                                 :genome-size           bu/genome-size-stat
                                                                                                 :lowest-error-per-case bu/lowest-error-per-case
+                                                                                                :applied-amount        bu/applied-stat
+                                                                                                :not-applied-amount    bu/not-applied-stat
+                                                                                                :not-func-not-apply    bu/not-func-so-not-apply-stat
                                                                                                 :num-no-ast            bu/num-no-ast-stat
                                                                                                 :num-penalties         (bu/make-num-penalty-stat (:penalty opts))
                                                                                                 :num-throwing          bu/num-throwing-stat
+                                                                                                :final-dna-counter     bu/dna-counter-stat
                                                                                                 :total-error           bu/total-error-stat
                                                                                                 :unique-behaviors      bu/unique-behaviors-stat}
                                                                                                individuals))]
@@ -99,6 +119,7 @@
                                        :stop-fn         (let [{:keys [max-generations cases]} opts]
                                                           (fn [{:keys [step step-start best new-best?]}]
                                                             (log/info :best-individual-errors (:errors best))
+                                                            (log/info :best-genome (:genome best))
                                                             (log/info "REPORT"
                                                                       {:step       step
                                                                        :duration   (- (System/currentTimeMillis) step-start)
@@ -151,6 +172,23 @@
     (:func best)))
 
 (comment
+  
   (run {:suite-ns        'erp12.cbgp-lite.benchmark.suite.psb
         :data-dir        "data/psb/"
-        :problem         "vectors-summed"}))
+        :problem         "vectors-summed"})
+
+  ;add a do block here, where it sets up the flame graph.
+  (do
+    (prof/profile
+     {:event :alloc}
+     (run {:suite-ns        'erp12.cbgp-lite.benchmark.suite.composite
+           ;:data-dir        "data/psb/"
+           :problem         "sum-vector-vals"
+           :app-type :baked-in
+           :baked-in-apply-probability 0.25
+           :mapper mapv}))
+    (prof/serve-ui 8080))
+
+  (prof/serve-ui 8080)
+
+  )

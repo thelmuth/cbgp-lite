@@ -1,5 +1,6 @@
 (ns erp12.cbgp-lite.search.plushy
-  (:require [erp12.cbgp-lite.utils :as u]))
+  (:require [erp12.cbgp-lite.lang.compile :as compile]
+            [erp12.cbgp-lite.utils :as u]))
 
 (defn prob-by-gene-kind
   [genes kind-distribution]
@@ -25,14 +26,16 @@
         (loop [[[el w] & more] choices]
           (when w
             (if (< r w)
-              (let [kind (:gene el)]
-                (case kind
-                  ;; Convert ERCs into true genes.
-                  :lit-generator {:gene :lit :val ((:fn el)) :type (:type el)}
-                  :local {:gene :local :idx (rand-int Integer/MAX_VALUE)}
-                  el))
+              (let [kind (:gene el)
+                    el-push-unit (case kind
+                                   ;; Convert ERCs into true genes.
+                                   :lit-generator {:gene :lit :val ((:fn el)) :type (:type el)}
+                                   :local {:gene :local :idx (rand-int Integer/MAX_VALUE)}
+                                   el)]
+                (if (= @compile/app-type :baked-in)
+                  (assoc el-push-unit :applied (< (rand) @compile/baked-in-apply-probability))
+                  el-push-unit))
               (recur more))))))))
-
 
 (defn random-plushy-genome
   [{:keys [min-genome-size max-genome-size genetic-source]}]

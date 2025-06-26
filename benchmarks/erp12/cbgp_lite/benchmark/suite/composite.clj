@@ -1,4 +1,3 @@
-
 (ns erp12.cbgp-lite.benchmark.suite.composite
   (:require [clj-fuzzy.levenshtein :as lev]
             [clojure.set :as set]
@@ -33,16 +32,21 @@
   ["Abel" "Margaret" "Kimber" "Kase" "Cecelia" "Katalina" "Alianna" "Bode" "Cody" "Charles" "Kinsley" "Kaliyah" "Jon" "Salem" "Nora" "Brodie" "Davis" "Ares" "Andres" "Adrian" "Michael" "Mara" "Azariah" "Eileen" "Russell" "Royal" "Ricardo" "Andi" "Hank" "Annika" "Oaklyn" "Shepherd" "Killian" "Oakleigh" "Garrett" "Forest" "Daleyza" "Deacon" "Eden" "Oscar" "Lillie" "Cole" "Emberly" "Nathan" "Indie" "Elise" "Andy" "Brayan" "Brylee" "Princess" "Julie" "Raelyn" "Clay" "Georgia" "Manuel" "Cataleya" "Lian" "Krew" "Marceline" "Ryder" "Asa" "Beckham" "Emmy" "Piper" "Cal" "Isabella" "Blaine" "Peyton" "Jasiah" "Elon" "Kai" "Mariam" "Ryan" "Jamie" "Zavier" "Lee" "Declan" "Adalynn" "Griffin" "Bristol" "Colt" "Eva" "Erin" "Landry" "Maeve" "Finley" "Spencer" "Luciano" "Trevor" "Adelynn" "Everlee" "Damon" "Alexis" "Renata" "Layne" "Emerson" "Khari" "Gracelynn" "Ozzy" "Eve"])
 
 (defn rand-map
-  [min-size max-size key-type val-type]
-  (let [generator-types {'int? #(rand-int-range -100 100)
-                         'boolean? #(< (rand) 0.5)
-                         'string? #(rand-string 0 10)
-                         'double? rand}
-        key-generator (get generator-types key-type)
-        val-generator (get generator-types val-type)
-        length (rand-int-range min-size max-size)]
-    (zipmap (repeatedly length key-generator)
-            (repeatedly length val-generator))))
+  ([min-size max-size]
+   (let [types ['int? 'boolean? 'string? 'double?]]
+     (rand-map min-size max-size
+               (rand-nth types)
+               (rand-nth types))))
+  ([min-size max-size key-type val-type]
+   (let [generator-types {'int? #(rand-int-range -100 100)
+                          'boolean? #(< (rand) 0.5)
+                          'string? #(rand-string 0 10)
+                          'double? rand}
+         key-generator (get generator-types key-type)
+         val-generator (get generator-types val-type)
+         length (rand-int-range min-size max-size)]
+     (zipmap (repeatedly length key-generator)
+             (repeatedly length val-generator)))))
 
 (defn rand-collection
   "Returns a random collection out of vector, set, map, string.
@@ -65,15 +69,6 @@
 
       :else
       (coll-type (repeatedly length generator)))))
-
-(comment
-  
-  (rand-collection 2 10)
-  
-  (rand-vector 2 5 #(rand-nth names-100))
-  
-  
-  )
 
 (def int-predicates
   [zero?
@@ -239,8 +234,8 @@
                         #(bu/absolute-distance (second %1) (second %2))]}
 
       "set-symmetric-difference"
-      ;; https://en.wikipedia.org/wiki/Symmetric_difference
-      {:description    "Given two sets, find the symmetric difference."
+      {:description    (str "Given two sets, find the symmetric difference"
+                            "https://en.wikipedia.org/wiki/Symmetric_difference")
        :input->type    {'input1 {:type :set :child {:type 'int?}}
                         'input2 {:type :set :child {:type 'int?}}}
        :ret-type       {:type :set :child {:type 'int?}}
