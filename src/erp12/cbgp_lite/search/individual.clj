@@ -23,9 +23,7 @@
     (with-out-and-stdout (apply func args))
     (catch Exception e
       {:output e :std-out nil})))
-;
 
-;
 (defn errors-for-case
   "Compute errors on a single case given a program's output.
 
@@ -79,8 +77,8 @@
                    (inc cases-used))))))))
 
 (defn evaluate-full-behavior
-  ;Passes the actual function created. and compute everything about the function. Behavior is how it acted. Errors is how far off it is.
-  ; Total-error sum of all errors. Solution is if the func is correct. Cases used isnt too important. Exception is a list of the exceptions thrown.
+  "Passes the actual function created. and compute everything about the function. Behavior is how it acted. Errors is how far off it is.
+  Total-error sum of all errors. Solution is if the func is correct. Cases used isnt too important. Exception is a list of the exceptions thrown."
   [{:keys [func cases loss-fns penalty]}]
   (if (nil? func)
     ;; If the compilation process did not produce any code
@@ -114,9 +112,9 @@
        :cases-used  (count cases)
        :exception   (:output (first (filter #(instance? Exception (:output %)) behavior)))})))
 
-
-;Makes AST, then turns it into an AST, and then turns that into a clojure function that gets passed to the func above to test its correctness.
 (defn make-evaluator
+  "Makes AST, then turns it into an AST, and then turns that into a clojure function 
+   that gets passed to the func above to test its correctness."
   [{:keys [evaluate-fn cases arg-symbols] :as opts}]
   (fn [gn context]
     (log/debug "Evaluating genome" gn)
@@ -157,8 +155,6 @@
               :state state
               :ret-type (:ret-type opts)}
              evaluation))))
-
-;Individual is one gigantic map that contains all the information necessary. 
 
 (defn simplify
   [{:keys [individual simplification-steps evaluator context]}]

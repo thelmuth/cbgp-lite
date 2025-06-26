@@ -49,7 +49,6 @@
 (defn default-genetic-source
   [{:keys [types vars extra-genes]}]
   (pl/make-genetic-source
-   ;printing this thing below for info
     (pl/prob-by-gene-kind (concat (map (fn [v] {:gene :var :name v}) vars)
                                   ;; Task-specific genes
                                   extra-genes

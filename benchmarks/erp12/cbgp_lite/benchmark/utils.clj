@@ -296,13 +296,3 @@
     (= actual expected) 0 ; if equal (including both empty), 0 loss
     :else (- 1.0 (/ (count (st/intersection actual expected))
                     (count (st/union actual expected))))))
-
-
-(comment
-  (prof/profile (dotimes [i 10000] (reduce + (range i))))
-  
-  ;; The resulting flamegraph will be stored in /tmp/clj-async-profiler/results/
-  ;; You can view the HTML file directly from there or start a local web UI:
-  
-  (prof/serve-ui 8080)
-  )

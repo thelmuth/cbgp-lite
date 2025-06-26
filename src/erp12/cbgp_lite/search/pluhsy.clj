@@ -36,8 +36,6 @@
                   (assoc el-push-unit :applied (< (rand) @compile/baked-in-apply-probability))
                   el-push-unit))
               (recur more))))))))
-;getting probability
-
 
 (defn random-plushy-genome
   [{:keys [min-genome-size max-genome-size genetic-source]}]
