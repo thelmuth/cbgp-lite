@@ -19,13 +19,13 @@
   [m]
   (let [weights (reductions + (vals m))
         total (last weights)
-        choices (map vector (keys m) weights)]
-    (let [choice (rand total)]
-      (loop [[[c w] & more] choices]
-        (when w
-          (if (< choice w)
-            c
-            (recur more)))))))
+        choices (map vector (keys m) weights)
+        choice (rand total)]
+    (loop [[[c w] & more] choices]
+      (when w
+        (if (< choice w)
+          c
+          (recur more))))))
 
 
 (defn safe-rand-nth

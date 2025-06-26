@@ -31,10 +31,9 @@
 
 (defmethod ast->form :let
   [{:keys [bindings body]}]
-  (let []
-    (list 'let
-          (vec (mapcat ast->form bindings))
-          (ast->form body))))
+  (list 'let
+        (vec (mapcat ast->form bindings))
+        (ast->form body)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

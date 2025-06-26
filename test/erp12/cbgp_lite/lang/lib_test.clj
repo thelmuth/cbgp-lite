@@ -1,5 +1,5 @@
 (ns erp12.cbgp-lite.lang.lib-test
-  (:require [clojure.test :refer [deftest testing is]]
+  (:require [clojure.test :refer [deftest is]]
             [erp12.cbgp-lite.lang.lib :as l]
             [clojure.set :as set])
   (:import (clojure.lang ExceptionInfo)))

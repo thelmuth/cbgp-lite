@@ -1,5 +1,5 @@
 (ns erp12.cbgp-lite.lang.schema-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is]]
             [erp12.cbgp-lite.lang.schema :as sch]))
 
 (deftest occurs?-test

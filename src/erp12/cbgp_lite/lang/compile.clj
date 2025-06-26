@@ -5,7 +5,6 @@
             [erp12.cbgp-lite.lang.lib :as lib]
             [erp12.cbgp-lite.lang.schema :as schema]
             [taoensso.timbre :as log]
-            [taoensso.timbre.appenders.core :as log-app]
             [clojure.pprint]))
 
 (def collect-types? (atom false))

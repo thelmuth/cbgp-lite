@@ -291,10 +291,8 @@
   ;; (println (:tag map-or-vec))
   (cond
     (and (map? map-or-vec)
-         (= (:op map-or-vec) :local))
-    (do 
-      ;; (println "local found! type whatever: " (:tag map-or-vec) (:form map-or-vec))
-      map-or-vec)
+         (= (:op map-or-vec) :local)) 
+    map-or-vec
 
     (map? map-or-vec)
     (first (filter #(not (nil? %))
