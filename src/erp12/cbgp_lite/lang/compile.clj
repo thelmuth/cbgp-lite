@@ -17,7 +17,7 @@
 ;; Backtracking is the same as :app-type and :baked-in-apply-probability. In the command line, type :backtracking followed by true or false to enable or disable it.
 (def app-type (atom :original))
 (def baked-in-apply-probability (atom 0.5))
-(def backtracking (atom false))
+(def backtracking (atom true))
 
 ;; @todo Move to schema-inference
 (defn tap-nodes
@@ -224,6 +224,8 @@
   "Pops the top function AST regardless of argument/return types.
   See `pop-ast` for return structure."
   [state]
+  ;; (println "---------pop-fn-ast---------")
+  ;; (println "Pop-func-State:" state) 
   (loop [remaining (:asts state)
          acc []]
     (if (empty? remaining)
@@ -234,8 +236,8 @@
             schema-type (if (= schema-type :scheme)
                           (get-in ast [::type :body :type])
                           schema-type)]
-        (if (= schema-type :=>)
-          {:ast   ast
+        (if (= schema-type :=>) 
+           {:ast   ast
            :state (assoc state :asts (concat acc (rest remaining)))}
           (recur (rest remaining)
                  (conj acc ast)))))))
@@ -245,22 +247,38 @@
    a map containing the function ast as well as the state with that function popped is added to a list.
    At the end, a list containing the maps of the functions and states with the function popped is returned."
   [state]
+  (println "-------pop-all-func-asts------------")
+  (println "State:" state)
   (loop [remaining (:asts state)
          acc []
          funclist (list)]
+    (println "Remaining:" remaining)
+    (println "acc:" acc)
+    (println "funclist:" funclist)
     (if (empty? remaining)
       (reverse funclist)
       (let [ast (first remaining)
             schema-type (get-in ast [::type :type])
             schema-type (if (= schema-type :scheme)
                           (get-in ast [::type :body :type])
-                          schema-type)]
+                          schema-type)
+            _ (println "Schema-type:" schema-type)]
         (recur (rest remaining)
                (conj acc ast)
-               (if (= schema-type :=>)
+               (cond 
+                 (= schema-type :=>)
                  (conj funclist {:ast   ast
                                  :state (assoc state :asts (concat acc (rest remaining)))})
-                 funclist))))))
+                 (= schema-type :overloaded)
+                 (let [_ (println "AST:" ast)
+                       _ (println "Alts: " (get-in ast [::type :alternatives]))
+                       mapped-alts (map #(assoc {} :ast   %
+                                                :state (assoc state :asts (concat acc (rest remaining)))) (get-in ast [::type :alternatives]))
+                       _ (println "mapped-alts:" mapped-alts)
+                       output (conj funclist mapped-alts)
+                       _ (println "Output:" output)]
+                   output)
+                 :else funclist))))))
 
 (defn pop-all-unifiable-asts
   "Pops every ast that is unifiable with the given schema. Does the same thing as pop-unifiable-ast, but instead of
@@ -465,10 +483,16 @@
   (cond
     ;; The backtracking method
     (= @backtracking true)
-    (let [allfuncs (pop-all-function-asts state)
+    (let [_ (println "\n------------------------")
+          allfuncs (pop-all-function-asts state)
+          _ (println "Allfuncs:" allfuncs)
           allfuncsinfo (map try-apply allfuncs)
+          _ (println "allfuncsinfo:" allfuncsinfo)
           able-to-be-applied (filter some? allfuncsinfo)
-          firstapplied (first able-to-be-applied)]
+          _ (println "able-to-be-applied:" able-to-be-applied)
+          firstapplied (first able-to-be-applied)
+          _ (println "firstapplied:" firstapplied)
+          _ (println "------------------------\n")]
       (if (empty? able-to-be-applied)
         (update (update state :fn-not-applied inc) :total-apply-attempts inc)
         (update (update firstapplied :fn-applied inc) :total-apply-attempts inc)))
