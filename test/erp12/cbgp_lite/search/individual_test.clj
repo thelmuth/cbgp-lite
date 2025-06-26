@@ -64,19 +64,20 @@
                                          :evaluate-fn i/evaluate-full-behavior}
                                         (u/enhance :arg-symbols task/arg-symbols
                                                    :type-env task/type-environment)))]
-    (is (= (dissoc (evaluator (list {:gene :lit
-                                     :val  1.0
-                                     :type {:type 'double?}})
-                              {:cases [{:inputs [1.5 2] :output 3.5}]})
-                   :func)
-           {:behavior    '({:output 1.0 :std-out ""})
+    (is (= {:behavior    '({:output 1.0 :std-out ""})
             :code        1.0
             :errors      [2.5]
             :push        [{:gene :lit :val 1.0 :type {:type 'double?}}]
             :total-error 2.5
             :cases-used  1
             :solution?   false
-            :exception   nil}))
+            :exception   nil
+            :ret-type    {:type 'double?}}
+           (dissoc (evaluator (list {:gene :lit
+                                     :val  1.0
+                                     :type {:type 'double?}})
+                              {:cases [{:inputs [1.5 2] :output 3.5}]})
+                   :func :state)))
     ;(is (= (dissoc (factory (list)
     ;                        {:cases [{:inputs [1.5 2] :output 3.5}]})
     ;               :func)
@@ -129,7 +130,8 @@
               :total-error 0.0
               :cases-used  3
               :solution?   true
-              :exception   nil}
+              :exception   nil
+              :ret-type {:type 'double?}}
              (let [gn (list {:gene :var :name 'input1}
                             {:gene :var :name 'input2}
                             {:gene :var :name 'double}
@@ -141,4 +143,4 @@
                     :simplification-steps 3
                     :evaluator            evaluator}
                    i/simplify
-                   (dissoc :func))))))))
+                   (dissoc :func :state))))))))

@@ -605,39 +605,39 @@
                              :input  {:type     :cat
                                       :children [{:type :s-var :sym ?x}]}
                              :output {:type :s-var :sym ?y}}}
-                  (c/push->ast {:push     [{:gene :var :name 'poly-f}
-                                           {:gene :var :name 'identity}
-                                           {:gene :apply}]
-                                :locals   []
-                                :ret-type {:type   :scheme
-                                           :s-vars ['a 'b]
-                                           :body   {:type   :=>
-                                                    :input  {:type     :cat
-                                                             :children [{:type :s-var :sym 'a}]}
-                                                    :output {:type :s-var :sym 'b}}}
-                                :type-env {'identity {:type   :scheme
-                                                      :s-vars ['c]
-                                                      :body   {:type   :=>
-                                                               :input  {:type     :cat
-                                                                        :children [{:type :s-var :sym 'c}]}
-                                                               :output {:type :s-var :sym 'c}}}
-                                           'poly-f   {:type   :scheme
-                                                      :s-vars ['d 'e]
-                                                      :body   {:type   :=>
-                                                               :input  {:type     :cat
-                                                                        :children [{:type :s-var :sym 'd}]}
-                                                               :output {:type :s-var :sym 'e}}}}}))))
+                  (:ast (c/push->ast {:push     [{:gene :var :name 'poly-f}
+                                                 {:gene :var :name 'identity}
+                                                 {:gene :apply}]
+                                      :locals   []
+                                      :ret-type {:type   :scheme
+                                                 :s-vars ['a 'b]
+                                                 :body   {:type   :=>
+                                                          :input  {:type     :cat
+                                                                   :children [{:type :s-var :sym 'a}]}
+                                                          :output {:type :s-var :sym 'b}}}
+                                      :type-env {'identity {:type   :scheme
+                                                            :s-vars ['c]
+                                                            :body   {:type   :=>
+                                                                     :input  {:type     :cat
+                                                                              :children [{:type :s-var :sym 'c}]}
+                                                                     :output {:type :s-var :sym 'c}}}
+                                                 'poly-f   {:type   :scheme
+                                                            :s-vars ['d 'e]
+                                                            :body   {:type   :=>
+                                                                     :input  {:type     :cat
+                                                                              :children [{:type :s-var :sym 'd}]}
+                                                                     :output {:type :s-var :sym 'e}}}}})))))
   (testing "pruning unused function args"
-    (is (= (c/push->ast {:push     [{:gene      :fn
-                                     :arg-types [{:type 'int?}
-                                                 {:type 'string?}]
-                                     :ret-type lib/INT}
-                                    [{:gene :var :name 'x}]]
-                         :locals   []
-                         :ret-type {:type   :=>
-                                    :input  {:type :cat :children []}
-                                    :output {:type 'int?}}
-                         :type-env {'x {:type 'int?}}})
+    (is (= (:ast (c/push->ast {:push     [{:gene      :fn
+                                           :arg-types [{:type 'int?}
+                                                       {:type 'string?}]
+                                           :ret-type lib/INT}
+                                          [{:gene :var :name 'x}]]
+                               :locals   []
+                               :ret-type {:type   :=>
+                                          :input  {:type :cat :children []}
+                                          :output {:type 'int?}}
+                               :type-env {'x {:type 'int?}}}))
            {::c/ast  {:op      :fn
                       :methods [{:op     :fn-method
                                  :params []
@@ -656,31 +656,31 @@
                              :output {:type   :=>
                                       :input  {:type :cat :children [{:type :s-var :sym ?a}]}
                                       :output {:type :s-var :sym ?a}}}}
-                  (c/push->ast {:push     [{:gene :var :name 'identity}
-                                           {:gene :fn :ret-type (lib/fn-of [(lib/s-var 'a)] (lib/s-var 'a))}]
-                                :locals   []
-                                :ret-type {:type   :=>
-                                           :input  {:type :cat :children []}
-                                           :output {:type   :=>
-                                                    :input  {:type :cat :children [{:type 'int?}]}
-                                                    :output {:type 'int?}}}
-                                :type-env {'identity {:type   :scheme
-                                                      :s-vars ['a]
-                                                      :body   {:type   :=>
-                                                               :input  {:type :cat :children [{:type :s-var :sym 'a}]}
-                                                               :output {:type :s-var :sym 'a}}}}})))))
+                  (:ast (c/push->ast {:push     [{:gene :var :name 'identity}
+                                                 {:gene :fn :ret-type (lib/fn-of [(lib/s-var 'a)] (lib/s-var 'a))}]
+                                      :locals   []
+                                      :ret-type {:type   :=>
+                                                 :input  {:type :cat :children []}
+                                                 :output {:type   :=>
+                                                          :input  {:type :cat :children [{:type 'int?}]}
+                                                          :output {:type 'int?}}}
+                                      :type-env {'identity {:type   :scheme
+                                                            :s-vars ['a]
+                                                            :body   {:type   :=>
+                                                                     :input  {:type :cat :children [{:type :s-var :sym 'a}]}
+                                                                     :output {:type :s-var :sym 'a}}}}}))))))
 
 (deftest simple-math-test
   ;; Add 100 to input.
-  (let [{::c/keys [ast type]} (c/push->ast {:push      [{:gene :lit :val 100 :type {:type 'int?}}
-                                                        {:gene :local :idx 0}
-                                                        {:gene :var :name '+}
-                                                        {:gene :apply}]
-                                            :locals    ['in1]
-                                            :ret-type  {:type 'int?}
-                                            :type-env  (assoc lib/type-env
-                                                              'in1 {:type 'int?})
-                                            :dealiases lib/dealiases})
+  (let [{::c/keys [ast type]} (:ast (c/push->ast {:push      [{:gene :lit :val 100 :type {:type 'int?}}
+                                                              {:gene :local :idx 0}
+                                                              {:gene :var :name '+}
+                                                              {:gene :apply}]
+                                                  :locals    ['in1]
+                                                  :ret-type  {:type 'int?}
+                                                  :type-env  (assoc lib/type-env
+                                                                    'in1 {:type 'int?})
+                                                  :dealiases lib/dealiases}))
         _ (is (= type {:type 'int? :typeclasses #{:number}}))
         form (a/ast->form ast)
         _ (is (= form '(+ in1 100)))
@@ -690,15 +690,15 @@
 
 (deftest simple-double-math-test
   ;; Add 100.0 to input.
-  (let [{::c/keys [ast type]} (c/push->ast {:push      [{:gene :lit :val 100.0 :type {:type 'double?}}
-                                                        {:gene :local :idx 0}
-                                                        {:gene :var :name '+}
-                                                        {:gene :apply}]
-                                            :locals    ['in1]
-                                            :ret-type  {:type 'double?}
-                                            :type-env  (assoc lib/type-env
-                                                              'in1 {:type 'double?})
-                                            :dealiases lib/dealiases})
+  (let [{::c/keys [ast type]} (:ast (c/push->ast {:push      [{:gene :lit :val 100.0 :type {:type 'double?}}
+                                                              {:gene :local :idx 0}
+                                                              {:gene :var :name '+}
+                                                              {:gene :apply}]
+                                                  :locals    ['in1]
+                                                  :ret-type  {:type 'double?}
+                                                  :type-env  (assoc lib/type-env
+                                                                    'in1 {:type 'double?})
+                                                  :dealiases lib/dealiases}))
         _ (is (= type {:type 'double? :typeclasses #{:number}}))
         form (a/ast->form ast)
         _ (is (= form '(+ in1 100.0)))
@@ -708,19 +708,19 @@
 
 (deftest conditional-logic-test
   ;; If input < 1000, return "small" else "large".
-  (let [{::c/keys [ast type]} (c/push->ast {:push      [{:gene :lit :val "large" :type {:type 'string?}}
-                                                        {:gene :lit :val "small" :type {:type 'string?}}
-                                                        {:gene :lit :val 1000 :type {:type 'int?}}
-                                                        {:gene :local :idx 0}
-                                                        {:gene :var :name `lib/<'}
-                                                        {:gene :apply}
-                                                        {:gene :var :name 'if}
-                                                        {:gene :apply}]
-                                            :locals    ['in1]
-                                            :ret-type  {:type 'string?}
-                                            :type-env  (assoc lib/type-env
-                                                              'in1 {:type 'int?})
-                                            :dealiases lib/dealiases})
+  (let [{::c/keys [ast type]} (:ast (c/push->ast {:push      [{:gene :lit :val "large" :type {:type 'string?}}
+                                                              {:gene :lit :val "small" :type {:type 'string?}}
+                                                              {:gene :lit :val 1000 :type {:type 'int?}}
+                                                              {:gene :local :idx 0}
+                                                              {:gene :var :name `lib/<'}
+                                                              {:gene :apply}
+                                                              {:gene :var :name 'if}
+                                                              {:gene :apply}]
+                                                  :locals    ['in1]
+                                                  :ret-type  {:type 'string?}
+                                                  :type-env  (assoc lib/type-env
+                                                                    'in1 {:type 'int?})
+                                                  :dealiases lib/dealiases}))
         _ (is (= type {:type 'string?}))
         form (a/ast->form ast)
         _ (is (= form '(if (erp12.cbgp-lite.lang.lib/<' in1 1000) "small" "large")))
@@ -731,19 +731,19 @@
 
 (deftest conditional-eq-logic-test
   ;; If input == 1000, return "same" else "different".
-  (let [{::c/keys [ast type]} (c/push->ast {:push      [{:gene :lit :val "different" :type {:type 'string?}}
-                                                        {:gene :lit :val "same" :type {:type 'string?}}
-                                                        {:gene :lit :val 1000 :type {:type 'int?}}
-                                                        {:gene :local :idx 0}
-                                                        {:gene :var :name '=}
-                                                        {:gene :apply}
-                                                        {:gene :var :name 'if}
-                                                        {:gene :apply}]
-                                            :locals    ['in1]
-                                            :ret-type  {:type 'string?}
-                                            :type-env  (assoc lib/type-env
-                                                              'in1 {:type 'int?})
-                                            :dealiases lib/dealiases})
+  (let [{::c/keys [ast type]} (:ast (c/push->ast {:push      [{:gene :lit :val "different" :type {:type 'string?}}
+                                                              {:gene :lit :val "same" :type {:type 'string?}}
+                                                              {:gene :lit :val 1000 :type {:type 'int?}}
+                                                              {:gene :local :idx 0}
+                                                              {:gene :var :name '=}
+                                                              {:gene :apply}
+                                                              {:gene :var :name 'if}
+                                                              {:gene :apply}]
+                                                  :locals    ['in1]
+                                                  :ret-type  {:type 'string?}
+                                                  :type-env  (assoc lib/type-env
+                                                                    'in1 {:type 'int?})
+                                                  :dealiases lib/dealiases}))
         _ (is (= type {:type 'string?}))
         form (a/ast->form ast)
         _ (is (= form '(if (= in1 1000) "same" "different")))
@@ -754,20 +754,20 @@
 
 (deftest let-binding-test
   ;; Square and then double the input.
-  (let [{::c/keys [ast type]} (c/push->ast {:push      [{:gene :local :idx 0}
-                                                        {:gene :local :idx 0}
-                                                        {:gene :var :name '*}
-                                                        {:gene :apply}
-                                                        {:gene :let}
-                                                        [{:gene :local :idx 1}
-                                                         {:gene :local :idx 1}
-                                                         {:gene :var :name '+}
-                                                         {:gene :apply}]]
-                                            :locals    ['in1]
-                                            :ret-type  {:type 'int?}
-                                            :type-env  (assoc lib/type-env
-                                                              'in1 {:type 'int?})
-                                            :dealiases lib/dealiases})
+  (let [{::c/keys [ast type]} (:ast (c/push->ast {:push      [{:gene :local :idx 0}
+                                                              {:gene :local :idx 0}
+                                                              {:gene :var :name '*}
+                                                              {:gene :apply}
+                                                              {:gene :let}
+                                                              [{:gene :local :idx 1}
+                                                               {:gene :local :idx 1}
+                                                               {:gene :var :name '+}
+                                                               {:gene :apply}]]
+                                                  :locals    ['in1]
+                                                  :ret-type  {:type 'int?}
+                                                  :type-env  (assoc lib/type-env
+                                                                    'in1 {:type 'int?})
+                                                  :dealiases lib/dealiases}))
         _ (is (= type {:type 'int? :typeclasses #{:number}}))
         form (a/ast->form ast)
         _ (is
@@ -782,17 +782,17 @@
 
 (deftest hof-with-anonymous-fn-test
   ;; Map `inc` over the elements of a vector
-  (let [{::c/keys [ast type]} (c/push->ast {:push      [{:gene :lit :val [1 2 3] :type {:type :vector :child {:type 'int?}}}
-                                                        {:gene :fn :arg-types [lib/INT] :ret-type lib/INT}
-                                                        [{:gene :local :idx 0}
-                                                         {:gene :var :name 'inc}
-                                                         {:gene :apply}]
-                                                        {:gene :var :name 'map-vec}
-                                                        {:gene :apply}]
-                                            :locals    []
-                                            :ret-type  {:type :vector :child {:type 'int?}}
-                                            :type-env  lib/type-env
-                                            :dealiases lib/dealiases})
+  (let [{::c/keys [ast type]} (:ast (c/push->ast {:push      [{:gene :lit :val [1 2 3] :type {:type :vector :child {:type 'int?}}}
+                                                              {:gene :fn :arg-types [lib/INT] :ret-type lib/INT}
+                                                              [{:gene :local :idx 0}
+                                                               {:gene :var :name 'inc}
+                                                               {:gene :apply}]
+                                                              {:gene :var :name 'map-vec}
+                                                              {:gene :apply}]
+                                                  :locals    []
+                                                  :ret-type  {:type :vector :child {:type 'int?}}
+                                                  :type-env  lib/type-env
+                                                  :dealiases lib/dealiases}))
         _ (is (= type {:type :vector :child {:type 'int? :typeclasses #{:number}}}))
         form (a/ast->form ast)
         _ (is (matches? (mapv (fn [?a] (inc ?a)) [1 2 3])
@@ -802,28 +802,28 @@
 
 (deftest nullary-fn-test
   ;; Generate a vector of 5 random doubles.
-  (let [{::c/keys [ast type]} (c/push->ast {:push      [{:gene :var :name 'rand}
-                                                        {:gene :apply}
-                                                        {:gene :fn :ret-type lib/DOUBLE}
-                                                        {:gene :lit :val 5 :type {:type 'int?}}
-                                                        {:gene :var :name 'repeatedly}
-                                                        {:gene :apply}]
-                                            :locals    []
-                                            :ret-type  {:type :vector :child {:type 'double?}}
-                                            :type-env  {'rand       {:type   :=>
-                                                                     :input  {:type :cat :children []}
-                                                                     :output {:type 'double?}}
-                                                        'repeatedly {:type   :scheme
-                                                                     :s-vars ['a]
-                                                                     :body   {:type   :=>
-                                                                              :input  {:type     :cat
-                                                                                       :children [{:type 'int?}
-                                                                                                  {:type   :=>
-                                                                                                   :input  {:type :cat :children []}
-                                                                                                   :output {:type :s-var :sym 'a}}]}
-                                                                              :output {:type  :vector
-                                                                                       :child {:type :s-var :sym 'a}}}}}
-                                            :dealiases {}})
+  (let [{::c/keys [ast type]} (:ast (c/push->ast {:push      [{:gene :var :name 'rand}
+                                                              {:gene :apply}
+                                                              {:gene :fn :ret-type lib/DOUBLE}
+                                                              {:gene :lit :val 5 :type {:type 'int?}}
+                                                              {:gene :var :name 'repeatedly}
+                                                              {:gene :apply}]
+                                                  :locals    []
+                                                  :ret-type  {:type :vector :child {:type 'double?}}
+                                                  :type-env  {'rand       {:type   :=>
+                                                                           :input  {:type :cat :children []}
+                                                                           :output {:type 'double?}}
+                                                              'repeatedly {:type   :scheme
+                                                                           :s-vars ['a]
+                                                                           :body   {:type   :=>
+                                                                                    :input  {:type     :cat
+                                                                                             :children [{:type 'int?}
+                                                                                                        {:type   :=>
+                                                                                                         :input  {:type :cat :children []}
+                                                                                                         :output {:type :s-var :sym 'a}}]}
+                                                                                    :output {:type  :vector
+                                                                                             :child {:type :s-var :sym 'a}}}}}
+                                                  :dealiases {}}))
         _ (is (= type {:type :vector :child {:type 'double?}}))
         form (a/ast->form ast)
         _ (is (= form '(repeatedly 5 (fn [] (rand)))))
@@ -833,16 +833,16 @@
 
 (deftest side-effects-test
   ;; Print hello world and return 0
-  (let [{::c/keys [ast type]} (c/push->ast {:push      [{:gene :lit :val 0 :type {:type 'int?}}
-                                                        {:gene :lit :val "Hello world!" :type {:type 'string?}}
-                                                        {:gene :var :name 'println}
-                                                        {:gene :apply}
-                                                        {:gene :var :name 'do2}
-                                                        {:gene :apply}]
-                                            :locals    []
-                                            :ret-type  {:type 'int?}
-                                            :type-env  lib/type-env
-                                            :dealiases lib/dealiases})
+  (let [{::c/keys [ast type]} (:ast (c/push->ast {:push      [{:gene :lit :val 0 :type {:type 'int?}}
+                                                              {:gene :lit :val "Hello world!" :type {:type 'string?}}
+                                                              {:gene :var :name 'println}
+                                                              {:gene :apply}
+                                                              {:gene :var :name 'do2}
+                                                              {:gene :apply}]
+                                                  :locals    []
+                                                  :ret-type  {:type 'int?}
+                                                  :type-env  lib/type-env
+                                                  :dealiases lib/dealiases}))
         _ (is (= type {:type 'int?}))
         form (a/ast->form ast)
         _ (is (= form '(do (println "Hello world!") 0)))
@@ -853,14 +853,14 @@
       (is (= (str s) "Hello world!\n")))))
 
 (deftest count-test
-  (let [{::c/keys [ast type]} (c/push->ast {:push      [{:gene :local :idx 0}
-                                                        {:gene :var :name 'count}
-                                                        {:gene :apply}]
-                                            :locals    ['in1]
-                                            :ret-type  {:type 'int?}
-                                            :type-env  (assoc lib/type-env
-                                                              'in1 {:type {:type :s-var :sym 'c}})
-                                            :dealiases lib/dealiases})
+  (let [{::c/keys [ast type]} (:ast (c/push->ast {:push      [{:gene :local :idx 0}
+                                                              {:gene :var :name 'count}
+                                                              {:gene :apply}]
+                                                  :locals    ['in1]
+                                                  :ret-type  {:type 'int?}
+                                                  :type-env  (assoc lib/type-env
+                                                                    'in1 {:type {:type :s-var :sym 'c}})
+                                                  :dealiases lib/dealiases}))
         _ (is (= type {:type 'int?}))
         form (a/ast->form ast)
         func (eval `(fn [~'in1] ~form))]
@@ -872,15 +872,15 @@
     (is (= (func "testing!") 8))))
 
 (deftest simpler-first-test
-  (let [{::c/keys [ast type]} (c/push->ast
-                               {:push      [{:gene :lit :val 42 :type {:type 'int?}}
-                                            {:gene :lit :val [55 66 77] :type {:type :vector :child {:type 'int?}}}
-                                            {:gene :var :name 'first}
-                                            {:gene :apply}]
-                                :locals    []
-                                :ret-type  {:type 'int?}
-                                :type-env  lib/type-env 
-                                :dealiases lib/dealiases})
+  (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                     {:push      [{:gene :lit :val 42 :type {:type 'int?}}
+                                                  {:gene :lit :val [55 66 77] :type {:type :vector :child {:type 'int?}}}
+                                                  {:gene :var :name 'first}
+                                                  {:gene :apply}]
+                                      :locals    []
+                                      :ret-type  {:type 'int?}
+                                      :type-env  lib/type-env 
+                                      :dealiases lib/dealiases}))
         _ (is (= type {:type 'int?}))
         _ (println "REAL-AST: " ast)
         form (a/ast->form ast)
@@ -889,20 +889,20 @@
     (is (= 55 (func)))))
 
 (deftest first-test
-  (let [{::c/keys [ast type]} (c/push->ast
-                               {:push      [{:gene :lit :val 2999 :type {:type 'int?}}
-                                            {:gene :local :idx 0}
-                                            {:gene :var :name 'first}
-                                            {:gene :apply}
-                                            #_{:gene :var :name 'int}
-                                            #_{:gene :apply}]
-                                :locals    ['in1]
-                                :ret-type  {:type 'int?}
-                                :type-env  (assoc lib/type-env
-                                                  'in1 {:type {:type :vector :child {:type 'int?}}
-                                                        #_{:type :s-var :sym 'c :typeclasses #{:indexable}
-                                                               }})
-                                :dealiases lib/dealiases})
+  (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                     {:push      [{:gene :lit :val 2999 :type {:type 'int?}}
+                                                  {:gene :local :idx 0}
+                                                  {:gene :var :name 'first}
+                                                  {:gene :apply}
+                                                  #_{:gene :var :name 'int}
+                                                  #_{:gene :apply}]
+                                      :locals    ['in1]
+                                      :ret-type  {:type 'int?}
+                                      :type-env  (assoc lib/type-env
+                                                        'in1 {:type {:type :vector :child {:type 'int?}}
+                                                              #_{:type :s-var :sym 'c :typeclasses #{:indexable}
+                                                                 }})
+                                      :dealiases lib/dealiases}))
         _ (is (= type {:type 'int?}))
         _ (println "REAL-AST: " ast)
         form (a/ast->form ast)
@@ -919,32 +919,32 @@
     (is (= 116 (func "testing!")))))
 
 (deftest replace-space-with-newline-test
-  (let [{::c/keys [ast type]} (c/push->ast {:push      [{:gene :lit :val \newline :type {:type 'char?}}
-                                                        {:gene :lit :val \space :type {:type 'char?}}
-                                                        {:gene :local :idx 0}
-                                                        {:gene :var :name `lib/replace-char}
-                                                        {:gene :apply}
-                                                        {:gene :let}
-                                                        [;; This vector contains the body of the `let`
+  (let [{::c/keys [ast type]} (:ast (c/push->ast {:push      [{:gene :lit :val \newline :type {:type 'char?}}
+                                                              {:gene :lit :val \space :type {:type 'char?}}
+                                                              {:gene :local :idx 0}
+                                                              {:gene :var :name `lib/replace-char}
+                                                              {:gene :apply}
+                                                              {:gene :let}
+                                                              [;; This vector contains the body of the `let`
                                                          ;; Starting with the second clause of the `do`
-                                                         {:gene :lit :val \newline :type {:type 'char?}}
-                                                         {:gene :local :idx 1}
-                                                         {:gene :var :name `lib/remove-char}
-                                                         {:gene :apply}
-                                                         {:gene :var :name 'count}
-                                                         {:gene :apply}
+                                                               {:gene :lit :val \newline :type {:type 'char?}}
+                                                               {:gene :local :idx 1}
+                                                               {:gene :var :name `lib/remove-char}
+                                                               {:gene :apply}
+                                                               {:gene :var :name 'count}
+                                                               {:gene :apply}
                                                          ;; Followed by the first clause of the `do`
-                                                         {:gene :local :idx 1}
-                                                         {:gene :var :name 'println}
-                                                         {:gene :apply}
+                                                               {:gene :local :idx 1}
+                                                               {:gene :var :name 'println}
+                                                               {:gene :apply}
                                                          ;; Invoke the do
-                                                         {:gene :var :name 'do2}
-                                                         {:gene :apply}]]
-                                            :locals    ['in1]
-                                            :ret-type  {:type 'int?}
-                                            :type-env  (assoc lib/type-env
-                                                              'in1 {:type 'string?})
-                                            :dealiases lib/dealiases})
+                                                               {:gene :var :name 'do2}
+                                                               {:gene :apply}]]
+                                                  :locals    ['in1]
+                                                  :ret-type  {:type 'int?}
+                                                  :type-env  (assoc lib/type-env
+                                                                    'in1 {:type 'string?})
+                                                  :dealiases lib/dealiases}))
         _ (is (= type {:type 'int?}))
         form (a/ast->form ast)
         _ (is
@@ -960,20 +960,21 @@
       (is (= (str s) "a\nbat\nCANDLE\n")))))
 
 (deftest polymorphic-output-test
-  (let [{::c/keys [ast type]} (c/push->ast {:push      [{:gene :local :idx 0}
-                                                        {:gene :local :idx 1}
-                                                        {:gene :lit :val true :type {:type 'boolean?}}
-                                                        {:gene :var :name 'if}
-                                                        {:gene :apply}]
-                                            :locals    ['x 'y]
-                                            :ret-type  (lib/s-var 'a)
-                                            :type-env  (assoc lib/type-env
-                                                              'x (lib/s-var 'a)
-                                                              'y (lib/s-var 'a))
-                                            :dealiases lib/dealiases})
-        _ (is (= (:type type) :s-var))
+  (let [{::c/keys [ast type]} (:ast
+                               (c/push->ast {:push      [{:gene :local :idx 0}
+                                                         {:gene :local :idx 1}
+                                                         {:gene :lit :val true :type {:type 'boolean?}}
+                                                         {:gene :var :name 'if}
+                                                         {:gene :apply}]
+                                             :locals    ['x 'y]
+                                             :ret-type  (lib/s-var 'a)
+                                             :type-env  (assoc lib/type-env
+                                                               'x (lib/s-var 'a)
+                                                               'y (lib/s-var 'a))
+                                             :dealiases lib/dealiases}))
+        _ (is (= :s-var (:type type)))
         form (a/ast->form ast)
-        _ (is (= form '(if true y x)))
+        _ (is (= '(if true y x) form))
         func (eval `(fn [~'x ~'y] ~form))]
-    (is (= (func 0 1) 1))
-    (is (= (func "this" "that") "that"))))
+    (is (= 1 (func 0 1)))
+    (is (= "that" (func "this" "that")))))
