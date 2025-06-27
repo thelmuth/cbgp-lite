@@ -564,9 +564,9 @@
    `safe-subs          (fn-of [STRING INT INT] STRING)
    `filter-str         (fn-of [(fn-of [CHAR] BOOLEAN) STRING] STRING)
   ;;  'first-str          (fn-of [STRING] CHAR)
-   'last-str           (fn-of [STRING] CHAR)
-   `rest-str           (unary-transform STRING)
-   `butlast-str        (unary-transform STRING)
+  ;;  'last-str           (fn-of [STRING] CHAR)
+  ;;  `rest-str           (unary-transform STRING)
+  ;;  `butlast-str        (unary-transform STRING)
    'nth-str            (fn-of [STRING INT] CHAR)
   ;;  'length             (fn-of [STRING] INT)
    'map-str            {:type   :scheme
@@ -580,15 +580,15 @@
                                         STRING]
                                        (vector-of (s-var 'a)))}
    `str/reverse        (unary-transform STRING)
-   'string->chars      (fn-of [STRING] (vector-of CHAR))
+  ;;  'string->chars      (fn-of [STRING] (vector-of CHAR)) ; see 'vec
    `split-str          (fn-of [STRING STRING] (vector-of STRING))
    'split-str-on-char  (fn-of [STRING CHAR] (vector-of STRING))
    `split-str-on-ws    (fn-of [STRING] (vector-of STRING))
-   'empty-str?         (unary-pred STRING)
+  ;;  'empty-str?         (unary-pred STRING)
    `str/includes?      (binary-pred STRING)
-   `char-in?           (fn-of [STRING CHAR] BOOLEAN)
-   'index-of-char      (fn-of [STRING CHAR] INT)
-   'index-of-str       (fn-of [STRING STRING] INT)
+  ;;  `char-in?           (fn-of [STRING CHAR] BOOLEAN)
+  ;;  'index-of-char      (fn-of [STRING CHAR] INT)
+  ;;  'index-of-str       (fn-of [STRING STRING] INT)
    'char-occurrences   (fn-of [STRING CHAR] INT)
    `str/replace        (fn-of [STRING STRING STRING] STRING)
    `str/replace-first  (fn-of [STRING STRING STRING] STRING)
@@ -614,6 +614,83 @@
    ;; Polymorphic collection functions
    'count              (scheme (fn-of [{:type (s-var 'c)}] INT)
                                {'c #{:countable}})
+   'mapv               {:type :overloaded
+                        :alternatives [
+                                       (scheme (fn-of [(fn-of [(s-var 'a)] (s-var 'b))
+                                                       (vector-of (s-var 'a))]
+                                                      (vector-of (s-var 'b)))) ; map-vec
+                                       (scheme (fn-of [(fn-of [(s-var 'a)] (s-var 'b))
+                                                       (set-of (s-var 'a))]
+                                                      (set-of (s-var 'b)))) ; set-vec
+                                       (scheme (fn-of [(fn-of [(tuple-of (s-var 'k) (s-var 'v))] (s-var 'e))
+                                                       (map-of (s-var 'k) (s-var 'v))]
+                                                      (vector-of (s-var 'e)))) ; map-map 
+                        ]} ; missing: map2-vec
+  ;;  'mapv2             (scheme (fn-of [(fn-of [(s-var 'a)] (s-var 'b)) (s-var 'c)] (s-var 'c2))
+  ;;                              {'c #{:countable}})
+   'vec                {:type :overloaded
+                        :alternatives [(scheme (fn-of [(map-of (s-var 'k) (s-var 'v))] (vector-of (tuple-of (s-var 'k) (s-var 'v)))))
+                                       (scheme (fn-of [(set-of (s-var 'e))] (vector-of (s-var 'e))))
+                                       (scheme (fn-of [STRING] (vector-of CHAR)))]}
+                                          ; may also include keys-vec and vals-vec
+   'set                {:type :overloaded
+                        :alternatives [(scheme (fn-of [(vector-of (s-var 'e))] (set-of (s-var 'e))))
+                                       (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))] (set-of (tuple-of (s-var 'k) (s-var 'v)))))]}
+   '->map              {:type :overloaded
+                        :alternatives [(scheme (fn-of [(vector-of (tuple-of (s-var 'k) (s-var 'v)))] (map-of (s-var 'k) (s-var 'v))))
+                                       (scheme (fn-of [(set-of (tuple-of (s-var 'k) (s-var 'v)))] (map-of (s-var 'k) (s-var 'v))))]}
+   'concat             {:type :overloaded
+                        :alternatives [(scheme (binary-transform (vector-of (s-var 'a)))) ;concatv
+                                       (fn-of [STRING STRING] STRING)]}
+   'first              {:type :overloaded ;;; where does indexable go?
+                           ;:typeclasses #{:indexable}
+                        :alternatives [(scheme (fn-of [(vector-of (s-var 'a))] (s-var 'a)))
+                                       (fn-of [STRING] CHAR)]}
+   'last               {:type :overloaded
+                        :alternatives [(scheme (fn-of [(vector-of (s-var 'a))] (s-var 'a)))
+                                       (fn-of [STRING] CHAR)]}
+   'rest               {:type :overloaded
+                        :alternatives [(scheme (fn-of [(vector-of (s-var 'a))] (vector-of (s-var 'a))))
+                                       (unary-transform STRING)]}
+   'butlast            {:type :overloaded
+                        :alternatives [(scheme (fn-of [(vector-of (s-var 'a))] (vector-of (s-var 'a))))
+                                       (unary-transform STRING)]}
+   'empty?             (scheme (fn-of [(s-var 'a)] BOOLEAN) {'a #{:indexable}})
+   'in?                {:type :overloaded
+                        :alternatives [(scheme (fn-of [(vector-of (s-var 'a)) (s-var 'a)] BOOLEAN))
+                                       (fn-of [STRING CHAR] BOOLEAN)]}
+   'index-of           (scheme (fn-of [STRING (s-var 'a)] INT) {'a #{:stringable}}) ; add typeclass for strings + chars
+   
+   'contains?          (scheme (fn-of [(s-var 'c)] BOOLEAN) {'c #{:countable}}) ; exclude strings
+   'reduce             {:type :overloaded
+                        :alternatives [(scheme (fn-of [(fn-of [(s-var 'a) (s-var 'a)] (s-var 'a))
+                                                       (vector-of (s-var 'a))]
+                                                      (s-var 'a))) ; reduce-vec
+                                       (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'a)] (s-var 'a))
+                                                       (set-of (s-var 'a))]
+                                                      (s-var 'a)))
+                                       (scheme (fn-of [(fn-of [(tuple-of (s-var 'k) (s-var 'v))
+                                                               (tuple-of (s-var 'k) (s-var 'v))]
+                                                              (tuple-of (s-var 'k) (s-var 'v)))
+                                                       (map-of (s-var 'k) (s-var 'v))]
+                                                      (tuple-of (s-var 'k) (s-var 'v)))) ; reduce-map 
+]} ; to-do: turn this into a typeclass-based func, merge w/ fold?
+   'fold               {:type :overloaded
+                        :alternatives [(scheme (fn-of [(fn-of [(s-var 'b) (s-var 'a)] (s-var 'b))
+                                                       (s-var 'b)
+                                                       (vector-of (s-var 'a))]
+                                                      (s-var 'b))) ; fold-vec
+                                       (scheme (fn-of [(fn-of [(s-var 'b) (s-var 'a)] (s-var 'b))
+                                                       (s-var 'b)
+                                                       (set-of (s-var 'a))]
+                                                      (s-var 'b))) ; fold-set
+                                       (scheme (fn-of [(fn-of [(s-var 'r)
+                                                               (tuple-of (s-var 'k) (s-var 'v))]
+                                                              (s-var 'r))
+                                                       (s-var 'r)
+                                                       (map-of (s-var 'k) (s-var 'v))]
+                                                      (s-var 'r))) ; fold-map
+                                       ]}
 
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Vector
@@ -623,12 +700,12 @@
                                       (vector-of (s-var 'a))))
    '->vector3          (scheme (fn-of [(s-var 'a) (s-var 'a) (s-var 'a)]
                                       (vector-of (s-var 'a))))
-   'map->vec           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
-                                      (vector-of (tuple-of (s-var 'k) (s-var 'v)))))
-   'set->vec           (scheme (fn-of [(set-of (s-var 'e))] (vector-of (s-var 'e))))
-   `concatv            {:type   :scheme
-                        :s-vars ['a]
-                        :body   (binary-transform (vector-of (s-var 'a)))}
+  ;;  'map->vec           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
+  ;;                                     (vector-of (tuple-of (s-var 'k) (s-var 'v)))))
+  ;;  'set->vec           (scheme (fn-of [(set-of (s-var 'e))] (vector-of (s-var 'e)))) 
+  ;;  `concatv            {:type   :scheme
+  ;;                       :s-vars ['a]
+  ;;                       :body   (binary-transform (vector-of (s-var 'a)))}
    `conj-vec           {:type   :scheme
                         :s-vars ['a]
                         :body   (fn-of [(vector-of (s-var 'a)) (s-var 'a)] (vector-of (s-var 'a)))}
@@ -640,21 +717,15 @@
                         :s-vars ['a]
                         :body   (fn-of [(vector-of (s-var 'a)) INT INT]
                                        (vector-of (s-var 'a)))}
-   'first              {:type :overloaded ;;; where does indexible go?
-                        ;:typeclasses #{:indexible}
-                        :alternatives [{:type   :scheme
-                                        :s-vars ['a]
-                                        :body   (fn-of [(vector-of (s-var 'a))] (s-var 'a))}
-                                       (fn-of [STRING] CHAR)]}
-   'last               {:type   :scheme
-                        :s-vars ['a]
-                        :body   (fn-of [(vector-of (s-var 'a))] (s-var 'a))}
-   `restv              {:type   :scheme
-                        :s-vars ['a]
-                        :body   (fn-of [(vector-of (s-var 'a))] (vector-of (s-var 'a)))}
-   `butlastv           {:type   :scheme
-                        :s-vars ['a]
-                        :body   (fn-of [(vector-of (s-var 'a))] (vector-of (s-var 'a)))}
+  ;;  'last               {:type   :scheme
+  ;;                       :s-vars ['a]
+  ;;                       :body   (fn-of [(vector-of (s-var 'a))] (s-var 'a))}                                    
+  ;;  `restv              {:type   :scheme
+  ;;                       :s-vars ['a]
+  ;;                       :body   (fn-of [(vector-of (s-var 'a))] (vector-of (s-var 'a)))}
+  ;;  `butlastv           {:type   :scheme
+  ;;                       :s-vars ['a]
+  ;;                       :body   (fn-of [(vector-of (s-var 'a))] (vector-of (s-var 'a)))}
    `safe-nth           {:type   :scheme
                         :s-vars ['a]
                         :body   (fn-of [(vector-of (s-var 'a)) INT] (s-var 'a))}
@@ -664,15 +735,15 @@
    `reversev           {:type   :scheme
                         :s-vars ['a]
                         :body   (fn-of [(vector-of (s-var 'a))] (vector-of (s-var 'a)))}
-   'empty?             {:type   :scheme
-                        :s-vars ['a]
-                        :body   (fn-of [(vector-of (s-var 'a))] BOOLEAN)}
-   `in?                {:type   :scheme
-                        :s-vars ['a]
-                        :body   (fn-of [(vector-of (s-var 'a)) (s-var 'a)] BOOLEAN)}
-   `index-of           {:type   :scheme
-                        :s-vars ['a]
-                        :body   (fn-of [(vector-of (s-var 'a)) (s-var 'a)] INT)}
+  ;;  'empty?             {:type   :scheme
+  ;;                       :s-vars ['a]
+  ;;                       :body   (fn-of [(vector-of (s-var 'a))] BOOLEAN)}
+  ;;  `in?                {:type   :scheme
+  ;;                       :s-vars ['a]
+  ;;                       :body   (fn-of [(vector-of (s-var 'a)) (s-var 'a)] BOOLEAN)}
+  ;;  `index-of           {:type   :scheme
+  ;;                       :s-vars ['a]
+  ;;                       :body   (fn-of [(vector-of (s-var 'a)) (s-var 'a)] INT)}
    `occurrences-of     {:type   :scheme
                         :s-vars ['a]
                         :body   (fn-of [(vector-of (s-var 'a)) (s-var 'a)] INT)}
@@ -702,11 +773,11 @@
    'range2             (scheme (fn-of [INT INT] (vector-of INT)))
    'range3             (scheme (fn-of [INT INT INT] (vector-of INT)))
   ;;  'count-vec          (scheme (fn-of [(vector-of (s-var 'a))] INT))
-   'map-vec            {:type   :scheme
-                        :s-vars ['a 'b]
-                        :body   (fn-of [(fn-of [(s-var 'a)] (s-var 'b))
-                                        (vector-of (s-var 'a))]
-                                       (vector-of (s-var 'b)))}
+  ;;  'map-vec            {:type   :scheme
+  ;;                       :s-vars ['a 'b]
+  ;;                       :body   (fn-of [(fn-of [(s-var 'a)] (s-var 'b))
+  ;;                                       (vector-of (s-var 'a))]
+  ;;                                      (vector-of (s-var 'b)))}
    'map2-vec           {:type   :scheme
                         :s-vars ['a1 'a2 'b]
                         :body   (fn-of [(fn-of [(s-var 'a1) (s-var 'a2)] (s-var 'b))
@@ -721,18 +792,18 @@
                         :body   (fn-of [(fn-of [(s-var 'a)] BOOLEAN)
                                         (vector-of (s-var 'a))]
                                        (vector-of (s-var 'a)))}
-   'reduce-vec         {:type   :scheme
-                        :s-vars ['a]
-                        :body   (fn-of [(fn-of [(s-var 'a) (s-var 'a)] (s-var 'a))
-                                        (vector-of (s-var 'a))]
-                                       (s-var 'a))}
-   'fold-vec           {:type   :scheme
-                        :s-vars ['a 'b]
-                        :body   (fn-of [(fn-of [(s-var 'b) (s-var 'a)] (s-var 'b))
-                                        (s-var 'b)
-                                        (vector-of (s-var 'a))]
-                                       (s-var 'b))}
-
+  ;;  'reduce-vec         {:type   :scheme
+  ;;                       :s-vars ['a]
+  ;;                       :body   (fn-of [(fn-of [(s-var 'a) (s-var 'a)] (s-var 'a))
+  ;;                                       (vector-of (s-var 'a))]
+  ;;                                      (s-var 'a))}
+  ;;  'fold-vec           {:type   :scheme
+  ;;                       :s-vars ['a 'b]
+  ;;                       :body   (fn-of [(fn-of [(s-var 'b) (s-var 'a)] (s-var 'b))
+  ;;                                       (s-var 'b)
+  ;;                                       (vector-of (s-var 'a))]
+  ;;                                      (s-var 'b))}
+   
    `removev            {:type   :scheme
                         :s-vars ['a]
                         :body   (fn-of [(fn-of [(s-var 'a)] BOOLEAN)
@@ -777,10 +848,10 @@
                                       (set-of (s-var 'e))))
    '->set3             (scheme (fn-of [(s-var 'e) (s-var 'e) (s-var 'e)]
                                       (set-of (s-var 'e))))
-   'vec->set           (scheme (fn-of [(vector-of (s-var 'e))]
-                                      (set-of (s-var 'e))))
-   'map->set           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
-                                      (set-of (tuple-of (s-var 'k) (s-var 'v)))))
+  ;;  'vec->set           (scheme (fn-of [(vector-of (s-var 'e))]
+  ;;                                     (set-of (s-var 'e))))
+  ;;  'map->set           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
+  ;;                                     (set-of (tuple-of (s-var 'k) (s-var 'v)))))
    `set/union          (scheme (fn-of [(set-of (s-var 'e))
                                        (set-of (s-var 'e))]
                                       (set-of (s-var 'e))))
@@ -800,8 +871,8 @@
                                       (set-of (s-var 'e))))
    'disj               (scheme (fn-of [(set-of (s-var 'e)) (s-var 'e)]
                                       (set-of (s-var 'e))))
-   'set-contains?      (scheme (fn-of [(set-of (s-var 'e)) (s-var 'e)]
-                                      BOOLEAN))
+  ;;  'set-contains?      (scheme (fn-of [(set-of (s-var 'e)) (s-var 'e)]
+  ;;                                     BOOLEAN))
   ;;  'count-set          (scheme (fn-of [(set-of (s-var 'e))] INT))
    `map-set            (scheme (fn-of [(fn-of [(s-var 'a)] (s-var 'b))
                                        (set-of (s-var 'a))]
@@ -809,13 +880,13 @@
    `filter-set         (scheme (fn-of [(fn-of [(s-var 'a)] BOOLEAN)
                                        (set-of (s-var 'a))]
                                       (set-of (s-var 'a))))
-   'reduce-set         (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'a)] (s-var 'a))
-                                       (set-of (s-var 'a))]
-                                      (s-var 'a)))
-   'fold-set           (scheme (fn-of [(fn-of [(s-var 'b) (s-var 'a)] (s-var 'b))
-                                       (s-var 'b)
-                                       (set-of (s-var 'a))]
-                                      (s-var 'b)))
+  ;;  'reduce-set         (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'a)] (s-var 'a))
+  ;;                                      (set-of (s-var 'a))]
+  ;;                                     (s-var 'a)))
+  ;;  'fold-set           (scheme (fn-of [(fn-of [(s-var 'b) (s-var 'a)] (s-var 'b))
+  ;;                                      (s-var 'b)
+  ;;                                      (set-of (s-var 'a))]
+  ;;                                     (s-var 'b)))
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;;; Map
    '->map1             (scheme (fn-of [(s-var 'k) (s-var 'v)]
@@ -827,10 +898,10 @@
                                        (s-var 'k) (s-var 'v)
                                        (s-var 'k) (s-var 'v)]
                                       (map-of (s-var 'k) (s-var 'v))))
-   'vec->map           (scheme (fn-of [(vector-of (tuple-of (s-var 'k) (s-var 'v)))]
-                                      (map-of (s-var 'k) (s-var 'v))))
-   'set->map           (scheme (fn-of [(set-of (tuple-of (s-var 'k) (s-var 'v)))]
-                                      (map-of (s-var 'k) (s-var 'v))))
+  ;;  'vec->map           (scheme (fn-of [(vector-of (tuple-of (s-var 'k) (s-var 'v)))]
+  ;;                                     (map-of (s-var 'k) (s-var 'v))))
+  ;;  'set->map           (scheme (fn-of [(set-of (tuple-of (s-var 'k) (s-var 'v)))]
+  ;;                                     (map-of (s-var 'k) (s-var 'v))))
    'get                (scheme (fn-of [(map-of (s-var 'k) (s-var 'v)) (s-var 'k)]
                                       (s-var 'v)))
    'get-or-else        (scheme (fn-of [(map-of (s-var 'k) (s-var 'v)) (s-var 'k) (s-var 'v)]
@@ -843,8 +914,8 @@
                                        (s-var 'k)
                                        (fn-of [(s-var 'v)] (s-var 'v))]
                                       (map-of (s-var 'k) (s-var 'v))))
-   'map-contains?      (scheme (fn-of [(map-of (s-var 'k) (s-var 'v)) (s-var 'k)]
-                                      BOOLEAN))
+  ;;  'map-contains?      (scheme (fn-of [(map-of (s-var 'k) (s-var 'v)) (s-var 'k)]
+  ;;                                     BOOLEAN))
    `keys-vec           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
                                       (vector-of (s-var 'k))))
    `keys-set           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
@@ -872,6 +943,7 @@
                                        (s-var 'r)
                                        (map-of (s-var 'k) (s-var 'v))]
                                       (s-var 'r)))
+
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Printing & Side Effects
    'do2                {:type   :scheme
@@ -920,14 +992,15 @@
     ;; double-quot       erp12.cbgp-lite.lang.lib/safe-quot
     ;; double-sub        -
     ;; double-neg        -
-    empty-str?        empty?
+    ;; empty-str?        empty?
     ;; first-str         first
-    fold-vec          reduce
-    fold-map          reduce
-    fold-set          reduce
+    fold                 reduce
+    ;; fold-vec          reduce
+    ;; fold-map          reduce
+    ;; fold-set          reduce
     get-or-else       get
-    index-of-char     clojure.string/index-of
-    index-of-str      clojure.string/index-of
+    ;; index-of-char     clojure.string/index-of
+    ;; index-of-str      clojure.string/index-of
     ;; int-abs           abs
     ;; int-add           +
     ;; int-dec           dec
@@ -939,12 +1012,12 @@
     ;; int-sub           -
     ;; int-neg           -
     join-chars        clojure.string/join
-    last-str          last
+    ;; last-str          last
     left              first
     ;; length            count
-    map->set          set
-    map->vec          vec
-    map-contains?     contains?
+    ;; map->set          set
+    ;; map->vec          vec
+    ;; map-contains?     contains?
     map-map           mapv
     map-str           mapv
     map-vec           mapv
@@ -958,21 +1031,22 @@
     range1            erp12.cbgp-lite.lang.lib/rangev
     range2            erp12.cbgp-lite.lang.lib/rangev
     range3            erp12.cbgp-lite.lang.lib/rangev
-    reduce-vec        reduce
-    reduce-map        reduce
-    reduce-set        reduce
+    ;; reduce-vec        reduce
+    ;; reduce-map        reduce
+    ;; reduce-set        reduce
     right             second
-    set->map          erp12.cbgp-lite.lang.lib/->map
-    set->vec          vec
-    set-contains?     contains?
+    ;; set->map          erp12.cbgp-lite.lang.lib/->map
+    ;; set->vec          vec
+    ;; set-contains?     contains?
     split-str-on-char erp12.cbgp-lite.lang.lib/split-str
-    str-join-sep      clojure.string/join
-    string->chars     vec
-    vec->map          erp12.cbgp-lite.lang.lib/->map
-    vec->set          set
+    str-join-sep      clojure.string/join})
+    ;; string->chars     vec
+    ;; vec->map          erp12.cbgp-lite.lang.lib/->map
+    ;; vec->set          set
+    
     ;; zero-double?      zero?
     ;; zero-int?         zero?
-    })
+    
 
 (def macros
   #{'if 'do2 'do3})
