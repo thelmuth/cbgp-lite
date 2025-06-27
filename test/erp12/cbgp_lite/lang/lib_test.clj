@@ -136,6 +136,6 @@
   (is (= #{'comp2-fn1 'comp2-fn2 'comp3-fn1 'comp3-fn2 'partial1-fn2 'partial1-fn3 'partial2-fn3 `l/max' `l/min'
            '* '+ '- 'abs 'dec 'inc 'mod 'quot `l/neg `l/pow `l/square}
          (set (keys (l/lib-for-type-ctors #{:=>})))))
-  (is (= #{'= `l/and 'not= `l/>' `l/or 'if `l/>=' `l/<=' 'not `l/<' 'zero?}
+  (is (= #{'= `l/and 'not= `l/>' `l/or 'if `l/>=' `l/<=' 'not `l/<' 'zero? 'contains? 'empty?}
          (set/difference (set (keys (l/lib-for-type-ctors #{:=> 'boolean?})))
                          (set (keys (l/lib-for-type-ctors #{:=>})))))))

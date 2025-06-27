@@ -787,7 +787,7 @@
                                                               [{:gene :local :idx 0}
                                                                {:gene :var :name 'inc}
                                                                {:gene :apply}]
-                                                              {:gene :var :name 'map-vec}
+                                                              {:gene :var :name 'mapv}
                                                               {:gene :apply}]
                                                   :locals    []
                                                   :ret-type  {:type :vector :child {:type 'int?}}
