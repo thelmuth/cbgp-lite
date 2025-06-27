@@ -640,8 +640,8 @@
                         :s-vars ['a]
                         :body   (fn-of [(vector-of (s-var 'a)) INT INT]
                                        (vector-of (s-var 'a)))}
-   'first              {:type :overloaded ;;; where does indexible go?
-                        ;:typeclasses #{:indexible}
+   'first              {:type :overloaded ;;; where does indexable go? 
+                        ;; :typeclasses :indexable
                         :alternatives [{:type   :scheme
                                         :s-vars ['a]
                                         :body   (fn-of [(vector-of (s-var 'a))] (s-var 'a))}

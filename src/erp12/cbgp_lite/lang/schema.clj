@@ -58,7 +58,7 @@
   (su/instantiate schema))
 
 (defn substitute
-  [subs schema]
+  [subs schema] 
   (su/substitute subs schema))
 
 (defn compose-substitutions
