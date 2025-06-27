@@ -247,14 +247,14 @@
    a map containing the function ast as well as the state with that function popped is added to a list.
    At the end, a list containing the maps of the functions and states with the function popped is returned."
   [state]
-  (println "-------pop-all-func-asts------------")
-  (println "State:" state)
+  ;(println "-------pop-all-func-asts------------")
+  ;(println "State:" state)
   (loop [remaining (:asts state)
          acc []
          funclist (list)]
-    (println "Remaining:" remaining)
-    (println "acc:" acc)
-    (println "funclist:" funclist)
+    ;; (println "Remaining:" remaining)
+    ;; (println "acc:" acc)
+    ;; (println "funclist:" funclist)
     (if (empty? remaining)
       (reverse funclist)
       (let [ast (first remaining)
@@ -262,7 +262,8 @@
             schema-type (if (= schema-type :scheme)
                           (get-in ast [::type :body :type])
                           schema-type)
-            _ (println "Schema-type:" schema-type)]
+            ;; _ (println "Schema-type:" schema-type)
+            ]
         (recur (rest remaining)
                (conj acc ast)
                (cond 
@@ -270,13 +271,17 @@
                  (conj funclist {:ast   ast
                                  :state (assoc state :asts (concat acc (rest remaining)))})
                  (= schema-type :overloaded)
-                 (let [_ (println "AST:" ast)
-                       _ (println "Alts: " (get-in ast [::type :alternatives]))
-                       mapped-alts (map #(assoc {} :ast   %
-                                                :state (assoc state :asts (concat acc (rest remaining)))) (get-in ast [::type :alternatives]))
-                       _ (println "mapped-alts:" mapped-alts)
-                       output (conj funclist mapped-alts)
-                       _ (println "Output:" output)]
+                 (let [
+                      ;;  _ (println "AST:" ast)
+                      ;;  _ (println "Alts: " (get-in ast [::type :alternatives]))
+                       mapped-alts (map (fn [alternative-schema]
+                                          {:ast {::ast (get ast ::ast) ::type alternative-schema}
+                                           :state (assoc state :asts (concat acc (rest remaining)))}) 
+                                        (get-in ast [::type :alternatives]))
+                       ;_ (println "mapped-alts:" mapped-alts)
+                       output (concat funclist mapped-alts)
+                       ;_ (println "Output:" output)
+                       ]
                    output)
                  :else funclist))))))
 
@@ -341,7 +346,10 @@
   [{:keys [push-unit state type-env]}]
   ;; Local variable numbers are mapped to a symbol using modulo logic and
   ;; then pushed to the AST stack.
-  (let [local-symbol (nth-local (:idx push-unit) state)]
+  
+  (let [local-symbol (nth-local (:idx push-unit) state)
+        ;; _ (println "Type-Local:" (schema/instantiate (get type-env local-symbol)))
+        ]
     (if (nil? local-symbol)
       state
       (push-ast {::ast  {:op :local :name local-symbol}
@@ -405,11 +413,15 @@
 
 (defn try-apply
   "Tries to apply a function to the state. If fails, returns the original state."
-  [{boxed-ast :ast state-fn-popped :state}]
+  [{boxed-ast :ast state-fn-popped :state :as current-fn}]
+  ;; (println "-------try-apply---------")
+  ;; (println "Current-FN:" current-fn)
+  ;; (println "Boxed-ast:" boxed-ast)
   (log/trace "Applying function:" boxed-ast)
   ;; function ast: clojure code that returns function. the data type of that function to find the right asts.
   (let [{fn-ast ::ast fn-type ::type} boxed-ast
         remaining-arg-types (schema/fn-arg-schemas fn-type)]
+    (println "Remaining-arg-types:" remaining-arg-types)
     (try-apply-fn-to-arguments remaining-arg-types {} [] state-fn-popped fn-ast fn-type)))
 
 (defn original-compile-step-apply
@@ -483,16 +495,17 @@
   (cond
     ;; The backtracking method
     (= @backtracking true)
-    (let [_ (println "\n------------------------")
+    (let [;_ (println "\n------------------------")
           allfuncs (pop-all-function-asts state)
-          _ (println "Allfuncs:" allfuncs)
+          ;_ (println "Allfuncs:" allfuncs)
           allfuncsinfo (map try-apply allfuncs)
-          _ (println "allfuncsinfo:" allfuncsinfo)
+          ;_ (println "allfuncsinfo:" allfuncsinfo)
           able-to-be-applied (filter some? allfuncsinfo)
-          _ (println "able-to-be-applied:" able-to-be-applied)
+          ;_ (println "able-to-be-applied:" able-to-be-applied)
           firstapplied (first able-to-be-applied)
-          _ (println "firstapplied:" firstapplied)
-          _ (println "------------------------\n")]
+          ;_ (println "firstapplied:" firstapplied)
+          ;_ (println "------------------------\n")
+          ]
       (if (empty? able-to-be-applied)
         (update (update state :fn-not-applied inc) :total-apply-attempts inc)
         (update (update firstapplied :fn-applied inc) :total-apply-attempts inc)))
