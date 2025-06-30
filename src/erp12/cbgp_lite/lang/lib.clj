@@ -281,8 +281,7 @@
   (let [replaced (replace pred coll)]
     (if (string? coll)
       (apply str replaced)
-      (into (empty coll) replaced)))
-  )
+      (into (empty coll) replaced))))
 
 (defn replace-first'
   [pred coll]
@@ -295,14 +294,12 @@
 (defn conj'
   [coll target]
   (if (set? coll)
-    (apply (comp set conj) coll target)
-    (apply (comp vec conj) coll target))
-  )
-
+    ((comp set conj) coll target)
+    ((comp vec conj) coll target)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Vector
 
-(def conj-vec (comp vec conj))
+;; (def conj-vec (comp vec conj))
 (def distinctv (comp vec distinct))
 (def mapcatv (comp vec mapcat))
 (def mapv-indexed (comp vec map-indexed))
@@ -384,7 +381,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Set
 
-(def conj-set (comp set conj))
+;; (def conj-set (comp set conj))
 (defn map-set [f s] (into #{} (map f s)))
 (defn filter-set [pred s] (into #{} (filter pred s)))
 
@@ -829,9 +826,9 @@
   ;;  `concatv            {:type   :scheme
   ;;                       :s-vars ['a]
   ;;                       :body   (binary-transform (vector-of (s-var 'a)))}
-   `conj-vec           {:type   :scheme
-                        :s-vars ['a]
-                        :body   (fn-of [(vector-of (s-var 'a)) (s-var 'a)] (vector-of (s-var 'a)))}
+  ;;  `conj-vec           {:type   :scheme
+  ;;                       :s-vars ['a]
+  ;;                       :body   (fn-of [(vector-of (s-var 'a)) (s-var 'a)] (vector-of (s-var 'a)))}
    `takev              {:type   :scheme
                         :s-vars ['a]
                         :body   (fn-of [INT (vector-of (s-var 'a))]
@@ -990,8 +987,8 @@
    `set/superset?      (scheme (fn-of [(set-of (s-var 'e))
                                        (set-of (s-var 'e))]
                                       BOOLEAN))
-   `conj-set           (scheme (fn-of [(set-of (s-var 'e)) (s-var 'e)]
-                                      (set-of (s-var 'e))))
+  ;;  `conj-set           (scheme (fn-of [(set-of (s-var 'e)) (s-var 'e)]
+  ;;                                     (set-of (s-var 'e))))
    'disj               (scheme (fn-of [(set-of (s-var 'e)) (s-var 'e)]
                                       (set-of (s-var 'e))))
   ;;  'set-contains?      (scheme (fn-of [(set-of (s-var 'e)) (s-var 'e)]
