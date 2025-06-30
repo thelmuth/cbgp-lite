@@ -180,7 +180,7 @@
   (char (mod i 128)))
 
 (def concat-str (comp str/join concat))
-(def take-str (comp str/join take))
+;; (def take-str (comp str/join take))
 ;; (def rest-str (comp str/join rest))
 (def butlast-str (comp str/join butlast))
 (def filter-str (comp str/join filter))
@@ -299,7 +299,7 @@
 (def mapv-indexed (comp vec map-indexed))
 (def removev (comp vec remove))
 (def concatv (comp vec concat))
-(def takev (comp vec take))
+;; (def takev (comp vec take))
 ;; (def restv (comp vec rest))
 (def butlastv (comp vec butlast))
 (def reversev (comp vec reverse))
@@ -402,6 +402,17 @@
           coll
           (assoc coll idx replacement)))))
 
+(defn take'
+  [num coll]
+  (if (string? coll)
+    (reduce str (take num coll))
+    (take num coll)))
+
+(defn reverse'
+  [coll]
+  (if (string? coll)
+    (reduce str (reverse coll))
+    (reverse coll)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Set

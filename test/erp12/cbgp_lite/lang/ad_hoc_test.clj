@@ -74,297 +74,288 @@
 
 ;;indexable (:vector 'string?)
 ;;first
-(deftest vector-first-test
-  (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                     {:push      [{:gene :lit :val 42 :type {:type 'int?}}
-                                                  {:gene :lit :val [55 66 77] :type {:type :vector :child {:type 'int?}}}
-                                                  {:gene :var :name 'first}
-                                                  {:gene :apply}]
-                                      :locals    []
-                                      :ret-type  {:type 'int?}
-                                      :type-env  lib/type-env
-                                      :dealiases lib/dealiases}))
-        _ (is (= type {:type 'int?}))
-        _ (println "REAL-AST: " ast)
-        form (a/ast->form ast)
-        _ (println "FORM: " form)
-        func (eval `(fn [] ~form))]
-    (is (= 55 (func)))))
+(deftest first-test
+  (testing "vector-first-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val 42 :type {:type 'int?}}
+                                                    {:gene :lit :val [55 66 77] :type {:type :vector :child {:type 'int?}}}
+                                                    {:gene :var :name 'first}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type 'int?}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= type {:type 'int?}))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= 55 (func)))))
 
-(deftest string-first-test
-  (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                     {:push      [{:gene :lit :val \j :type {:type 'char?}}
-                                                  {:gene :lit :val "Hello" :type {:type 'string?}}
-                                                  {:gene :var :name 'first}
-                                                  {:gene :apply}]
-                                      :locals    []
-                                      :ret-type  {:type 'char?}
-                                      :type-env  lib/type-env
-                                      :dealiases lib/dealiases}))
-        _ (is (= type {:type 'char?}))
-        _ (println "REAL-AST: " ast)
-        form (a/ast->form ast)
-        _ (println "FORM: " form)
-        func (eval `(fn [] ~form))]
-    (is (= \H (func)))))
+  (testing "string-first-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val \j :type {:type 'char?}}
+                                                    {:gene :lit :val "Hello" :type {:type 'string?}}
+                                                    {:gene :var :name 'first}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type 'char?}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= type {:type 'char?}))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= \H (func)))))
 
-(deftest set-first-test
-  (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                     {:push      [{:gene :lit :val 42 :type {:type 'int?}}
-                                                  {:gene :lit :val #{1 2 3 4} :type {:type :set :child {:type 'int?}}}
-                                                  {:gene :var :name 'first}
-                                                  {:gene :apply}]
-                                      :locals    []
-                                      :ret-type  {:type 'int?}
-                                      :type-env  lib/type-env
-                                      :dealiases lib/dealiases}))
-        _ (is (= type {:type 'int?}))
-        _ (println "REAL-AST: " ast)
-        form (a/ast->form ast)
-        _ (println "FORM: " form)
-        func (eval `(fn [] ~form))]
-    (is (= 42 (func)))))
+  (testing "set-first-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val 42 :type {:type 'int?}}
+                                                    {:gene :lit :val #{1 2 3 4} :type {:type :set :child {:type 'int?}}}
+                                                    {:gene :var :name 'first}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type 'int?}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= type {:type 'int?}))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= 42 (func)))))
 
-(deftest map-first-test
-  (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                     {:push      [{:gene :lit :val 42 :type {:type 'int?}}
-                                                  {:gene :lit :val #{1 2 3 4} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
-                                                  {:gene :var :name 'first}
-                                                  {:gene :apply}]
-                                      :locals    []
-                                      :ret-type  {:type 'int?}
-                                      :type-env  lib/type-env
-                                      :dealiases lib/dealiases}))
-        _ (is (= type {:type 'int?}))
-        _ (println "REAL-AST: " ast)
-        form (a/ast->form ast)
-        _ (println "FORM: " form)
-        func (eval `(fn [] ~form))]
-    (is (= 42 (func)))))
+  (testing "map-first-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val 42 :type {:type 'int?}}
+                                                    {:gene :lit :val #{1 2 3 4} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
+                                                    {:gene :var :name 'first}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type 'int?}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= type {:type 'int?}))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= 42 (func))))))
 
 ;;last
-(deftest vector-last-test
-  (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                     {:push      [{:gene :lit :val 42 :type {:type 'int?}}
-                                                  {:gene :lit :val [55 66 77] :type {:type :vector :child {:type 'int?}}}
-                                                  {:gene :var :name 'last}
-                                                  {:gene :apply}]
-                                      :locals    []
-                                      :ret-type  {:type 'int?}
-                                      :type-env  lib/type-env
-                                      :dealiases lib/dealiases}))
-        _ (is (= type {:type 'int?}))
-        _ (println "REAL-AST: " ast)
-        form (a/ast->form ast)
-        _ (println "FORM: " form)
-        func (eval `(fn [] ~form))]
-    (is (= 77 (func)))))
+(deftest last-test
+  (testing "vector-last-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val 42 :type {:type 'int?}}
+                                                    {:gene :lit :val [55 66 77] :type {:type :vector :child {:type 'int?}}}
+                                                    {:gene :var :name 'last}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type 'int?}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= type {:type 'int?}))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= 77 (func)))))
 
-(deftest string-last-test
-  (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                     {:push      [{:gene :lit :val \j :type {:type 'char?}}
-                                                  {:gene :lit :val "Hello" :type {:type 'string?}}
-                                                  {:gene :var :name 'last}
-                                                  {:gene :apply}]
-                                      :locals    []
-                                      :ret-type  {:type 'char?}
-                                      :type-env  lib/type-env
-                                      :dealiases lib/dealiases}))
-        _ (is (= type {:type 'char?}))
-        _ (println "REAL-AST: " ast)
-        form (a/ast->form ast)
-        _ (println "FORM: " form)
-        func (eval `(fn [] ~form))]
-    (is (= \o (func)))))
+  (testing "string-last-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val \j :type {:type 'char?}}
+                                                    {:gene :lit :val "Hello" :type {:type 'string?}}
+                                                    {:gene :var :name 'last}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type 'char?}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= type {:type 'char?}))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= \o (func))))))
 
 ;;rest [!!]
-(deftest vector-rest-test
-  (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                     {:push      [{:gene :lit :val [89 98] :type {:type :vector :child {:type 'int?}}}
-                                                  {:gene :lit :val [55 66 77] :type {:type :vector :child {:type 'int?}}}
-                                                  {:gene :var :name `lib/rest'}
-                                                  {:gene :apply}]
-                                      :locals    []
-                                      :ret-type  {:type :vector :child {:type 'int?}} ;;[!!]
-                                      :type-env  lib/type-env
-                                      :dealiases lib/dealiases}))
-        _ (is (= type {:type :vector :child {:type 'int?}}))
-        _ (println "REAL-AST: " ast)
-        form (a/ast->form ast)
-        _ (println "FORM: " form)
-        func (eval `(fn [] ~form))]
-    (is (= [66 77] (func)))))
+(deftest rest-test
+  (testing "vector-rest-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val [89 98] :type {:type :vector :child {:type 'int?}}}
+                                                    {:gene :lit :val [55 66 77] :type {:type :vector :child {:type 'int?}}}
+                                                    {:gene :var :name `lib/rest'}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type :vector :child {:type 'int?}}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= type {:type :vector :child {:type 'int?}}))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= [66 77] (func)))))
 
-(deftest string-rest-test
-  (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                     {:push      [{:gene :lit :val "hi" :type {:type 'string?}}
-                                                  {:gene :lit :val "Hello" :type {:type 'string?}}
-                                                  {:gene :var :name `lib/rest'}
-                                                  {:gene :apply}]
-                                      :locals    []
-                                      :ret-type  {:type 'string?}
-                                      :type-env  lib/type-env
-                                      :dealiases lib/dealiases}))
-        _ (is (= type {:type 'string?}))
-        _ (println "REAL-AST: " ast)
-        form (a/ast->form ast)
-        _ (println "FORM: " form)
-        func (eval `(fn [] ~form))]
-    (is (= "ello" (func)))))
+  (testing "string-rest-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val "hi" :type {:type 'string?}}
+                                                    {:gene :lit :val "Hello" :type {:type 'string?}}
+                                                    {:gene :var :name `lib/rest'}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type 'string?}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= type {:type 'string?}))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= "ello" (func))))))
 
 ;;butlast[!!]
-(deftest vector-butlast-test
-  (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                     {:push      [{:gene :lit :val [89 98] :type {:type :vector :child {:type 'int?}}}
-                                                  {:gene :lit :val [55 66 77] :type {:type :vector :child {:type 'int?}}}
-                                                  {:gene :var :name `lib/butlast'}
-                                                  {:gene :apply}]
-                                      :locals    []
-                                      :ret-type  {:type :vector :child {:type 'int?}} ;;[!!]
-                                      :type-env  lib/type-env
-                                      :dealiases lib/dealiases}))
-        _ (is (= type {:type :vector :child {:type 'int?}}))
-        _ (println "REAL-AST: " ast)
-        form (a/ast->form ast)
-        _ (println "FORM: " form)
-        func (eval `(fn [] ~form))]
-    (is (= [55 66] (func)))))
+(deftest butlast-test
+  (testing "vector-butlast-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val [89 98] :type {:type :vector :child {:type 'int?}}}
+                                                    {:gene :lit :val [55 66 77] :type {:type :vector :child {:type 'int?}}}
+                                                    {:gene :var :name `lib/butlast'}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type :vector :child {:type 'int?}}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= type {:type :vector :child {:type 'int?}}))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= [55 66] (func)))))
 
-(deftest string-butlast-test
-  (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                     {:push      [{:gene :lit :val "hi" :type {:type 'string?}}
-                                                  {:gene :lit :val "Hello" :type {:type 'string?}}
-                                                  {:gene :var :name `lib/butlast'}
-                                                  {:gene :apply}]
-                                      :locals    []
-                                      :ret-type  {:type 'string?}
-                                      :type-env  lib/type-env
-                                      :dealiases lib/dealiases}))
-        _ (is (= type {:type 'string?}))
-        _ (println "REAL-AST: " ast)
-        form (a/ast->form ast)
-        _ (println "FORM: " form)
-        func (eval `(fn [] ~form))]
-    (is (= "Hell" (func)))))
+  (testing "string-butlast-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val "hi" :type {:type 'string?}}
+                                                    {:gene :lit :val "Hello" :type {:type 'string?}}
+                                                    {:gene :var :name `lib/butlast'}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type 'string?}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= type {:type 'string?}))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= "Hell" (func))))))
 
 ;;nth 
-(deftest vector-nth-test
-  (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                     {:push      [{:gene :lit :val 99 :type {:type 'int?}}
-                                                  {:gene :lit :val [55 66 77] :type {:type :vector :child {:type 'int?}}}
-                                                  {:gene :lit :val 2 :type {:type 'int?}}
-                                                  {:gene :var :name `lib/safe-nth}
-                                                  {:gene :apply}]
-                                      :locals    []
-                                      :ret-type  {:type 'int?} ;;[!!]
-                                      :type-env  lib/type-env
-                                      :dealiases lib/dealiases}))
-        _ (is (= {:type 'int?} type))
-        _ (println "REAL-AST: " ast)
-        form (a/ast->form ast)
-        _ (println "FORM: " form)
-        func (eval `(fn [] ~form))]
-    (is (= 77 (func)))))
+(deftest nth-test
+  (testing "vector-nth-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val 99 :type {:type 'int?}}
+                                                    {:gene :lit :val [55 66 77] :type {:type :vector :child {:type 'int?}}}
+                                                    {:gene :lit :val 2 :type {:type 'int?}}
+                                                    {:gene :var :name `lib/safe-nth}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type 'int?}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= {:type 'int?} type))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= 77 (func))))) 
+  (testing "string-nth-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val \k :type {:type 'char?}}
+                                                    {:gene :lit :val "Hello there" :type {:type 'string?}}
+                                                    {:gene :lit :val 4 :type {:type 'int?}}
+                                                    {:gene :var :name `lib/safe-nth}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type 'char?}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= {:type 'char?} type))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= \o (func))))))
 
-(deftest string-nth-test
-  (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                     {:push      [{:gene :lit :val \k :type {:type 'char?}}
-                                                  {:gene :lit :val "Hello there" :type {:type 'string?}}
-                                                  {:gene :lit :val 4 :type {:type 'int?}}
-                                                  {:gene :var :name `lib/safe-nth}
-                                                  {:gene :apply}]
-                                      :locals    []
-                                      :ret-type  {:type 'char?}
-                                      :type-env  lib/type-env
-                                      :dealiases lib/dealiases}))
-        _ (is (= {:type 'char?} type))
-        _ (println "REAL-AST: " ast)
-        form (a/ast->form ast)
-        _ (println "FORM: " form)
-        func (eval `(fn [] ~form))]
-    (is (= \o (func)))))
+(deftest take-test
+  (testing "Take String"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val "Hello there" :type {:type 'string?}}
+                                                    {:gene :lit :val 5 :type {:type 'int?}}
+                                                    {:gene :var :name `lib/take'}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type 'string?}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= {:type 'string?} type))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= "Hello" (func)))))
+  (testing "Take Vector"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val [1 2 3 4 5 6 7 8 9] :type {:type :vector :child {:type 'int?}}}
+                                                    {:gene :lit :val 5 :type {:type 'int?}}
+                                                    {:gene :var :name `lib/take'}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type :vector :child {:type 'int?}}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= {:type :vector :child {:type 'int?}} type))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= [1 2 3 4 5] (func))))))
 
-(deftest vector-remove-test
-  (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                     {:push      [{:gene :lit :val [6] :type {:type :vector :child {:type 'int?}}}
-                                                  {:gene :lit :val [55 66 0 77 0] :type {:type :vector :child {:type 'int?}}}
-                                                  {:gene :var :name 'zero?}
-                                                  {:gene :var :name `lib/remove'}
-                                                  {:gene :apply}]
-                                      :locals    []
-                                      :ret-type  {:type :vector :child {:type 'int?}} ;;[!!]
-                                      :type-env  lib/type-env
-                                      :dealiases lib/dealiases}))
-        _ (is (= :vector (:type type)))
-        _ (println "REAL-AST: " ast)
-        form (a/ast->form ast)
-        _ (println "FORM: " form)
-        func (eval `(fn [] ~form))]
-    (is (= [55 66 77] (func)))))
+(deftest reverse-test
+  (testing "Reverse Vector"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val [1 2 3 4 5 ] :type {:type :vector :child {:type 'int?}}} 
+                                                    {:gene :var :name `lib/reverse'}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type :vector :child {:type 'int?}}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= {:type :vector :child {:type 'int?}} type))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= [5 4 3 2 1] (func)))))
+  (testing "Reverse String"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val "notlimaH" :type {:type 'string?}} 
+                                                    {:gene :var :name `lib/reverse'}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type 'string?}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= {:type 'string?} type))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= "Hamilton" (func))))))
 
-(deftest set-remove-test
-  (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                     {:push      [{:gene :lit :val #{6} :type {:type :set :child {:type 'int?}}}
-                                                  {:gene :lit :val #{55 66 0 77 8} :type {:type :set :child {:type 'int?}}}
-                                                  {:gene :var :name 'zero?}
-                                                  {:gene :var :name `lib/remove'}
-                                                  {:gene :apply}]
-                                      :locals    []
-                                      :ret-type  {:type :set :child {:type 'int?}} ;;[!!]
-                                      :type-env  lib/type-env
-                                      :dealiases lib/dealiases}))
-        _ (is (= :set (:type type)))
-        _ (println "REAL-AST: " ast)
-        form (a/ast->form ast)
-        _ (println "FORM: " form)
-        func (eval `(fn [] ~form))]
-    (is (= #{55 66 77 8} (func)))))
 
-#_(deftest map-remove-test
-  (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                     {:push      [{:gene :lit :val {1 4 98 3} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
-                                                  {:gene :lit :val {1 2 3 4 0 0} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
-                                                   {:gene :fn :arg-types [lib/tuple-of lib/INT lib/INT] :ret-type lib/BOOLEAN}
-                                                  [{:gene :local :idx 0}
-                                                   {:gene :local :idx 1}
-                                                   {:gene :var :name '>}
-                                                   {:gene :apply}]
-                                                  {:gene :var :name `lib/remove'}
-                                                  {:gene :apply}]
-                                      :locals    []
-                                      :ret-type  {:type :map-of :key {:type 'int?} :value {:type 'int?}} ;;[!!]
-                                      :type-env  lib/type-env
-                                      :dealiases lib/dealiases}))
-        _ (is (= :map-of (:type type)))
-        _ (println "REAL-AST: " ast)
-        form (a/ast->form ast)
-        _ (println "FORM: " form)
-        func (eval `(fn [] ~form))]
-    (is (= {1 2} (func)))))
-
-(deftest string-remove-test
-  (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                     {:push      [{:gene :lit :val \k :type {:type 'char?}}
-                                                  {:gene :lit :val "hi there isabelle" :type {:type 'string?}} 
-                                                  {:gene :fn :arg-types [lib/CHAR] :ret-type lib/BOOLEAN}
-                                                  [{:gene :local :idx 0}
-                                                   {:gene :lit :val \i :type {:type 'char?}}
-                                                   {:gene :var :name '=}
-                                                   {:gene :apply}]
-                                                  {:gene :var :name `lib/remove'}
-                                                  {:gene :apply}]
-                                      :locals    []
-                                      :ret-type  {:type 'string?}
-                                      :type-env  lib/type-env
-                                      :dealiases lib/dealiases}))
-        _ (is (= type {:type 'string?}))
-        _ (println "REAL-AST: " ast)
-        form (a/ast->form ast)
-        _ (println "FORM: " form)
-        func (eval `(fn [] ~form))]
-    (is (= "h there sabelle" (func)))))
-
-;; remvoe element 
+;; remove element 
 
 #_(deftest vector-remove-element-test
   (let [{::c/keys [ast type]} (:ast (c/push->ast
@@ -678,6 +669,167 @@
           func (eval `(fn [] ~form))
           _ (println "FUNC:" func)]
       (is (= 15 (func))))))
+
+(deftest remove-test
+  (testing "vector-remove-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val [6] :type {:type :vector :child {:type 'int?}}}
+                                                    {:gene :lit :val [55 66 0 77 0] :type {:type :vector :child {:type 'int?}}}
+                                                    {:gene :var :name 'zero?}
+                                                    {:gene :var :name `lib/remove'}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type :vector :child {:type 'int?}}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= :vector (:type type)))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= [55 66 77] (func)))))
+
+  (testing "set-remove-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val #{6} :type {:type :set :child {:type 'int?}}}
+                                                    {:gene :lit :val #{55 66 0 77 8} :type {:type :set :child {:type 'int?}}}
+                                                    {:gene :var :name 'zero?}
+                                                    {:gene :var :name `lib/remove'}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type :set :child {:type 'int?}}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= :set (:type type)))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= #{55 66 77 8} (func)))))
+
+  #_(testing "map-remove-test"
+      (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                         {:push      [{:gene :lit :val {1 4 98 3} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
+                                                      {:gene :lit :val {1 2 3 4 0 0} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
+                                                      {:gene :fn :arg-types [lib/tuple-of lib/INT lib/INT] :ret-type lib/BOOLEAN}
+                                                      [{:gene :local :idx 0}
+                                                       {:gene :local :idx 1}
+                                                       {:gene :var :name '>}
+                                                       {:gene :apply}]
+                                                      {:gene :var :name `lib/remove'}
+                                                      {:gene :apply}]
+                                          :locals    []
+                                          :ret-type  {:type :map-of :key {:type 'int?} :value {:type 'int?}} ;;[!!]
+                                          :type-env  lib/type-env
+                                          :dealiases lib/dealiases}))
+            _ (is (= :map-of (:type type)))
+            _ (println "REAL-AST: " ast)
+            form (a/ast->form ast)
+            _ (println "FORM: " form)
+            func (eval `(fn [] ~form))]
+        (is (= {1 2} (func)))))
+
+  (testing "string-remove-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val \k :type {:type 'char?}}
+                                                    {:gene :lit :val "hi there isabelle" :type {:type 'string?}}
+                                                    {:gene :fn :arg-types [lib/CHAR] :ret-type lib/BOOLEAN}
+                                                    [{:gene :local :idx 0}
+                                                     {:gene :lit :val \i :type {:type 'char?}}
+                                                     {:gene :var :name '=}
+                                                     {:gene :apply}]
+                                                    {:gene :var :name `lib/remove'}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type 'string?}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= type {:type 'string?}))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= "h there sabelle" (func))))))
+
+(deftest filter-test
+  (testing "Filter Vector"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val [6] :type {:type :vector :child {:type 'int?}}}
+                                                    {:gene :lit :val [55 66 0 77 0] :type {:type :vector :child {:type 'int?}}}
+                                                    {:gene :var :name 'zero?}
+                                                    {:gene :var :name `lib/filter'}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type :vector :child {:type 'int?}}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= :vector (:type type)))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= [0 0] (func)))))
+  (testing "Filter Set"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val #{6} :type {:type :set :child {:type 'int?}}}
+                                                    {:gene :lit :val #{55 66 0 77 8} :type {:type :set :child {:type 'int?}}}
+                                                    {:gene :var :name 'zero?}
+                                                    {:gene :var :name `lib/filter'}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type :set :child {:type 'int?}}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= :set (:type type)))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= #{0} (func)))))
+  
+  #_(testing "map-remove-test"
+      (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                         {:push      [{:gene :lit :val {1 4 98 3} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
+                                                      {:gene :lit :val {1 2 3 4 0 0} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
+                                                      {:gene :fn :arg-types [lib/tuple-of lib/INT lib/INT] :ret-type lib/BOOLEAN}
+                                                      [{:gene :local :idx 0}
+                                                       {:gene :local :idx 1}
+                                                       {:gene :var :name '>}
+                                                       {:gene :apply}]
+                                                      {:gene :var :name `lib/filter'}
+                                                      {:gene :apply}]
+                                          :locals    []
+                                          :ret-type  {:type :map-of :key {:type 'int?} :value {:type 'int?}} ;;[!!]
+                                          :type-env  lib/type-env
+                                          :dealiases lib/dealiases}))
+            _ (is (= :map-of (:type type)))
+            _ (println "REAL-AST: " ast)
+            form (a/ast->form ast)
+            _ (println "FORM: " form)
+            func (eval `(fn [] ~form))]
+        (is (= {1 2} (func)))))
+  
+  (testing "string-remove-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val \k :type {:type 'char?}}
+                                                    {:gene :lit :val "hi there isabelle" :type {:type 'string?}}
+                                                    {:gene :fn :arg-types [lib/CHAR] :ret-type lib/BOOLEAN}
+                                                    [{:gene :local :idx 0}
+                                                     {:gene :lit :val \i :type {:type 'char?}}
+                                                     {:gene :var :name '=}
+                                                     {:gene :apply}]
+                                                    {:gene :var :name `lib/filter'}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type 'string?}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= type {:type 'string?}))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= "ii" (func))))))
 
 ;; Other 
 ;; in?
