@@ -280,8 +280,14 @@
 (defn mapcat'
   [pred coll]
   (vec (mapcat pred coll)))
-(mapcat' reverse [[1 2 3] [3 4 5]])
 
+
+;; (defn mapcat'
+;;   [pred coll]
+;;   (let [mapcated (mapcat pred coll)]
+;;     (if (string? coll)
+;;       (apply str mapcated)
+;;       (into (empty coll) mapcated))))
 
 ; [!] may not work
 (defn conj'
