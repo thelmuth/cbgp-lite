@@ -277,6 +277,15 @@
       (apply str removed)
       (into (empty coll) removed))))
 
+(defn mapcat'
+  [pred coll]
+  (let [mapcated (mapcat pred coll)]
+    (if (string? coll)
+      (apply str mapcated)
+      (into (empty coll) mapcated))))
+
+(mapcat' reverse [[1 2 3] [55 6 98]])
+
 ; [!] may not work
 (defn conj'
   [coll target]
@@ -817,7 +826,7 @@
                                                        STRING]
                                                       (s-var 'a))) ; fold-str
                                        ]}
-   `mapcat            {:type :overloaded
+   `mapcat'            {:type :overloaded
                        :alternatives [(scheme (fn-of [(fn-of [(s-var 'a)] (vector-of (s-var 'b)))
                                                       (vector-of (s-var 'a))]
                                                      (vector-of (s-var 'b))))
