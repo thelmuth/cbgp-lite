@@ -35,10 +35,10 @@
   (is (= "ab" (l/take-str 2 "abcd"))))
 
 (deftest rest-str-test
-  (is (= "bcd" (l/rest-str "abcd"))))
+  (is (= "bcd" (l/rest' "abcd"))))
 
 (deftest butlast-str-test
-  (is (= "abc" (l/butlast-str "abcd"))))
+  (is (= "abc" (l/butlast' "abcd"))))
 
 (deftest str-sort-test
   (is (= "abc" (l/str-sort "cba"))))
@@ -78,10 +78,10 @@
   (is (= [1] (l/takev 1 [1 2 3]))))
 
 (deftest restv-test
-  (is (= [2 3] (l/restv [1 2 3]))))
+  (is (= [2 3] (l/rest' [1 2 3]))))
 
 (deftest butlastv-test
-  (is (= [1 2] (l/butlastv [1 2 3]))))
+  (is (= [1 2] (l/butlast' [1 2 3]))))
 
 (deftest reversev-test
   (is (= [3 2 1] (l/reversev [1 2 3]))))
@@ -101,7 +101,7 @@
 
 (deftest replacev-test
   (is (= [:a :_ :c :_]
-         (l/replacev [:a :b :c :b] :b :_))))
+         (l/replace' [:a :b :c :b] :b :_))))
 
 (deftest replacev-first-test
   (is (= [:a :_ :c :b]
