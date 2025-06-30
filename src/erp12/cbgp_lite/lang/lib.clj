@@ -277,6 +277,12 @@
       (apply str removed)
       (into (empty coll) removed))))
 
+(defn mapcat'
+  [pred coll]
+  (vec (mapcat pred coll)))
+(mapcat' reverse [[1 2 3] [3 4 5]])
+
+
 ; [!] may not work
 (defn conj'
   [coll target]
@@ -333,12 +339,12 @@
 ;;   [vtr to-replace replace-with]
 ;;   (replace {to-replace replace-with} vtr))
 
-(defn replacev-first
-  [vtr to-replace replace-with]
-  (let [idx (.indexOf vtr to-replace)]
-    (if (< idx 0)
-      vtr
-      (assoc vtr idx replace-with))))
+;; (defn replacev-first
+;;   [vtr to-replace replace-with]
+;;   (let [idx (.indexOf vtr to-replace)]
+;;     (if (< idx 0)
+;;       vtr
+;;       (assoc vtr idx replace-with))))
 
 ;; (defn remove-element
 ;;   [vtr el]
@@ -372,6 +378,15 @@
     (let [idx (mod idx (count coll))]
       (nth coll idx))))
 
+;;New safe-sub
+(defn safe-sub
+  [coll start end]
+  (if (string? coll)
+    (safe-subs coll start end)
+    (safe-subvec coll start end)))
+
+(safe-sub "Hamilton" 0 3)
+(safe-sub [1 2 3 4] 0 3)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fixing LazySeqs
 
@@ -413,7 +428,6 @@
   (if (string? coll)
     (reduce str (reverse coll))
     (reverse coll)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Set
 
@@ -817,7 +831,7 @@
                                                        STRING]
                                                       (s-var 'a))) ; fold-str
                                        ]}
-   `mapcat            {:type :overloaded
+   `mapcat'            {:type :overloaded
                        :alternatives [(scheme (fn-of [(fn-of [(s-var 'a)] (vector-of (s-var 'b)))
                                                       (vector-of (s-var 'a))]
                                                      (vector-of (s-var 'b))))

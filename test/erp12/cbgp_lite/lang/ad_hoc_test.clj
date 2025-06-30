@@ -325,7 +325,7 @@
 (deftest reverse-test
   (testing "Reverse Vector"
     (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                       {:push      [{:gene :lit :val [1 2 3 4 5 ] :type {:type :vector :child {:type 'int?}}} 
+                                       {:push      [{:gene :lit :val [1 2 3 4 5] :type {:type :vector :child {:type 'int?}}} 
                                                     {:gene :var :name `lib/reverse'}
                                                     {:gene :apply}]
                                         :locals    []
@@ -354,7 +354,24 @@
           func (eval `(fn [] ~form))]
       (is (= "Hamilton" (func))))))
 
-
+(deftest safe-sub-test
+  (testing "safe-substring test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val 3 :type {:type 'int?}}
+                                                    {:gene :lit :val 0 :type {:type 'int?}}
+                                                    {:gene :lit :val "Hamilton" :type {:type 'string?}} 
+                                                    {:gene :var :name `lib/safe-sub}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type 'string?}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= {:type 'string?} type))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= "Ham" (func))))))
 ;; remove element 
 
 #_(deftest vector-remove-element-test
