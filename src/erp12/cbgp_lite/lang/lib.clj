@@ -276,6 +276,29 @@
       (apply str removed)
       (into (empty coll) removed))))
 
+(defn replace'
+  [pred coll]
+  (let [replaced (replace pred coll)]
+    (if (string? coll)
+      (apply str replaced)
+      (into (empty coll) replaced)))
+  )
+
+(defn replace-first'
+  [pred coll]
+  (let [replaced (replace pred coll)]
+    (if (string? coll)
+      (apply str replaced)
+      (into (empty coll) replaced))))
+
+; [!] may not work
+(defn conj'
+  [coll target]
+  (if (set? coll)
+    (apply (comp set conj) coll target)
+    (apply (comp vec conj) coll target))
+  )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Vector
 
@@ -610,8 +633,8 @@
    'char-occurrences   (fn-of [STRING CHAR] INT)
    `str/replace        (fn-of [STRING STRING STRING] STRING)
    `str/replace-first  (fn-of [STRING STRING STRING] STRING)
-   `replace-char       (fn-of [STRING CHAR CHAR] STRING)
-   `replace-first-char (fn-of [STRING CHAR CHAR] STRING)
+  ;;  `replace-char       (fn-of [STRING CHAR CHAR] STRING)
+  ;;  `replace-first-char (fn-of [STRING CHAR CHAR] STRING)
   ;;  `remove-char        (fn-of [STRING CHAR] STRING)
    `set-char           (fn-of [STRING INT CHAR] STRING)
    `str/join           (fn-of [(vector-of STRING)] STRING)
@@ -640,19 +663,23 @@
                                        (scheme (fn-of [(fn-of [CHAR] (s-var 'a))
                                                         STRING]
                                                        (vector-of (s-var 'a)))) ; map-str      
-                                      ;;  (scheme (fn-of [(fn-of [(s-var 'a)] (s-var 'b))
-                                      ;;                  (set-of (s-var 'a))]
-                                      ;;                 (set-of (s-var 'b)))) ; map-set? [!] to-do: make map-set return a vec
+                                       (scheme (fn-of [(fn-of [(s-var 'a)] (s-var 'b))
+                                                       (set-of (s-var 'a))]
+                                                      (vector-of (s-var 'b)))) ; map-set? [!] to-do: make map-set return a vec
                                        (scheme (fn-of [(fn-of [(tuple-of (s-var 'k) (s-var 'v))] (s-var 'e))
                                                        (map-of (s-var 'k) (s-var 'v))]
                                                       (vector-of (s-var 'e)))) ; map-map
                                        ]}
-   ; [!] above, possibly make typeclassed?                      
+   ; [!] above, possibly make typeclassed?   
    'map2v              {:type :overloaded
-                        :alternatives [
-                                       ; [!] to do
-                                       ; add map2-vec
-                                       ; add (new) map2-str
+                        :alternatives [(scheme (fn-of [(fn-of [CHAR CHAR] (s-var 'a))
+                                                       STRING
+                                                       STRING]
+                                                      (vector-of (s-var 'a)))) ; str 
+                                       (scheme (fn-of [(fn-of [(s-var 'a1) (s-var 'a2)] (s-var 'b))
+                                                       (vector-of (s-var 'a1))
+                                                       (vector-of (s-var 'a2))]
+                                                      (vector-of (s-var 'b)))) ; vec
                         ]}
    'vec                {:type :overloaded
                         :alternatives [(scheme (fn-of [(map-of (s-var 'k) (s-var 'v))] (vector-of (tuple-of (s-var 'k) (s-var 'v)))))
@@ -667,11 +694,11 @@
    'concat             {:type :overloaded
                         :alternatives [(scheme (binary-transform (vector-of (s-var 'a))))
                                        (fn-of [STRING STRING] STRING)]} ; double-check
-   `conj               {:type :overloaded
+   `conj'              {:type :overloaded
                         :alternatives [(scheme (fn-of [(vector-of (s-var 'a)) (s-var 'a)] (vector-of (s-var 'a)))) ; conj-vec
                                        (scheme (fn-of [(set-of (s-var 'e)) (s-var 'e)]
                                                       (set-of (s-var 'e)))) ; conj-set
-                        ]} ; [!] to do
+                        ]}
    'first              {:type :overloaded ;;; where does indexable go?
                            ;:typeclasses #{:indexable}
                         :alternatives [(scheme (fn-of [(vector-of (s-var 'a))] (s-var 'a)))
@@ -770,22 +797,22 @@
                        :alternatives [(scheme (fn-of [(vector-of (s-var 'a)) INT] (s-var 'a))) ; safe-nth
                                       (fn-of [STRING INT] CHAR) ; nth-str 
                                       ]}
-   `replace           {:type :overloaded
+   `replace'          {:type :overloaded
                        :alternatives [(scheme (fn-of [(vector-of (s-var 'a))
                                                       (s-var 'a)
                                                       (s-var 'a)]
                                                      (vector-of (s-var 'a)))) ; vec
                                       (fn-of [STRING CHAR CHAR] STRING) ; char
                                       (fn-of [STRING STRING STRING] STRING) ; str
-                                      ]} ; [!] to-do
-   `replace-first     {:type :overloaded
+                                      ]} ; [!] to-do - test
+   `replace-first'    {:type :overloaded
                        :alternatives [(scheme (fn-of [(vector-of (s-var 'a))
                                                       (s-var 'a)
                                                       (s-var 'a)]
                                                      (vector-of (s-var 'a))))
                                       (fn-of [STRING CHAR CHAR] STRING) ; char
                                       (fn-of [STRING STRING STRING] STRING) ; str
-                                      ]} ; [!] to-do
+                                      ]} ; [!] to-do - test
                               
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
