@@ -53,7 +53,7 @@
   (is (= "ac" (l/filter-str #(not= % \b) "abc"))))
 
 (deftest char-in?-test
-  (is (l/char-in? "abc" \b)))
+  (is (l/in? "abc" \b)))
 
 (deftest char-occurrences-test
   (is (= 1 (l/char-occurrences "abc" \b))))
@@ -64,9 +64,9 @@
 (deftest replace-first-char-test
   (is (= "zaa" (l/replace-first-char "aaa" \a \z))))
 
-(deftest remove-char-test
-  (is (= "" (l/remove-char "aaa" \a)))
-  (is (= "bc" (l/remove-char "abc" \a))))
+(deftest remove-element-test
+  (is (= "" (l/remove-element "aaa" \a)))
+  (is (= "bc" (l/remove-element "abc" \a))))
 
 (deftest set-char-test
   (is (= "aba" (l/set-char "aaa" 1 \b))))
@@ -133,8 +133,7 @@
 
 (deftest lib-for-type-ctors-test
   (is (empty? (keys (l/lib-for-type-ctors #{'boolean?}))))
-  (is (= #{'comp2-fn1 'comp2-fn2 'comp3-fn1 'comp3-fn2 'partial1-fn2 'partial1-fn3 'partial2-fn3 `l/max' `l/min'
-           '* '+ '- 'abs 'dec 'inc 'mod 'quot `l/neg `l/pow `l/square}
+  (is (= #{`l/max' `l/min' '* '+ '- 'abs 'dec 'inc 'mod 'quot `l/neg `l/pow `l/square}
          (set (keys (l/lib-for-type-ctors #{:=>})))))
   (is (= #{'= `l/and 'not= `l/>' `l/or 'if `l/>=' `l/<=' 'not `l/<' 'zero? 'contains? 'empty?}
          (set/difference (set (keys (l/lib-for-type-ctors #{:=> 'boolean?})))

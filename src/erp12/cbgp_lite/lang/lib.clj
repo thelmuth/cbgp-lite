@@ -1069,10 +1069,10 @@
     append-str        str
     ;; char->int         int
     char-occurrences  erp12.cbgp-lite.lang.lib/occurrences-of
-    comp2-fn1         comp
-    comp2-fn2         comp
-    comp3-fn1         comp
-    comp3-fn2         comp
+    ;; comp2-fn1         comp
+    ;; comp2-fn2         comp
+    ;; comp3-fn1         comp
+    ;; comp3-fn2         comp
     ;; count-map         count
     ;; count-set         count
     ;; count-vec         count
@@ -1121,9 +1121,9 @@
     ;; mapcat-str        erp12.cbgp-lite.lang.lib/mapcatv
     nth-or-else       nth
     ;; nth-str           erp12.cbgp-lite.lang.lib/safe-nth
-    partial1-fn2      partial
-    partial1-fn3      partial
-    partial2-fn3      partial
+    ;; partial1-fn2      partial
+    ;; partial1-fn3      partial
+    ;; partial2-fn3      partial
     range1            erp12.cbgp-lite.lang.lib/rangev
     range2            erp12.cbgp-lite.lang.lib/rangev
     range3            erp12.cbgp-lite.lang.lib/rangev
