@@ -421,7 +421,7 @@
   [coll]
   (if (string? coll)
     (reduce str (reverse coll))
-    (reverse coll)))
+    (vec (reverse coll))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Set

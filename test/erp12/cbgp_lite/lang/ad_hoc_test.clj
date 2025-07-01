@@ -356,12 +356,11 @@
 
 
 ;; remove element 
-
-#_(deftest vector-remove-element-test
+(deftest vector-remove-element-test
   (let [{::c/keys [ast type]} (:ast (c/push->ast
                                      {:push      [{:gene :lit :val [6] :type {:type :vector :child {:type 'int?}}}
                                                   {:gene :lit :val [55 66 0 77 0] :type {:type :vector :child {:type 'int?}}}
-                                                  {:gene :lit :val 77 :type 'int?}
+                                                  {:gene :lit :val 77 :type {:type 'int?}}
                                                   {:gene :var :name `lib/remove-element}
                                                   {:gene :apply}]
                                       :locals    []
@@ -373,13 +372,13 @@
         form (a/ast->form ast)
         _ (println "FORM: " form)
         func (eval `(fn [] ~form))]
-    (is (= [55 66 77] (func)))))
+    (is (= [55 66 0 0] (func)))))
 
 
-#_(deftest string-remove-element-test
+(deftest string-remove-element-test
   (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                     {:push      [{:gene :lit :val "hello there" :type 'string?}
-                                                  {:gene :lit :val "hello world!!" :type 'string?}
+                                     {:push      [{:gene :lit :val "hello there" :type {:type 'string?}}
+                                                  {:gene :lit :val "hello world!!" :type {:type 'string?}}
                                                   {:gene :lit :val \w  :type {:type 'char?}}
                                                   {:gene :var :name `lib/remove-element}
                                                   {:gene :apply}]
@@ -605,6 +604,7 @@
           func (eval `(fn [] ~form))
           _ (println "FUNC:" func)]
       (is (= 15 (func)))))
+  
   ;; REDUCE WITH MAP does not work
   #_(testing "Map"
       (let [{::c/keys [ast type]} (:ast (c/push->ast
@@ -787,7 +787,7 @@
           func (eval `(fn [] ~form))]
       (is (= #{0} (func)))))
   
-  #_(testing "map-remove-test"
+  #_(testing "map-filter-test"
       (let [{::c/keys [ast type]} (:ast (c/push->ast
                                          {:push      [{:gene :lit :val {1 4 98 3} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
                                                       {:gene :lit :val {1 2 3 4 0 0} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
@@ -833,14 +833,15 @@
 
 ;; Other 
 ;; in?
-
+;; mapcat vector
+;; [!!] order of mapcat and vector in genome is VERY weird 
 (deftest mapcat-vector-test
   (testing "mapcat Vector"
     (let [{::c/keys [ast type]} (:ast (c/push->ast
                                        {:push      [{:gene :lit :val [6 5 9] :type {:type :vector :child {:type 'int?}}}
-                                                    {:gene :lit :val [[1 2 3] [55 6 98]] :type {:type :vector :child {:type :vector :child {:type 'int?}}}}
-                                                    {:gene :var :name `lib/reverse'}
-                                                    {:gene :var :name `lib/mapcat'}
+                                                    {:gene :var :name `lib/mapcat'} 
+                                                    {:gene :var :name `lib/reverse'} 
+                                                    {:gene :lit :val [[1 2 3] [55 6 98]] :type {:type :vector :child {:type :vector :child {:type 'int?}}}} 
                                                     {:gene :apply}]
                                         :locals    []
                                         :ret-type  {:type :vector :child {:type 'int?}}
@@ -854,6 +855,29 @@
       (is (= [3 2 1 98 6 55] (func))))))
 
 
+(type (lib/mapcat' lib/reverse' [[1 2 3] [55 6 98]]))
+
 (lib/mapcat' lib/reverse' [[1 2 3] [55 6 98]])
 
+(vec (lib/reverse' [[1 2 3] [55 6 98]]))
+
 (lib/reverse' [[1 2 3] [55 6 98]])
+
+(deftest in?-vec-test
+  (testing "vector-remove-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val [6] :type {:type :vector :child {:type 'int?}}}
+                                                    {:gene :lit :val [55 66 0 77 0] :type {:type :vector :child {:type 'int?}}}
+                                                    {:gene :lit :val 66 :type {:type 'int?}}
+                                                    {:gene :var :name 'in?}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type 'boolean?}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= type {:type 'boolean?}))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= true (func))))))
