@@ -891,7 +891,7 @@
           func (eval `(fn [] ~form))]
       (is (= #{55 66 77 8} (func)))))
 
-  (testing "map Remove"
+  (testing "Map Remove"
      (let [{::c/keys [ast type]} (:ast (c/push->ast
                                         {:push      [{:gene :lit :val {1 4, 98 3} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
                                                      {:gene :lit :val {40 \h, 50 \e, 200 \p} :type {:type :map-of :key {:type 'int?} :value {:type 'char?}}}
