@@ -1186,7 +1186,43 @@
           form (a/ast->form ast)
           _ (println "FORM: " form)
           func (eval `(fn [] ~form))]
-      (is (= [104 105 32 116 104 101 114 101] (func))))))
+      (is (= [104 105 32 116 104 101 114 101] (func)))))
+  
+  ; form: (mapv #(assoc [\a 30] 2 %) (keys {\a 1 \b 10}))
+  (mapv #(assoc [\a 30] 2 %) (keys {\a 1 \b 10})) 
+  (mapv #(assoc [\a 30] 2 (first %)) {\a 1 \b 10}) 
+
+  (testing "mapv map"
+      (println)
+      (println "MAPV TEST START")
+      (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                         {:push      [{:gene :lit :val {1 4, 98 3} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
+                                                      {:gene :lit :val {40 \h, 50 \e, 200 \p} :type {:type :map-of :key {:type 'int?} :value {:type 'char?}}}
+                                                      {:gene :fn :arg-types [(lib/tuple-of lib/INT lib/CHAR)] :ret-type lib/BOOLEAN}
+                                                      [{:gene :local :idx 0}
+                                                       {:gene :var :name 'left}
+                                                       {:gene :apply}
+                                                       {:gene :local :idx 0}
+                                                       {:gene :var :name 'right}
+                                                       {:gene :apply}
+                                                       {:gene :var :name 'int}
+                                                       {:gene :apply}
+                                                       {:gene :var :name `lib/>'}
+                                                       {:gene :apply}]
+                                                      {:gene :var :name 'mapv}
+                                                      {:gene :apply}]
+                                          :locals    []
+                                          :ret-type  {:type :vector :child {:type 'boolean?}}
+                                          :type-env  lib/type-env
+                                          :dealiases lib/dealiases}))
+            _ (is (= :vector (:type type)))
+            _ (println)
+            _ (println "REAL-AST: " ast)
+            form (a/ast->form ast)
+            _ (println "FORM: " form)
+            func (eval `(fn [] ~form))]
+        (is (= [true true false] (func))))) 
+  )
 
 (deftest map2v-test
    (testing "map2v Vector"
