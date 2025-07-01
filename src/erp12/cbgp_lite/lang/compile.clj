@@ -115,8 +115,9 @@
            (canonical-type (::type ast))))
 
   ;; output-able? checks if the output type of the tree youre checking has the same output type as the problem.
-  (println)
-  (println "AST:" ast)
+  ; [!] print debugging
+  ;; (println)
+  ;; (println "AST:" ast)
   (let [output-able? (and (unifiable? ret-type (::type ast))
                           (not (macro? (::ast ast))))
         newest-out-ast (if output-able? ast newest)

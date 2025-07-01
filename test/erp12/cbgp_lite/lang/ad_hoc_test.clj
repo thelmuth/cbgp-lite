@@ -379,7 +379,7 @@
   (let [{::c/keys [ast type]} (:ast (c/push->ast
                                      {:push      [{:gene :lit :val [6] :type {:type :vector :child {:type 'int?}}}
                                                   {:gene :lit :val [55 66 0 77 0] :type {:type :vector :child {:type 'int?}}}
-                                                  {:gene :lit :val 77 :type 'int?}
+                                                  {:gene :lit :val 77 :type {:type 'int?}}
                                                   {:gene :var :name `lib/remove-element}
                                                   {:gene :apply}]
                                       :locals    []
@@ -482,7 +482,6 @@
            (func "test")))))
   )
      
->>>>>>> schen/llmgp/ad-hoc
 ;; Combining collections
 ;; Conj, Concat, join
 (deftest conj-test
@@ -922,8 +921,8 @@
     (let [{::c/keys [ast type]} (:ast (c/push->ast
                                        {:push      [{:gene :lit :val [6 5 9] :type {:type :vector :child {:type 'int?}}}
                                                     {:gene :lit :val [[1 2 3] [55 6 98]] :type {:type :vector :child {:type :vector :child {:type 'int?}}}}
-                                                    {:gene :var :name `lib/reverse'}
                                                     {:gene :var :name `lib/mapcat'}
+                                                    {:gene :var :name `lib/reverse'}
                                                     {:gene :apply}]
                                         :locals    []
                                         :ret-type  {:type :vector :child {:type 'int?}}
