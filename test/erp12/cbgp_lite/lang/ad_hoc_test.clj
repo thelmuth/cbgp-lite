@@ -1174,7 +1174,41 @@
           form (a/ast->form ast)
           _ (println "FORM: " form)
           func (eval `(fn [] ~form))]
-      (is (= [104 105 32 116 104 101 114 101] (func))))))
+      (is (= [104 105 32 116 104 101 114 101] (func)))))
+  
+  ; form: (mapv #(assoc [\a 30] 2 %) (keys {\a 1 \b 10}))
+  (mapv #(assoc [\a 30] 2 %) (keys {\a 1 \b 10})) 
+  (mapv #(assoc [\a 30] 2 (first %)) {\a 1 \b 10}) 
+
+  (testing "mapv map"
+      (println)
+      (println "MAPV TEST START")
+      (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                         {:push      [{:gene :lit :val {\a 10 \b 20} :type {:type :map-of :key {:type 'char?} :value {:type 'int?}}}
+                                                      ;{:gene :fn :arg-types [(lib/tuple-of (lib/s-var 'k) (lib/s-var 'v))] :ret-type (lib/s-var 'a)}
+                                                      {:gene :fn :arg-types [(lib/tuple-of lib/CHAR lib/INT)] :ret-type {:type :s-var :sym 'a}}
+                                                      ;{:gene :fn :arg-types [(lib/tuple-of lib/CHAR lib/INT)] :ret-type (lib/tuple-of lib/CHAR lib/INT)}
+                                                      [{:gene :local :idx 0}
+                                                       {:gene :var :name 'first}
+                                                       {:gene :apply}
+                                                       {:gene :lit :val 2 :type {:type 'int?}}
+                                                       {:gene :lit :val [\a 30] :type (lib/tuple-of lib/CHAR lib/INT)}
+                                                       {:gene :var :name 'assoc}
+                                                       {:gene :apply}]
+                                                      {:gene :var :name 'mapv}
+                                                      {:gene :apply}] 
+                                          :locals    []
+                                          :ret-type  {:type :vector :child {:type :s-var :sym 'a}}
+                                          :type-env  lib/type-env
+                                          :dealiases lib/dealiases}))
+            _ (is (= :vector (:type type)))
+            _ (println)
+            _ (println "REAL-AST: " ast)
+            form (a/ast->form ast)
+            _ (println "FORM: " form)
+            func (eval `(fn [] ~form))]
+        (is (= [\b 2] (func)))))
+  )
 
 (deftest map2v-test
    (testing "map2v Vector"
