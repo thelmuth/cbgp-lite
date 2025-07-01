@@ -1196,21 +1196,23 @@
       (println)
       (println "MAPV TEST START")
       (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                         {:push      [{:gene :lit :val {\a 10 \b 20} :type {:type :map-of :key {:type 'char?} :value {:type 'int?}}}
-                                                      ;{:gene :fn :arg-types [(lib/tuple-of (lib/s-var 'k) (lib/s-var 'v))] :ret-type (lib/s-var 'a)}
-                                                      {:gene :fn :arg-types [(lib/tuple-of lib/CHAR lib/INT)] :ret-type {:type :s-var :sym 'a}}
-                                                      ;{:gene :fn :arg-types [(lib/tuple-of lib/CHAR lib/INT)] :ret-type (lib/tuple-of lib/CHAR lib/INT)}
+                                         {:push      [{:gene :lit :val {1 4, 98 3} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
+                                                      {:gene :lit :val {40 \h, 50 \e, 200 \p} :type {:type :map-of :key {:type 'int?} :value {:type 'char?}}}
+                                                      {:gene :fn :arg-types [(lib/tuple-of lib/INT lib/CHAR)] :ret-type lib/BOOLEAN}
                                                       [{:gene :local :idx 0}
-                                                       {:gene :var :name 'first}
+                                                       {:gene :var :name 'left}
                                                        {:gene :apply}
-                                                       {:gene :lit :val 2 :type {:type 'int?}}
-                                                       {:gene :lit :val [\a 30] :type (lib/tuple-of lib/CHAR lib/INT)}
-                                                       {:gene :var :name 'assoc}
+                                                       {:gene :local :idx 0}
+                                                       {:gene :var :name 'right}
+                                                       {:gene :apply}
+                                                       {:gene :var :name 'int}
+                                                       {:gene :apply}
+                                                       {:gene :var :name `lib/>'}
                                                        {:gene :apply}]
                                                       {:gene :var :name 'mapv}
-                                                      {:gene :apply}] 
+                                                      {:gene :apply}]
                                           :locals    []
-                                          :ret-type  {:type :vector :child {:type :s-var :sym 'a}}
+                                          :ret-type  {:type :vector :child {:type 'boolean?}}
                                           :type-env  lib/type-env
                                           :dealiases lib/dealiases}))
             _ (is (= :vector (:type type)))
@@ -1219,7 +1221,7 @@
             form (a/ast->form ast)
             _ (println "FORM: " form)
             func (eval `(fn [] ~form))]
-        (is (= [\b 2] (func)))))
+        (is (= [true true false] (func))))) 
   )
 
 (deftest map2v-test
