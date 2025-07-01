@@ -282,13 +282,6 @@
   (vec (mapcat pred coll)))
 
 
-;; (defn mapcat'
-;;   [pred coll]
-;;   (let [mapcated (mapcat pred coll)]
-;;     (if (string? coll)
-;;       (apply str mapcated)
-;;       (into (empty coll) mapcated))))
-
 ; [!] may not work
 (defn conj'
   [coll target]
@@ -307,14 +300,14 @@
 
 ;; (def conj-vec (comp vec conj))
 (def distinctv (comp vec distinct))
-(def mapcatv (comp vec mapcat))
+;; (def mapcatv (comp vec mapcat))
 (def mapv-indexed (comp vec map-indexed))
 (def removev (comp vec remove))
 (def concatv (comp vec concat))
 ;; (def takev (comp vec take))
 ;; (def restv (comp vec rest))
 (def butlastv (comp vec butlast))
-(def reversev (comp vec reverse))
+;; (def reversev (comp vec reverse))
 (def sortv (comp vec sort))
 (def sortv-by (comp vec sort-by))
 
@@ -433,13 +426,19 @@
   [num coll]
   (if (string? coll)
     (reduce str (take num coll))
-    (take num coll)))
+    (into (empty coll) (take num coll))))
 
 (defn reverse'
   [coll]
   (if (string? coll)
     (reduce str (reverse coll))
-    (reverse coll)))
+    (vec (reverse coll))))
+
+(defn sort'
+  [coll]
+  (if (string? coll)
+    (str/join (sort coll))
+    ((comp vec sort) coll)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Set
 

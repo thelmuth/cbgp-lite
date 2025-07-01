@@ -482,6 +482,7 @@
            (func "test")))))
   )
      
+>>>>>>> schen/llmgp/ad-hoc
 ;; Combining collections
 ;; Conj, Concat, join
 (deftest conj-test
@@ -916,6 +917,25 @@
           func (eval `(fn [] ~form))]
       (is (= "ii" (func))))))
 
+(deftest mapcat-vector-test
+  (testing "mapcat Vector"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val [6 5 9] :type {:type :vector :child {:type 'int?}}}
+                                                    {:gene :lit :val [[1 2 3] [55 6 98]] :type {:type :vector :child {:type :vector :child {:type 'int?}}}}
+                                                    {:gene :var :name `lib/reverse'}
+                                                    {:gene :var :name `lib/mapcat'}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type :vector :child {:type 'int?}}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= :vector (:type type)))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= [3 2 1 98 6 55] (func))))))
+
 ;; Functional Programming
 ;; comp (comp2-fn1, comp3-fn1, comp2-fn2, comp3-fn2), partial
 #_(deftest comp-test
@@ -1122,13 +1142,12 @@
 
 ;; Other 
 ;; in?
-(deftest mapcat-vector-test
-  (testing "mapcat Vector"
+(deftest sort-test
+  (testing "Sort Vector"
     (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                       {:push      [{:gene :lit :val [6 5 9] :type {:type :vector :child {:type 'int?}}}
-                                                    {:gene :lit :val [[1 2 3] [55 6 98]] :type {:type :vector :child {:type :vector :child {:type 'int?}}}}
-                                                    {:gene :var :name `lib/reverse'}
-                                                    {:gene :var :name `lib/mapcat'}
+                                       {:push      [{:gene :lit :val [6] :type {:type :vector :child {:type 'int?}}}
+                                                    {:gene :lit :val [9 4 1 4 3 15] :type {:type :vector :child {:type 'int?}}} 
+                                                    {:gene :var :name `lib/sort'}
                                                     {:gene :apply}]
                                         :locals    []
                                         :ret-type  {:type :vector :child {:type 'int?}}
@@ -1139,5 +1158,19 @@
           form (a/ast->form ast)
           _ (println "FORM: " form)
           func (eval `(fn [] ~form))]
-      (is (= [3 2 1 98 6 55] (func))))))
-
+      (is (= [1 3 4 4 9 15] (func)))))
+  (testing "Sort Vector"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val "fledcbxa" :type {:type 'string?}}
+                                                    {:gene :var :name `lib/sort'}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type 'string?}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= {:type 'string?} type))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= "abcdeflx" (func))))))
