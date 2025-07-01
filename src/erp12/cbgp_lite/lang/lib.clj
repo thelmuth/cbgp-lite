@@ -504,7 +504,23 @@
 (def type-env
   {;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; FP
-   'comp                  {:type :overloaded
+   'comp                  #_{:type :overloaded
+                           :alternatives [(scheme (fn-of [(fn-of [(s-var 'b)] (s-var 'c))
+                                                          (fn-of [(s-var 'a)] (s-var 'b))]
+                                                         (fn-of [(s-var 'a)] (s-var 'c))))
+                                          (scheme (fn-of [(fn-of [(s-var 'c)] (s-var 'd))
+                                                          (fn-of [(s-var 'b)] (s-var 'c))
+                                                          (fn-of [(s-var 'a)] (s-var 'b))]
+                                                         (fn-of [(s-var 'a)] (s-var 'd))))
+                                          (scheme (fn-of [(fn-of [(s-var 'c)] (s-var 'd))
+                                                          (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
+                                                         (fn-of [(s-var 'a) (s-var 'b)] (s-var 'd))))
+                                          (scheme (fn-of [(fn-of [(s-var 'd)] (s-var 'e))
+                                                          (fn-of [(s-var 'c)] (s-var 'd))
+                                                          (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
+                                                         (fn-of [(s-var 'a) (s-var 'b)] (s-var 'e))))
+                                          ]} ; common -> rare order
+                           {:type :overloaded
                            :alternatives [(scheme (fn-of [(fn-of [(s-var 'd)] (s-var 'e))
                                                           (fn-of [(s-var 'c)] (s-var 'd))
                                                           (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
