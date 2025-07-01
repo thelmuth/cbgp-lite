@@ -93,9 +93,10 @@
 
 (defn unifiable?
   [unify-with typ]
-  (println)
-  (println "UNIFYING: " unify-with)
-  (println "--- with: " typ)
+  ; [!] print debugging
+  ;; (println)
+  ;; (println "UNIFYING: " unify-with)
+  ;; (println "--- with: " typ)
   (not (schema/mgu-failure? (schema/mgu unify-with typ))))
 
 (declare compile-step)
