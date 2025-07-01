@@ -397,8 +397,10 @@
     (safe-subs coll start end)
     (safe-subvec coll start end)))
 
-(safe-sub "Hamilton" 0 3)
-(safe-sub [1 2 3 4] 0 3)
+(defn map2v
+  [expr coll1 coll2]
+  (mapv expr coll1 coll2))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fixing LazySeqs
 
@@ -739,13 +741,13 @@
                                                       (vector-of (s-var 'a)))) ; map-str      
                                        (scheme (fn-of [(fn-of [(s-var 'a)] (s-var 'b))
                                                        (set-of (s-var 'a))]
-                                                      (vector-of (s-var 'b)))) ; map-set? [!] to-do: make map-set return a vec
+                                                      (vector-of (s-var 'b)))) ; map-set? 
                                        (scheme (fn-of [(fn-of [(tuple-of (s-var 'k) (s-var 'v))] (s-var 'e))
                                                        (map-of (s-var 'k) (s-var 'v))]
                                                       (vector-of (s-var 'e)))) ; map-map
                                        ]}
    ; [!] above, possibly make typeclassed?   
-   'map2v              {:type :overloaded
+   `map2v              {:type :overloaded
                         :alternatives [(scheme (fn-of [(fn-of [CHAR CHAR] (s-var 'a))
                                                        STRING
                                                        STRING]
