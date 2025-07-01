@@ -315,9 +315,15 @@
   ;; Cap the range to avoid memory errors.
   (comp vec #(take 100 %) range))
 
+;; (defn index-of
+;;   [coll el]
+;;   (.indexOf coll el))
+
 (defn index-of
   [coll el]
-  (.indexOf coll el))
+  (if (string? coll)
+    (str/index-of coll (str el))
+    (.indexOf coll el)))
 
 (defn occurrences-of
   [coll el]
@@ -544,7 +550,23 @@
 (def type-env
   {;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; FP
-   'comp                  {:type :overloaded
+   'comp                  #_{:type :overloaded
+                           :alternatives [(scheme (fn-of [(fn-of [(s-var 'b)] (s-var 'c))
+                                                          (fn-of [(s-var 'a)] (s-var 'b))]
+                                                         (fn-of [(s-var 'a)] (s-var 'c))))
+                                          (scheme (fn-of [(fn-of [(s-var 'c)] (s-var 'd))
+                                                          (fn-of [(s-var 'b)] (s-var 'c))
+                                                          (fn-of [(s-var 'a)] (s-var 'b))]
+                                                         (fn-of [(s-var 'a)] (s-var 'd))))
+                                          (scheme (fn-of [(fn-of [(s-var 'c)] (s-var 'd))
+                                                          (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
+                                                         (fn-of [(s-var 'a) (s-var 'b)] (s-var 'd))))
+                                          (scheme (fn-of [(fn-of [(s-var 'd)] (s-var 'e))
+                                                          (fn-of [(s-var 'c)] (s-var 'd))
+                                                          (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
+                                                         (fn-of [(s-var 'a) (s-var 'b)] (s-var 'e))))
+                                          ]} ; common -> rare order
+                          {:type :overloaded
                            :alternatives [(scheme (fn-of [(fn-of [(s-var 'd)] (s-var 'e))
                                                           (fn-of [(s-var 'c)] (s-var 'd))
                                                           (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
@@ -556,9 +578,10 @@
                                                           (fn-of [(s-var 'b)] (s-var 'c))
                                                           (fn-of [(s-var 'a)] (s-var 'b))]
                                                          (fn-of [(s-var 'a)] (s-var 'd))))
-                                          (scheme (fn-of [(fn-of [(s-var 'b)] (s-var 'c))
+                                          #_(scheme (fn-of [(fn-of [(s-var 'b)] (s-var 'c))
                                                           (fn-of [(s-var 'a)] (s-var 'b))]
-                                                         (fn-of [(s-var 'a)] (s-var 'c))))]}
+                                                         (fn-of [(s-var 'a)] (s-var 'c))))
+                                          ]}
   ;;  'comp2-fn1          (scheme (fn-of [(fn-of [(s-var 'b)] (s-var 'c))
   ;;                                      (fn-of [(s-var 'a)] (s-var 'b))]
   ;;                                     (fn-of [(s-var 'a)] (s-var 'c))))
@@ -765,10 +788,9 @@
    `in?                {:type :overloaded
                         :alternatives [(scheme (fn-of [(vector-of (s-var 'a)) (s-var 'a)] BOOLEAN))
                                        (fn-of [STRING CHAR] BOOLEAN)
-                                       (binary-pred STRING)]} ; [!] to-do - add str handling to func
-   `index-of           (scheme (fn-of [(s-var 'c) (s-var 'a)] INT) {'c #{:indexable} 'a #{:stringable}}) ; add typeclass for strings + chars  
-   ; [!] contains? may need to be overloaded
-   'contains?          (scheme (fn-of [(s-var 'c) (s-var 'a)] BOOLEAN) {'c #{:keyable}}) ; exclude strings and vecs 
+                                       (binary-pred STRING)]}
+   `index-of           (scheme (fn-of [(s-var 'c) (s-var 'a)] INT) {'c #{:indexable}}) 
+   'contains?          (scheme (fn-of [(s-var 'c) (s-var 'a)] BOOLEAN) {'c #{:keyable}})
    `filter'             {:type :overloaded
                          :alternatives [(scheme (fn-of [(fn-of [(s-var 'a)] BOOLEAN)
                                                         (vector-of (s-var 'a))]

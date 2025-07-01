@@ -480,7 +480,12 @@
     (is (= {} (func [])))
     (is (thrown?
          java.lang.IllegalArgumentException
+<<<<<<< HEAD
          (func "test")))))     
+=======
+         (func "test")))))
+     
+>>>>>>> schen/llmgp/ad-hoc
 ;; Combining collections
 ;; Conj, Concat, join
 (deftest conj-test
