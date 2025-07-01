@@ -110,7 +110,6 @@
            (fn [m t] (assoc m t (inc (get m t 0))))
            (canonical-type (::type ast))))
 
-  ;; output-able? checks if the output type of the tree youre checking has the same output type as the problem.
   (let [output-able? (and (unifiable? ret-type (::type ast))
                           (not (macro? (::ast ast))))
         newest-out-ast (if output-able? ast newest)
@@ -421,7 +420,7 @@
   ;; function ast: clojure code that returns function. the data type of that function to find the right asts.
   (let [{fn-ast ::ast fn-type ::type} boxed-ast
         remaining-arg-types (schema/fn-arg-schemas fn-type)]
-    (println "Remaining-arg-types:" remaining-arg-types)
+    ;(println "Remaining-arg-types:" remaining-arg-types)
     (try-apply-fn-to-arguments remaining-arg-types {} [] state-fn-popped fn-ast fn-type)))
 
 (defn original-compile-step-apply

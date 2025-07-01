@@ -32,7 +32,7 @@
   (is (= "abcdef" (l/concat-str "abc" "def"))))
 
 (deftest take-str-test
-  (is (= "ab" (l/take-str 2 "abcd"))))
+  (is (= "ab" (l/take' 2 "abcd"))))
 
 (deftest rest-str-test
   (is (= "bcd" (l/rest' "abcd"))))
@@ -75,7 +75,7 @@
   (is (= [1 2 3] (l/concatv [1 2] [3]))))
 
 (deftest takev-test
-  (is (= [1] (l/takev 1 [1 2 3]))))
+  (is (= [1] (l/take' 1 [1 2 3]))))
 
 (deftest restv-test
   (is (= [2 3] (l/rest' [1 2 3]))))
@@ -84,7 +84,7 @@
   (is (= [1 2] (l/butlast' [1 2 3]))))
 
 (deftest reversev-test
-  (is (= [3 2 1] (l/reversev [1 2 3]))))
+  (is (= [3 2 1] (l/reverse' [1 2 3]))))
 
 (deftest in?-test
   (is (l/in? [:a :b :c] :b))
@@ -105,19 +105,19 @@
 
 (deftest replacev-first-test
   (is (= [:a :_ :c :b]
-         (l/replacev-first [:a :b :c :b] :b :_))))
+         (l/replace-first' [:a :b :c :b] :b :_))))
 
-(deftest remove-element-test
-  (is (= [:a :c]
-         (l/remove-element [:a :b :c] :b))))
+;; (deftest remove-element-test
+;;   (is (= [:a :c]
+;;          (l/remove-element [:a :b :c] :b))))
 
 (deftest safe-subs-test
-  (is (= "abc" (l/safe-subs "abc" -1 1000)))
-  (is (= "" (l/safe-subs "abc" 10 1))))
+  (is (= "abc" (l/safe-sub "abc" -1 1000)))
+  (is (= "" (l/safe-sub "abc" 10 1))))
 
 (deftest safe-subvec-test
-  (is (= [:a] (l/safe-subvec [:a] -1 10)))
-  (is (= [] (l/safe-subvec [:a] 10 1))))
+  (is (= [:a] (l/safe-sub [:a] -1 10)))
+  (is (= [] (l/safe-sub [:a] 10 1))))
 
 (deftest safe-assoc-test
   (is (= [:_ :b] (l/safe-assoc-nth [:a :b] 2 :_))))
