@@ -737,7 +737,7 @@
                                                       (vector-of (s-var 'a)))) ; map-str      
                                        (scheme (fn-of [(fn-of [(s-var 'a)] (s-var 'b))
                                                        (set-of (s-var 'a))]
-                                                      (vector-of (s-var 'b)))) ; map-set? [!] to-do: make map-set return a vec
+                                                      (vector-of (s-var 'b)))) ; map-set? 
                                        (scheme (fn-of [(fn-of [(tuple-of (s-var 'k) (s-var 'v))] (s-var 'e))
                                                        (map-of (s-var 'k) (s-var 'v))]
                                                       (vector-of (s-var 'e)))) ; map-map
