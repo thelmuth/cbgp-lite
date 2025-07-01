@@ -23,13 +23,13 @@
   (is (= 0.0 (l/safe-asin 4.0))))
 
 (deftest mapcatv-test
-  (is (= [:a :b] (l/mapcatv identity [[:a] [:b]]))))
+  (is (= [:a :b] (l/mapcat' identity [[:a] [:b]]))))
 
 (deftest removev-test
-  (is (= [:a :b] (l/removev #{:_} [:a :_ :b]))))
+  (is (= [:a :b] (l/remove' #{:_} [:a :_ :b]))))
 
 (deftest concat-str-test
-  (is (= "abcdef" (l/concat-str "abc" "def"))))
+  (is (= "abcdef" (l/concat' "abc" "def"))))
 
 (deftest take-str-test
   (is (= "ab" (l/take' 2 "abcd"))))
@@ -41,7 +41,7 @@
   (is (= "abc" (l/butlast' "abcd"))))
 
 (deftest str-sort-test
-  (is (= "abc" (l/str-sort "cba"))))
+  (is (= "abc" (l/sort' "cba"))))
 
 (deftest split-str-test
   (is (= ["a" "c"] (l/split-str "abc" "b"))))
@@ -50,7 +50,7 @@
   (is (= ["abc" "def"] (l/split-str-on-ws "abc def"))))
 
 (deftest filter-str-test
-  (is (= "ac" (l/filter-str #(not= % \b) "abc"))))
+  (is (= "ac" (l/filter' #(not= % \b) "abc"))))
 
 (deftest char-in?-test
   (is (l/in? "abc" \b)))
@@ -59,10 +59,10 @@
   (is (= 1 (l/char-occurrences "abc" \b))))
 
 (deftest replace-char-test
-  (is (= "zzz" (l/replace-char "aaa" \a \z))))
+  (is (= "zzz" (l/replace' "aaa" \a \z))))
 
 (deftest replace-first-char-test
-  (is (= "zaa" (l/replace-first-char "aaa" \a \z))))
+  (is (= "zaa" (l/replace-first' "aaa" \a \z))))
 
 (deftest remove-element-test
   (is (= "" (l/remove-element "aaa" \a)))
@@ -72,7 +72,7 @@
   (is (= "aba" (l/set-char "aaa" 1 \b))))
 
 (deftest concatv-test
-  (is (= [1 2 3] (l/concatv [1 2] [3]))))
+  (is (= [1 2 3] (l/concat' [1 2] [3]))))
 
 (deftest takev-test
   (is (= [1] (l/take' 1 [1 2 3]))))

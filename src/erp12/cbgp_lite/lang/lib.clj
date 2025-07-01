@@ -204,9 +204,9 @@
        str/join
        re-pattern))
 
-(defn str-sort
-  [s]
-  (str/join (sort s)))
+;; (defn str-sort
+;;   [s]
+;;   (str/join (sort s)))
 
 (defn split-str
   [s on]
@@ -308,7 +308,7 @@
 ;; (def restv (comp vec rest))
 (def butlastv (comp vec butlast))
 ;; (def reversev (comp vec reverse))
-(def sortv (comp vec sort))
+;; (def sortv (comp vec sort))
 (def sortv-by (comp vec sort-by))
 
 (def rangev
@@ -390,8 +390,9 @@
     (safe-subs coll start end)
     (safe-subvec coll start end)))
 
-(safe-sub "Hamilton" 0 3)
-(safe-sub [1 2 3 4] 0 3)
+(defn map2v
+  [expr coll1 coll2]
+  (mapv expr coll1 coll2))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fixing LazySeqs
 
@@ -743,7 +744,7 @@
                                                       (vector-of (s-var 'e)))) ; map-map
                                        ]}
    ; [!] above, possibly make typeclassed?   
-   'map2v              {:type :overloaded
+   `map2v              {:type :overloaded
                         :alternatives [(scheme (fn-of [(fn-of [CHAR CHAR] (s-var 'a))
                                                        STRING
                                                        STRING]
@@ -826,15 +827,15 @@
                                                       (s-var 'a))) ; reduce-vec
                                        (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'a)] (s-var 'a))
                                                        (set-of (s-var 'a))]
-                                                      (s-var 'a)))
+                                                      (s-var 'a))) ;;reduce-set
                                        (scheme (fn-of [(fn-of [(tuple-of (s-var 'k) (s-var 'v))
                                                                (tuple-of (s-var 'k) (s-var 'v))]
                                                               (tuple-of (s-var 'k) (s-var 'v)))
                                                        (map-of (s-var 'k) (s-var 'v))]
                                                       (tuple-of (s-var 'k) (s-var 'v)))) ; reduce-map
-                                       (scheme (fn-of [(fn-of [CHAR CHAR] CHAR)
-                                                       STRING]
-                                                      CHAR)) ; reduce-str
+                                      ;;  (scheme (fn-of [(fn-of [CHAR CHAR] CHAR)
+                                      ;;                  STRING]
+                                      ;;                 CHAR)) ; reduce-str
                                        ]}
    'fold               {:type :overloaded
                         :alternatives [(scheme (fn-of [(fn-of [(s-var 'b) (s-var 'a)] (s-var 'b))
@@ -851,18 +852,19 @@
                                                        (s-var 'r)
                                                        (map-of (s-var 'k) (s-var 'v))]
                                                       (s-var 'r))) ; fold-map
-                                       (scheme (fn-of [(fn-of [(s-var 'a) CHAR] (s-var 'a))
-                                                       (s-var 'a)
-                                                       STRING]
-                                                      (s-var 'a))) ; fold-str
+                                      ;;  (scheme (fn-of [(fn-of [(s-var 'a) CHAR] (s-var 'a))
+                                      ;;                  (s-var 'a)
+                                      ;;                  STRING]
+                                      ;;                 (s-var 'a))) ; fold-str
                                        ]}
    `mapcat'            {:type :overloaded
                        :alternatives [(scheme (fn-of [(fn-of [(s-var 'a)] (vector-of (s-var 'b)))
                                                       (vector-of (s-var 'a))]
                                                      (vector-of (s-var 'b))))
-                                      (scheme (fn-of [(fn-of [CHAR] (vector-of (s-var 'a)))
-                                                      STRING]
-                                                     (vector-of (s-var 'a))))]}
+                                      ;; (scheme (fn-of [(fn-of [CHAR] (vector-of (s-var 'a)))
+                                      ;;                 STRING]
+                                      ;;                (vector-of (s-var 'a))))
+                                      ]}
 
 ;;;;;;; string-vec functions; organize later
    `safe-nth          {:type :overloaded
