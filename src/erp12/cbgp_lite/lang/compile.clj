@@ -643,3 +643,9 @@
           (recur (compile-step {:push-unit push-unit
                                 :type-env  type-env
                                 :state     (assoc state :apply-it (:applied push-unit))})))))))
+
+
+
+(rest "helllerrrr")
+(type (rest [55 66 77]))
+

@@ -3,7 +3,8 @@
   (:require [clojure.core :as core]
             [clojure.set :as set]
             [clojure.string :as str]
-            [erp12.cbgp-lite.lang.schema :as schema]))
+            [erp12.cbgp-lite.lang.schema :as schema]
+            [clojure.string :as string]))
 
 ;; @todo What do do about nil?
 ;; first, last, etc. return nil on empty collections.
@@ -179,8 +180,8 @@
   (char (mod i 128)))
 
 (def concat-str (comp str/join concat))
-(def take-str (comp str/join take))
-(def rest-str (comp str/join rest))
+;; (def take-str (comp str/join take))
+;; (def rest-str (comp str/join rest))
 (def butlast-str (comp str/join butlast))
 (def filter-str (comp str/join filter))
 
@@ -276,52 +277,42 @@
       (apply str removed)
       (into (empty coll) removed))))
 
-; [!] probs doesn't work
-(defn replace'
-  [coll target replace]
-  (let [replaced (replace coll target replace)]
-    (if (string? coll)
-      (apply str replaced)
-      (into (empty coll) replaced)))
-  )
+(defn mapcat'
+  [pred coll]
+  (vec (mapcat pred coll)))
 
-(defn replace-first'
-  [coll target replace]
-  (let [replaced (str/replace-first coll target replace)]
-    (if (string? coll)
-      (apply str replaced)
-      (into (empty coll) replaced))))
+
+;; (defn mapcat'
+;;   [pred coll]
+;;   (let [mapcated (mapcat pred coll)]
+;;     (if (string? coll)
+;;       (apply str mapcated)
+;;       (into (empty coll) mapcated))))
 
 ; [!] may not work
 (defn conj'
   [coll target]
   (if (set? coll)
-    (apply (comp set conj) coll target)
-    (apply (comp vec conj) coll target))
-  )
+    ((comp set conj) coll target)
+    ((comp vec conj) coll target)))
 
 (defn concat'
-  [coll target] 
-  (let [concated (concat coll target)]
-    (if (string? coll)
-      (do (apply str concated) (println "works:" concated)) 
-      ;(println "here1:" concated)
-      ;(println "here:" concated)
-      (into (empty coll) concated)
-      )))
-
+  [coll1 coll2]
+  (if (string? coll1)
+    (reduce str (concat coll1 coll2))
+    ((comp vec concat) coll1 coll2)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Vector
 
-(def conj-vec (comp vec conj))
+;; (def conj-vec (comp vec conj))
 (def distinctv (comp vec distinct))
 (def mapcatv (comp vec mapcat))
 (def mapv-indexed (comp vec map-indexed))
 (def removev (comp vec remove))
 (def concatv (comp vec concat))
-(def takev (comp vec take))
-(def restv (comp vec rest))
+;; (def takev (comp vec take))
+;; (def restv (comp vec rest))
 (def butlastv (comp vec butlast))
 (def reversev (comp vec reverse))
 (def sortv (comp vec sort))
@@ -350,16 +341,16 @@
     (str/includes? coll (str el))
     (<= 0 (.indexOf coll el))))
 
-(defn replacev
-  [vtr to-replace replace-with]
-  (replace {to-replace replace-with} vtr))
+;; (defn replacev
+;;   [vtr to-replace replace-with]
+;;   (replace {to-replace replace-with} vtr))
 
-(defn replacev-first
-  [vtr to-replace replace-with]
-  (let [idx (.indexOf vtr to-replace)]
-    (if (< idx 0)
-      vtr
-      (assoc vtr idx replace-with))))
+;; (defn replacev-first
+;;   [vtr to-replace replace-with]
+;;   (let [idx (.indexOf vtr to-replace)]
+;;     (if (< idx 0)
+;;       vtr
+;;       (assoc vtr idx replace-with))))
 
 ;; (defn remove-element
 ;;   [vtr el]
@@ -393,10 +384,60 @@
     (let [idx (mod idx (count coll))]
       (nth coll idx))))
 
+;;New safe-sub
+(defn safe-sub
+  [coll start end]
+  (if (string? coll)
+    (safe-subs coll start end)
+    (safe-subvec coll start end)))
+
+(safe-sub "Hamilton" 0 3)
+(safe-sub [1 2 3 4] 0 3)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Fixing LazySeqs
+
+(defn rest'
+  [coll]
+  (if (string? coll)
+    (reduce str (rest coll))
+    ((comp vec rest) coll)))
+
+(defn butlast'
+  [coll]
+  (if (string? coll)
+    (reduce str (butlast coll))
+    ((comp vec butlast) coll)))
+
+(defn replace'
+  [coll target replacement]
+  (if (string? coll)
+    (str/replace coll target replacement)
+    (replace {target replacement} coll))) 
+
+(defn replace-first'
+  [coll target replacement]
+    (if (string? coll)
+      (str/replace-first coll target replacement)
+      (let [idx (.indexOf coll target)]
+        (if (< idx 0)
+          coll
+          (assoc coll idx replacement)))))
+
+(defn take'
+  [num coll]
+  (if (string? coll)
+    (reduce str (take num coll))
+    (take num coll)))
+
+(defn reverse'
+  [coll]
+  (if (string? coll)
+    (reduce str (reverse coll))
+    (reverse coll)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Set
 
-(def conj-set (comp set conj))
+;; (def conj-set (comp set conj))
 (defn map-set [f s] (into #{} (map f s)))
 (defn filter-set [pred s] (into #{} (filter pred s)))
 
@@ -731,10 +772,10 @@
    'last               {:type :overloaded
                         :alternatives [(scheme (fn-of [(vector-of (s-var 'a))] (s-var 'a)))
                                        (fn-of [STRING] CHAR)]}
-   'rest               {:type :overloaded
+   `rest'               {:type :overloaded
                         :alternatives [(scheme (fn-of [(vector-of (s-var 'a))] (vector-of (s-var 'a))))
                                        (unary-transform STRING)]}
-   'butlast            {:type :overloaded
+   `butlast'            {:type :overloaded
                         :alternatives [(scheme (fn-of [(vector-of (s-var 'a))] (vector-of (s-var 'a))))
                                        (unary-transform STRING)]}
    'empty?             (scheme (fn-of [(s-var 'a)] BOOLEAN) {'a #{:countable}})
@@ -810,7 +851,7 @@
                                                        STRING]
                                                       (s-var 'a))) ; fold-str
                                        ]}
-   `mapcat            {:type :overloaded
+   `mapcat'            {:type :overloaded
                        :alternatives [(scheme (fn-of [(fn-of [(s-var 'a)] (vector-of (s-var 'b)))
                                                       (vector-of (s-var 'a))]
                                                      (vector-of (s-var 'b))))
