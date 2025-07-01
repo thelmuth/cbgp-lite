@@ -204,9 +204,9 @@
        str/join
        re-pattern))
 
-(defn str-sort
-  [s]
-  (str/join (sort s)))
+;; (defn str-sort
+;;   [s]
+;;   (str/join (sort s)))
 
 (defn split-str
   [s on]
@@ -308,7 +308,7 @@
 ;; (def restv (comp vec rest))
 (def butlastv (comp vec butlast))
 ;; (def reversev (comp vec reverse))
-(def sortv (comp vec sort))
+;; (def sortv (comp vec sort))
 (def sortv-by (comp vec sort-by))
 
 (def rangev
@@ -390,8 +390,9 @@
     (safe-subs coll start end)
     (safe-subvec coll start end)))
 
-(safe-sub "Hamilton" 0 3)
-(safe-sub [1 2 3 4] 0 3)
+(defn map2v
+  [expr coll1 coll2]
+  (mapv expr coll1 coll2))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fixing LazySeqs
 
@@ -743,7 +744,7 @@
                                                       (vector-of (s-var 'e)))) ; map-map
                                        ]}
    ; [!] above, possibly make typeclassed?   
-   'map2v              {:type :overloaded
+   `map2v              {:type :overloaded
                         :alternatives [(scheme (fn-of [(fn-of [CHAR CHAR] (s-var 'a))
                                                        STRING
                                                        STRING]

@@ -129,7 +129,7 @@
   (testing "map-first-test"
     (let [{::c/keys [ast type]} (:ast (c/push->ast
                                        {:push      [{:gene :lit :val 42 :type {:type 'int?}}
-                                                    {:gene :lit :val #{1 2 3 4} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
+                                                    {:gene :lit :val {1 2 3 4} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
                                                     {:gene :var :name 'first}
                                                     {:gene :apply}]
                                         :locals    []
@@ -480,12 +480,8 @@
     (is (= {} (func [])))
     (is (thrown?
          java.lang.IllegalArgumentException
-<<<<<<< HEAD
-         (func "test")))))     
-=======
          (func "test")))))
      
->>>>>>> schen/llmgp/ad-hoc
 ;; Combining collections
 ;; Conj, Concat, join
 (deftest conj-test
@@ -1161,3 +1157,57 @@
           _ (println "FORM: " form)
           func (eval `(fn [] ~form))]
       (is (= "abcdeflx" (func))))))
+
+
+(deftest contains?-test
+  (testing "contains? Map"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val 1 :type {:type 'int?}}
+                                                    {:gene :lit :val {1 2, 3 4} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
+                                                    {:gene :var :name 'contains?}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type 'boolean?}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= type {:type 'boolean?}))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= true (func)))))
+  
+  (testing "contains? Set"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val 4 :type {:type 'int?}}
+                                                    {:gene :lit :val #{1 2 3 4} :type {:type :set :child {:type 'int?}}}
+                                                    {:gene :var :name 'contains?}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type 'boolean?}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= type {:type 'boolean?}))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= true (func)))))
+  (testing "contains? Invalid types"
+    (testing "contains? Set"
+      (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                         {:push      [{:gene :lit :val false :type {:type 'boolean?}}
+                                                      {:gene :lit :val 5 :type {:type 'int?}}
+                                                      {:gene :lit :val [1 2 3 4] :type {:type :vector :child {:type 'int?}}}
+                                                      {:gene :var :name 'contains?}
+                                                      {:gene :apply}]
+                                          :locals    []
+                                          :ret-type  {:type 'boolean?}
+                                          :type-env  lib/type-env
+                                          :dealiases lib/dealiases}))
+            _ (is (= type {:type 'boolean?}))
+            _ (println "REAL-AST: " ast)
+            form (a/ast->form ast)
+            _ (println "FORM: " form)
+            func (eval `(fn [] ~form))]
+        (is (= false (func)))))))
