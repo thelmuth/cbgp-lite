@@ -891,27 +891,33 @@
           func (eval `(fn [] ~form))]
       (is (= #{55 66 77 8} (func)))))
 
-  #_(testing "Remove Map"
-      (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                         {:push      [{:gene :lit :val {1 4 98 3} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
-                                                      {:gene :lit :val {1 2 3 4 0 0} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
-                                                      {:gene :fn :arg-types [lib/tuple-of lib/INT lib/INT] :ret-type lib/BOOLEAN}
-                                                      [{:gene :local :idx 0}
-                                                       {:gene :local :idx 1}
-                                                       {:gene :var :name '>}
-                                                       {:gene :apply}]
-                                                      {:gene :var :name `lib/remove'}
+  (testing "map Remove"
+     (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                        {:push      [{:gene :lit :val {1 4, 98 3} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
+                                                     {:gene :lit :val {40 \h, 50 \e, 200 \p} :type {:type :map-of :key {:type 'int?} :value {:type 'char?}}}
+                                                     {:gene :fn :arg-types [(lib/tuple-of lib/INT lib/CHAR)] :ret-type lib/BOOLEAN}
+                                                     [{:gene :local :idx 0}
+                                                      {:gene :var :name 'left}
+                                                      {:gene :apply}
+                                                      {:gene :local :idx 0}
+                                                      {:gene :var :name 'right}
+                                                      {:gene :apply}
+                                                      {:gene :var :name 'int}
+                                                      {:gene :apply}
+                                                      {:gene :var :name `lib/>'}
                                                       {:gene :apply}]
-                                          :locals    []
-                                          :ret-type  {:type :map-of :key {:type 'int?} :value {:type 'int?}} ;;[!!]
-                                          :type-env  lib/type-env
-                                          :dealiases lib/dealiases}))
-            _ (is (= :map-of (:type type)))
-            _ (println "REAL-AST: " ast)
-            form (a/ast->form ast)
-            _ (println "FORM: " form)
-            func (eval `(fn [] ~form))]
-        (is (= {1 2} (func)))))
+                                                     {:gene :var :name `lib/remove'}
+                                                     {:gene :apply}]
+                                         :locals    []
+                                         :ret-type  {:type :map-of :key {:type 'int?} :value {:type 'char?}} ;;[!!]
+                                         :type-env  lib/type-env
+                                         :dealiases lib/dealiases}))
+           _ (is (= :map-of (:type type)))
+           _ (println "REAL-AST: " ast)
+           form (a/ast->form ast)
+           _ (println "FORM: " form)
+           func (eval `(fn [] ~form))]
+       (is (= {200 \p} (func)))))
 
   (testing "Remove String"
     (let [{::c/keys [ast type]} (:ast (c/push->ast
@@ -971,19 +977,25 @@
           func (eval `(fn [] ~form))]
       (is (= #{0} (func)))))
   
-  #_(testing "Filter Map"
+  (testing "Map Filter"
       (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                         {:push      [{:gene :lit :val {1 4 98 3} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
-                                                      {:gene :lit :val {1 2 3 4 0 0} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
-                                                      {:gene :fn :arg-types [lib/tuple-of lib/INT lib/INT] :ret-type lib/BOOLEAN}
+                                         {:push      [{:gene :lit :val {1 4, 98 3} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
+                                                      {:gene :lit :val {40 \h, 50 \e, 200 \p} :type {:type :map-of :key {:type 'int?} :value {:type 'char?}}}
+                                                      {:gene :fn :arg-types [(lib/tuple-of lib/INT lib/CHAR)] :ret-type lib/BOOLEAN}
                                                       [{:gene :local :idx 0}
-                                                       {:gene :local :idx 1}
-                                                       {:gene :var :name '>}
+                                                       {:gene :var :name 'left}
+                                                       {:gene :apply}
+                                                       {:gene :local :idx 0}
+                                                       {:gene :var :name 'right}
+                                                       {:gene :apply}
+                                                       {:gene :var :name 'int}
+                                                       {:gene :apply}
+                                                       {:gene :var :name `lib/>'}
                                                        {:gene :apply}]
                                                       {:gene :var :name `lib/filter'}
                                                       {:gene :apply}]
                                           :locals    []
-                                          :ret-type  {:type :map-of :key {:type 'int?} :value {:type 'int?}} ;;[!!]
+                                          :ret-type  {:type :map-of :key {:type 'int?} :value {:type 'char?}} ;;[!!]
                                           :type-env  lib/type-env
                                           :dealiases lib/dealiases}))
             _ (is (= :map-of (:type type)))
@@ -991,7 +1003,7 @@
             form (a/ast->form ast)
             _ (println "FORM: " form)
             func (eval `(fn [] ~form))]
-        (is (= {1 2} (func)))))
+        (is (= {40 \h, 50 \e} (func)))))
   
   (testing "Filter String"
     (let [{::c/keys [ast type]} (:ast (c/push->ast
