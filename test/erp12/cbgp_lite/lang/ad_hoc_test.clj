@@ -1034,8 +1034,6 @@
           func (eval `(fn [] ~form))]
       (is (= [3 2 1 98 6 55] (func))))))
   
-;; Other 
-;; in?
 (deftest sort-test
   (testing "Sort Vector"
     (let [{::c/keys [ast type]} (:ast (c/push->ast
@@ -1123,3 +1121,102 @@
             _ (println "FORM: " form)
             func (eval `(fn [] ~form))]
         (is (= false (func)))))))
+
+(deftest mapv-test
+  (testing "mapv Vector"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :var :name 'inc}
+                                                    {:gene :lit :val [1 2 3] :type {:type :vector :child {:type 'int?}}}
+                                                    {:gene :var :name 'mapv}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type :vector :child {:type 'int?}}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= :vector (:type type)))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= [2 3 4] (func)))))
+
+  (testing "mapv Set"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :lit :val #{5 6 7 8} :type {:type :set :child {:type 'int?}}}
+                                                    {:gene :var :name 'inc}
+                                                    {:gene :var :name 'mapv}
+                                                    {:gene :apply}
+                                                    {:gene :var :name `lib/sort'}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type :vector :child {:type 'int?}}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= :vector (:type type)))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= [6 7 8 9] (func)))))
+
+  (testing "mapv string"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :var :name 'int}
+                                                    {:gene :lit :val "hi there" :type {:type 'string?}}
+                                                    {:gene :var :name 'mapv}
+                                                    {:gene :apply}]
+                                        :locals    []
+                                        :ret-type  {:type :vector :child {:type 'int?}}
+                                        :type-env  lib/type-env
+                                        :dealiases lib/dealiases}))
+          _ (is (= :vector (:type type)))
+          _ (println "REAL-AST: " ast)
+          form (a/ast->form ast)
+          _ (println "FORM: " form)
+          func (eval `(fn [] ~form))]
+      (is (= [104 105 32 116 104 101 114 101] (func))))))
+
+(deftest map2v-test
+   (testing "map2v Vector"
+     (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                        {:push      [{:gene :lit :val [1 2 3] :type {:type :vector :child {:type 'int?}}}
+                                                     {:gene :lit :val [4 5 6] :type {:type :vector :child {:type 'int?}}}
+                                                     {:gene :var :name '+}
+                                                     {:gene :var :name `lib/map2v}
+                                                     {:gene :apply}]
+                                         :locals    []
+                                         :ret-type  {:type :vector :child {:type 'int?}}
+                                         :type-env  lib/type-env
+                                         :dealiases lib/dealiases}))
+           _ (is (= :vector (:type type)))
+           _ (println "REAL-AST: " ast)
+           form (a/ast->form ast)
+           _ (println "FORM: " form)
+           func (eval `(fn [] ~form))]
+       (is (= [5 7 9] (func)))))
+ 
+   (testing "map2v string"
+     (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                        {:push      [{:gene :lit :val "hello hi" :type {:type 'string?}}
+                                                     {:gene :lit :val "hi there" :type {:type 'string?}}
+                                                     {:gene :fn :arg-types [lib/CHAR lib/CHAR] :ret-type lib/INT}
+                                                     [{:gene :local :idx 0}
+                                                      {:gene :var :name 'int}
+                                                      {:gene :apply}
+                                                      {:gene :local :idx 1}
+                                                      {:gene :var :name 'int}
+                                                      {:gene :apply}
+                                                      {:gene :var :name '+}
+                                                      {:gene :apply}]
+                                                     {:gene :var :name `lib/map2v}
+                                                     {:gene :apply}]
+                                         :locals    []
+                                         :ret-type  {:type :vector :child {:type 'int?}}
+                                         :type-env  lib/type-env
+                                         :dealiases lib/dealiases}))
+           _ (is (= :vector (:type type)))
+           _ (println "REAL-AST: " ast)
+           form (a/ast->form ast)
+           _ (println "FORM: " form)
+           func (eval `(fn [] ~form))]
+       (is (= [208 206 140 224 215 133 218 206] (func))))))
