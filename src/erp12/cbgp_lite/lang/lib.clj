@@ -282,13 +282,6 @@
   (vec (mapcat pred coll)))
 
 
-;; (defn mapcat'
-;;   [pred coll]
-;;   (let [mapcated (mapcat pred coll)]
-;;     (if (string? coll)
-;;       (apply str mapcated)
-;;       (into (empty coll) mapcated))))
-
 ; [!] may not work
 (defn conj'
   [coll target]
@@ -307,14 +300,14 @@
 
 ;; (def conj-vec (comp vec conj))
 (def distinctv (comp vec distinct))
-(def mapcatv (comp vec mapcat))
+;; (def mapcatv (comp vec mapcat))
 (def mapv-indexed (comp vec map-indexed))
 (def removev (comp vec remove))
 (def concatv (comp vec concat))
 ;; (def takev (comp vec take))
 ;; (def restv (comp vec rest))
 (def butlastv (comp vec butlast))
-(def reversev (comp vec reverse))
+;; (def reversev (comp vec reverse))
 (def sortv (comp vec sort))
 (def sortv-by (comp vec sort-by))
 
@@ -427,13 +420,19 @@
   [num coll]
   (if (string? coll)
     (reduce str (take num coll))
-    (take num coll)))
+    (into (empty coll) (take num coll))))
 
 (defn reverse'
   [coll]
   (if (string? coll)
     (reduce str (reverse coll))
-    (reverse coll)))
+    (vec (reverse coll))))
+
+(defn sort'
+  [coll]
+  (if (string? coll)
+    (str/join (sort coll))
+    ((comp vec sort) coll)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Set
 
@@ -598,10 +597,9 @@
   ;;                                     (fn-of [(s-var 'c)] (s-var 'd))))
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Conditional Control Flow
-   'if                 {:type   :scheme
-                        :s-vars ['a]
-                        :body   (fn-of [BOOLEAN (s-var 'a) (s-var 'a)]
-                                       (s-var 'a))}
+   'if                 (scheme (fn-of [BOOLEAN (s-var 'a) (s-var 'a)]
+                                      (s-var 'a)))
+   
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Common
    '=                  (scheme (fn-of [(s-var 'a) (s-var 'a)] BOOLEAN))
@@ -645,9 +643,7 @@
    'zero?              (scheme (fn-of [(s-var 'a)] BOOLEAN) {'a #{:number}})
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Text
-   'str                {:type   :scheme
-                        :s-vars ['t]
-                        :body   (fn-of [(s-var 't)] STRING)}
+   'str                (scheme (fn-of [(s-var 't)] STRING))
    `int->char          (fn-of [INT] CHAR)
    `whitespace?        (unary-pred CHAR)
    `digit?             (unary-pred CHAR)
@@ -679,7 +675,7 @@
    'split-str-on-char  (fn-of [STRING CHAR] (vector-of STRING))
    `split-str-on-ws    (fn-of [STRING] (vector-of STRING))
   ;;  'empty-str?         (unary-pred STRING)
-   `str/includes?      (binary-pred STRING)
+  ;;  `str/includes?      (binary-pred STRING)
   ;;  `char-in?           (fn-of [STRING CHAR] BOOLEAN)
   ;;  'index-of-char      (fn-of [STRING CHAR] INT)
   ;;  'index-of-str       (fn-of [STRING STRING] INT)
@@ -768,7 +764,8 @@
    'empty?             (scheme (fn-of [(s-var 'a)] BOOLEAN) {'a #{:countable}})
    `in?                {:type :overloaded
                         :alternatives [(scheme (fn-of [(vector-of (s-var 'a)) (s-var 'a)] BOOLEAN))
-                                       (fn-of [STRING CHAR] BOOLEAN)]}
+                                       (fn-of [STRING CHAR] BOOLEAN)
+                                       (binary-pred STRING)]} ; [!] to-do - add str handling to func
    `index-of           (scheme (fn-of [(s-var 'c) (s-var 'a)] INT) {'c #{:indexable} 'a #{:stringable}}) ; add typeclass for strings + chars  
    ; [!] contains? may need to be overloaded
    'contains?          (scheme (fn-of [(s-var 'c) (s-var 'a)] BOOLEAN) {'c #{:keyable}}) ; exclude strings and vecs 
@@ -928,9 +925,7 @@
   ;;  `safe-nth           {:type   :scheme
   ;;                       :s-vars ['a]
   ;;                       :body   (fn-of [(vector-of (s-var 'a)) INT] (s-var 'a))}
-   'nth-or-else        {:type   :scheme
-                        :s-vars ['a]
-                        :body   (fn-of [(vector-of (s-var 'a)) INT (s-var 'a)] (s-var 'a))}
+   'nth-or-else        (scheme (fn-of [(vector-of (s-var 'a)) INT (s-var 'a)] (s-var 'a)))
   ;;  `reversev           {:type   :scheme
   ;;                       :s-vars ['a]
   ;;                       :body   (fn-of [(vector-of (s-var 'a))] (vector-of (s-var 'a)))}
@@ -943,15 +938,9 @@
   ;;  `index-of           {:type   :scheme
   ;;                       :s-vars ['a]
   ;;                       :body   (fn-of [(vector-of (s-var 'a)) (s-var 'a)] INT)}
-   `occurrences-of     {:type   :scheme
-                        :s-vars ['a]
-                        :body   (fn-of [(vector-of (s-var 'a)) (s-var 'a)] INT)}
-   `safe-assoc-nth     {:type   :scheme
-                        :s-vars ['a]
-                        :body   (fn-of [(vector-of (s-var 'a))
-                                        INT
-                                        (s-var 'a)]
-                                       (vector-of (s-var 'a)))}
+   `occurrences-of     (scheme (fn-of [(vector-of (s-var 'a)) (s-var 'a)] INT))
+   `safe-assoc-nth     (scheme (fn-of [(vector-of (s-var 'a)) INT (s-var 'a)]
+                                      (vector-of (s-var 'a))))
   ;;  `replacev           {:type   :scheme
   ;;                       :s-vars ['a]
   ;;                       :body   (fn-of [(vector-of (s-var 'a))
@@ -1145,18 +1134,10 @@
    
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Printing & Side Effects
-   'do2                {:type   :scheme
-                        :s-vars ['a]
-                        :body   (fn-of [NIL (s-var 'a)] (s-var 'a))}
-   'do3                {:type   :scheme
-                        :s-vars ['a]
-                        :body   (fn-of [NIL NIL (s-var 'a)] (s-var 'a))}
-   'print              {:type   :scheme
-                        :s-vars ['a]
-                        :body   (fn-of [(s-var 'a)] NIL)}
-   'println            {:type   :scheme
-                        :s-vars ['a]
-                        :body   (fn-of [(s-var 'a)] NIL)}})
+   'do2                (scheme (fn-of [NIL (s-var 'a)] (s-var 'a)))
+   'do3                (scheme (fn-of [NIL NIL (s-var 'a)] (s-var 'a)))
+   'print              (scheme (fn-of [(s-var 'a)] NIL))
+   'println            (scheme (fn-of [(s-var 'a)] NIL))})
 
 (def dealiases
   '{->map1            hash-map
