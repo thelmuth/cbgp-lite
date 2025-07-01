@@ -738,7 +738,7 @@
                                                       (vector-of (s-var 'a)))) ; map-str      
                                        (scheme (fn-of [(fn-of [(s-var 'a)] (s-var 'b))
                                                        (set-of (s-var 'a))]
-                                                      (vector-of (s-var 'b)))) ; map-set? [!] to-do: make map-set return a vec
+                                                      (vector-of (s-var 'b)))) ; map-set? 
                                        (scheme (fn-of [(fn-of [(tuple-of (s-var 'k) (s-var 'v))] (s-var 'e))
                                                        (map-of (s-var 'k) (s-var 'v))]
                                                       (vector-of (s-var 'e)))) ; map-map
@@ -827,15 +827,15 @@
                                                       (s-var 'a))) ; reduce-vec
                                        (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'a)] (s-var 'a))
                                                        (set-of (s-var 'a))]
-                                                      (s-var 'a)))
+                                                      (s-var 'a))) ;;reduce-set
                                        (scheme (fn-of [(fn-of [(tuple-of (s-var 'k) (s-var 'v))
                                                                (tuple-of (s-var 'k) (s-var 'v))]
                                                               (tuple-of (s-var 'k) (s-var 'v)))
                                                        (map-of (s-var 'k) (s-var 'v))]
                                                       (tuple-of (s-var 'k) (s-var 'v)))) ; reduce-map
-                                       (scheme (fn-of [(fn-of [CHAR CHAR] CHAR)
-                                                       STRING]
-                                                      CHAR)) ; reduce-str
+                                      ;;  (scheme (fn-of [(fn-of [CHAR CHAR] CHAR)
+                                      ;;                  STRING]
+                                      ;;                 CHAR)) ; reduce-str
                                        ]}
    'fold               {:type :overloaded
                         :alternatives [(scheme (fn-of [(fn-of [(s-var 'b) (s-var 'a)] (s-var 'b))
@@ -852,18 +852,19 @@
                                                        (s-var 'r)
                                                        (map-of (s-var 'k) (s-var 'v))]
                                                       (s-var 'r))) ; fold-map
-                                       (scheme (fn-of [(fn-of [(s-var 'a) CHAR] (s-var 'a))
-                                                       (s-var 'a)
-                                                       STRING]
-                                                      (s-var 'a))) ; fold-str
+                                      ;;  (scheme (fn-of [(fn-of [(s-var 'a) CHAR] (s-var 'a))
+                                      ;;                  (s-var 'a)
+                                      ;;                  STRING]
+                                      ;;                 (s-var 'a))) ; fold-str
                                        ]}
    `mapcat'            {:type :overloaded
                        :alternatives [(scheme (fn-of [(fn-of [(s-var 'a)] (vector-of (s-var 'b)))
                                                       (vector-of (s-var 'a))]
                                                      (vector-of (s-var 'b))))
-                                      (scheme (fn-of [(fn-of [CHAR] (vector-of (s-var 'a)))
-                                                      STRING]
-                                                     (vector-of (s-var 'a))))]}
+                                      ;; (scheme (fn-of [(fn-of [CHAR] (vector-of (s-var 'a)))
+                                      ;;                 STRING]
+                                      ;;                (vector-of (s-var 'a))))
+                                      ]}
 
 ;;;;;;; string-vec functions; organize later
    `safe-nth          {:type :overloaded
