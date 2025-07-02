@@ -581,16 +581,16 @@
   ;;                                      (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
   ;;                                     (fn-of [(s-var 'a) (s-var 'b)] (s-var 'e))))
    'partial                  {:type :overloaded
-                              :alternatives [(scheme (fn-of [(fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))
-                                                             (s-var 'a)]
-                                                            (fn-of [(s-var 'b)] (s-var 'c))))
-                                             (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'b) (s-var 'c)] (s-var 'd))
-                                                             (s-var 'a)]
-                                                            (fn-of [(s-var 'b) (s-var 'c)] (s-var 'd))))
-                                             (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'b) (s-var 'c)] (s-var 'd))
+                              :alternatives [(scheme (fn-of [(fn-of [(s-var 'a) (s-var 'b) (s-var 'c)] (s-var 'd)) ;; partial2-fn3 -- fn of 3 arguments, fixing the first 2 arguments
                                                              (s-var 'a)
                                                              (s-var 'b)]
-                                                            (fn-of [(s-var 'c)] (s-var 'd))))]}
+                                                            (fn-of [(s-var 'c)] (s-var 'd))))
+                                             (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'b) (s-var 'c)] (s-var 'd)) ;; partial1-fn3 -- fn of 3 arguments, fixing the first argument
+                                                             (s-var 'a)]
+                                                            (fn-of [(s-var 'b) (s-var 'c)] (s-var 'd))))
+                                             (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'b)] (s-var 'c)) ;; partial1-fn2 -- fn of 2 arguments, fixing the first argument
+                                                             (s-var 'a)]
+                                                            (fn-of [(s-var 'b)] (s-var 'c))))]}
   ;;  'partial1-fn2       (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))
   ;;                                      (s-var 'a)]
   ;;                                     (fn-of [(s-var 'b)] (s-var 'c))))

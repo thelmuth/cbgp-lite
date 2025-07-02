@@ -857,35 +857,35 @@
                (str "Hello world!" newl)))))))
 
 (deftest replace-space-with-newline-test
-  (let [{::c/keys [ast type]} (:ast (c/push->ast {:push      [{:gene :lit :val \newline :type {:type 'char?}}
-                                                              {:gene :lit :val \space :type {:type 'char?}}
-                                                              {:gene :local :idx 0}
-                                                              {:gene :var :name `lib/replace'}
-                                                              {:gene :apply}
-                                                              {:gene :let}
-                                                              [;; This vector contains the body of the `let`
+  (let [{::c/keys [ast type]}
+        (:ast (c/push->ast {:push      [{:gene :lit :val \newline :type {:type 'char?}}
+                                        {:gene :lit :val \space :type {:type 'char?}}
+                                        {:gene :local :idx 0}
+                                        {:gene :var :name `lib/replace'}
+                                        {:gene :apply}
+                                        {:gene :let}
+                                        [;; This vector contains the body of the `let`
                                                          ;; Starting with the second clause of the `do`
-                                                               {:gene :lit :val \newline :type {:type 'char?}}
-                                                               {:gene :local :idx 1}
-                                                               {:gene :var :name `lib/remove-element}
-                                                               {:gene :apply}
-                                                               {:gene :var :name 'count}
-                                                               {:gene :apply}
+                                         {:gene :lit :val \newline :type {:type 'char?}}
+                                         {:gene :local :idx 1}
+                                         {:gene :var :name `lib/remove-element}
+                                         {:gene :apply}
+                                         {:gene :var :name 'count}
+                                         {:gene :apply}
                                                          ;; Followed by the first clause of the `do`
-                                                               {:gene :local :idx 1}
-                                                               {:gene :var :name 'println}
-                                                               {:gene :apply}
+                                         {:gene :local :idx 1}
+                                         {:gene :var :name 'println}
+                                         {:gene :apply}
                                                          ;; Invoke the do
-                                                               {:gene :var :name 'do2}
-                                                               {:gene :apply}]]
-                                                  :locals    ['in1]
-                                                  :ret-type  {:type 'int?}
-                                                  :type-env  (assoc lib/type-env
-                                                                    'in1 {:type 'string?})
-                                                  :dealiases lib/dealiases}))
+                                         {:gene :var :name 'do2}
+                                         {:gene :apply}]]
+                            :locals    ['in1]
+                            :ret-type  {:type 'int?}
+                            :type-env  (assoc lib/type-env
+                                              'in1 {:type 'string?})
+                            :dealiases lib/dealiases}))
         _ (is (= type {:type 'int?}))
         form (a/ast->form ast)
-        _ (println "FORM:" form)
         _ (is
            #_{:clj-kondo/ignore [:unresolved-symbol :redundant-do]}
            (matches? (let [?v (erp12.cbgp-lite.lang.lib/replace' in1 \space \newline)]
@@ -899,7 +899,7 @@
       (is (= (func "a bat CANDLE") 10))
       (binding [*out* newl]
         (println)
-       (is (= (str s) (str "a\nbat\nCANDLE" newl)))))))
+        (is (= (str s) (str "a\nbat\nCANDLE" newl)))))))
 
 (deftest polymorphic-output-test
   (let [{::c/keys [ast type]} (:ast

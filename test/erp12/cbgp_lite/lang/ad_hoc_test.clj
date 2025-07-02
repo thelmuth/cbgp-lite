@@ -25,7 +25,7 @@
                                                     :dealiases lib/dealiases}))
           _ (is (= {:type :vector :child {:type 'string?}} type))
           form (a/ast->form ast)
-          _ (println "FORM: " form)
+          _ (when verbose (println "FORM: " form))
           func (eval `(fn [~'in1 ~'in2] ~form))]
       (is (= ["good " "orning!"] (func "good morning!" "m")))))
   
@@ -42,7 +42,7 @@
                                                     :dealiases lib/dealiases}))
           _ (is (= {:type :vector :child {:type 'string?}} type))
           form (a/ast->form ast)
-          _ (println "FORM: " form)
+          _ (when verbose (println "FORM: " form))
           func (eval `(fn [~'in1 ~'in2] ~form))]
       (is (= ["good " "orning!"] (func "good morning!" \m)))))
   
@@ -57,7 +57,7 @@
                                                     :dealiases lib/dealiases}))
           _ (is (= {:type :vector :child {:type 'string?}} type))
           form (a/ast->form ast)
-          _ (println "FORM: " form)
+          _ (when verbose (println "FORM: " form))
           func (eval `(fn [~'in1] ~form))]
       (is (= ["good" "morning!"] (func "good morning!")))))
   )
@@ -1315,3 +1315,187 @@
           _ (when verbose (println "FORM: " form))
           func (eval `(fn [] ~form))]
       (is (= [208 206 140 224 215 133 218 206] (func))))))
+
+;; Functional Programming
+;; comp (comp2-fn1, comp3-fn1, comp2-fn2, comp3-fn2), partial
+(deftest comp-test
+  (testing "comp2-fn1-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :local :idx 0}
+                                                    {:gene :var :name 'inc}
+                                                    {:gene :var :name `lib/square}
+                                                    {:gene :var :name 'comp}
+                                                    {:gene :apply}
+                                                    {:gene :apply}]
+                                        :locals    ['in1]
+                                        :ret-type  (lib/s-var 'a)
+                                        :type-env  (assoc lib/type-env
+                                                          'in1 {:type 'int?})
+                                        :dealiases lib/dealiases}))
+          _ (is (= 'int? (:type type)))
+          _ (when verbose (println "REAL-AST: " ast))
+          form (a/ast->form ast)
+          _ (when verbose (println "FORM: " form))
+          func (eval `(fn [~'in1] ~form))]
+      (is (= 25 (func 4)))))
+  
+  (testing "comp3-fn1-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :local :idx 0}
+                                                    {:gene :var :name `lib/square}
+                                                    {:gene :var :name 'inc}
+                                                    {:gene :var :name 'inc}
+                                                    {:gene :var :name 'comp}
+                                                    {:gene :apply}
+                                                    {:gene :apply}]
+                                        :locals    ['in1]
+                                        :ret-type  (lib/s-var 'a)
+                                        :type-env  (assoc lib/type-env
+                                                          'in1 {:type 'int?})
+                                        :dealiases lib/dealiases}))
+          _ (is (= 'int? (:type type)))
+          _ (when verbose (println "REAL-AST: " ast))
+          form (a/ast->form ast)
+          _ (when verbose (println "FORM: " form))
+          func (eval `(fn [~'in1] ~form))]
+      (is (= 18 (func 4)))))
+  
+  (testing "comp2-fn2-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :local :idx 1}
+                                                    {:gene :local :idx 0}
+                                                    {:gene :var :name '+}
+                                                    {:gene :var :name 'dec}
+                                                    {:gene :var :name 'comp}
+                                                    {:gene :apply}
+                                                    {:gene :apply}]
+                                        :locals    ['in1 'in2 'in3]
+                                        :ret-type  (lib/s-var 'a)
+                                        :type-env  (assoc lib/type-env
+                                                          'in1 {:type 'int?}
+                                                          'in2 {:type 'int?})
+                                        :dealiases lib/dealiases}))
+          _ (is (= 'int? (:type type)))
+          _ (when verbose (println "REAL-AST: " ast))
+          form (a/ast->form ast)
+          _ (when verbose (println "FORM: " form))
+          func (eval `(fn [~'in1 ~'in2] ~form))]
+      (is (= 14 (func 10 5)))))
+
+  (testing "comp3-fn2-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :local :idx 2}
+                                                    {:gene :local :idx 1}
+                                                    {:gene :local :idx 0}
+                                                    {:gene :var :name '+}
+                                                    {:gene :var :name 'dec}
+                                                    {:gene :var :name 'str}
+                                                    {:gene :var :name 'comp}
+                                                    {:gene :apply}
+                                                    {:gene :apply}]
+                                        :locals    ['in1 'in2 'in3]
+                                        :ret-type  (lib/s-var 'a)
+                                        :type-env  (assoc lib/type-env
+                                                          'in1 {:type 'int?}
+                                                          'in2 {:type 'int?}
+                                                          'in3 {:type 'int?})
+                                        :dealiases lib/dealiases}))
+          _ (is (= 'string? (:type type)))
+          _ (when verbose (println "REAL-AST: " ast))
+          form (a/ast->form ast)
+          _ (when verbose (println "FORM: " form))
+          func (eval `(fn [~'in1 ~'in2 ~'in3] ~form))]
+      (is (= "14" (func 10 5 1))))))
+
+(deftest partial-test
+  ; partial (partial1-fn2, partial1-fn3, partial2-fn3)
+  ; target form: ((partial * 100) 5)
+  (testing "partial1-fn2-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :local :idx 0}
+                                                    {:gene :lit :val 100 :type {:type 'int?}}
+                                                    {:gene :var :name '*}
+                                                    {:gene :var :name 'partial}
+                                                    {:gene :apply}
+                                                    {:gene :apply}]
+                                        :locals    ['in1]
+                                        :ret-type  {:type 'int?}
+                                        :type-env  (assoc lib/type-env
+                                                          'in1 {:type 'int?})
+                                        :dealiases lib/dealiases}))
+          _ (is (= 'int? (:type type)))
+          _ (when verbose (println "REAL-AST: " ast))
+          form (a/ast->form ast)
+          _ (when verbose (println "FORM: " form))
+          func (eval `(fn [~'in1] ~form))]
+      (is (= 500 (func 5)))))
+
+    ; target form: ((partial assoc {\a 1 \b 2 \c 3}) \z 42)
+  (testing "partial1-fn3-test"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :local :idx 0}
+                                                    {:gene :lit :val {\a 1 \b 2 \c 3} :type {:type :map-of :key {:type 'char?} :value {:type 'int?}}}
+                                                    {:gene :var :name 'assoc}
+                                                    {:gene :var :name 'partial}
+                                                    {:gene :apply}
+                                                    {:gene :lit :val \z :type {:type 'char?}}
+                                                    {:gene :apply}]
+                                        :locals    ['in1]
+                                        :ret-type  {:type :map-of :key {:type 'char?} :value {:type 'int?}}
+                                        :type-env  (assoc lib/type-env
+                                                          'in1 {:type 'int?})
+                                        :dealiases lib/dealiases}))
+          _ (is (= :map-of (:type type)))
+          _ (when verbose (println "REAL-AST: " ast))
+          form (a/ast->form ast)
+          _ (when verbose (println "FORM: " form))
+          func (eval `(fn [~'in1] ~form))]
+      (is (= '((partial assoc {\a 1, \b 2, \c 3}) \z in1) form))
+      (is (= {\a 1 \b 2 \c 3 \z 42} (func 42)))))
+
+ ; target form: ((partial assoc {\a 1 \b 2 \c 3} \z) 42)
+  (testing "partial2-fn3-test-A"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :local :idx 0}
+                                                    {:gene :lit :val \z :type {:type 'char?}}
+                                                    {:gene :lit :val {\a 1 \b 2 \c 3} :type {:type :map-of :key {:type 'char?} :value {:type 'int?}}}
+                                                    {:gene :var :name 'assoc}
+                                                    {:gene :var :name 'partial}
+                                                    {:gene :apply}
+                                                    {:gene :apply}]
+                                        :locals    ['in1]
+                                        :ret-type  {:type :map-of :key {:type 'char?} :value {:type 'int?}}
+                                        :type-env  (assoc lib/type-env
+                                                          'in1 {:type 'int?})
+                                        :dealiases lib/dealiases}))
+          _ (is (= :map-of (:type type)))
+          _ (when verbose (println "REAL-AST: " ast))
+          form (a/ast->form ast)
+          _ (when verbose (println "FORM: " form))
+          func (eval `(fn [~'in1] ~form))]
+      (is (= '((partial assoc {\a 1, \b 2, \c 3} \z) in1) form))
+      (is (= {\a 1 \b 2 \c 3 \z 42} (func 42)))))
+  
+  ; target form: ((partial test3 param1 param2) param3)
+  ;          eg. ((partial assoc {:a 1 :b 2 :c 3} :z) 42)
+  (testing "partial2-fn3-test-B"
+    (let [{::c/keys [ast type]} (:ast (c/push->ast
+                                       {:push      [{:gene :local :idx 1}
+                                                    {:gene :local :idx 0}
+                                                    {:gene :lit :val {0 42 1 2999 2 108} :type {:type :map-of :key {:type 'int?} :value {:type 'int?}}}
+                                                    {:gene :var :name 'assoc}
+                                                    {:gene :var :name 'partial}
+                                                    {:gene :apply}
+                                                    {:gene :apply}]
+                                        :locals    ['in1 'in2]
+                                        :ret-type  {:type :map-of :key {:type 'int?} :value {:type 'int?}}
+                                        :type-env  (assoc lib/type-env
+                                                          'in1 {:type 'int?}
+                                                          'in2 {:type 'int?})
+                                        :dealiases lib/dealiases}))
+          _ (is (= :map-of (:type type)))
+          _ (when verbose (println "REAL-AST: " ast))
+          form (a/ast->form ast)
+          _ (when verbose (println "FORM: " form))
+          func (eval `(fn [~'in1 ~'in2] ~form))]
+      (is (= {0 42 1 2999 2 108 3 42} (func 3 42))))))
