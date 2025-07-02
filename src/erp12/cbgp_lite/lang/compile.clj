@@ -273,10 +273,10 @@
                  (let [
                       ;;  _ (println "AST:" ast)
                       ;;  _ (println "Alts: " (get-in ast [::type :alternatives]))
-                       mapped-alts (map (fn [alternative-schema]
+                       mapped-alts (reverse (map (fn [alternative-schema]
                                           {:ast {::ast (get ast ::ast) ::type alternative-schema}
                                            :state (assoc state :asts (concat acc (rest remaining)))}) 
-                                        (get-in ast [::type :alternatives]))
+                                        (get-in ast [::type :alternatives])))
                       ;;  _ (println "mapped-alts:" mapped-alts)
                        output (concat funclist mapped-alts)
                       ;;  _ (println "Output:" output)
