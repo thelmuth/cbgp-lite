@@ -867,7 +867,7 @@
                                                          ;; Starting with the second clause of the `do`
                                                                {:gene :lit :val \newline :type {:type 'char?}}
                                                                {:gene :local :idx 1}
-                                                               {:gene :var :name `lib/replace'}
+                                                               {:gene :var :name `lib/remove-element}
                                                                {:gene :apply}
                                                                {:gene :var :name 'count}
                                                                {:gene :apply}
@@ -885,17 +885,21 @@
                                                   :dealiases lib/dealiases}))
         _ (is (= type {:type 'int?}))
         form (a/ast->form ast)
+        _ (println "FORM:" form)
         _ (is
            #_{:clj-kondo/ignore [:unresolved-symbol :redundant-do]}
            (matches? (let [?v (erp12.cbgp-lite.lang.lib/replace' in1 \space \newline)]
                        (do (println ?v)
-                           (count (erp12.cbgp-lite.lang.lib/remove ?v \newline))))
+                           (count (erp12.cbgp-lite.lang.lib/remove-element ?v \newline))))
                      form))
         func (eval `(fn [~'in1] ~form))
-        s (new StringWriter)]
+        s (new StringWriter)
+        newl (new StringWriter)]
     (binding [*out* s]
       (is (= (func "a bat CANDLE") 10))
-      (is (= (str s) "a\nbat\nCANDLE\n")))))
+      (binding [*out* newl]
+        (println)
+       (is (= (str s) (str "a\nbat\nCANDLE" newl)))))))
 
 (deftest polymorphic-output-test
   (let [{::c/keys [ast type]} (:ast
