@@ -45,20 +45,18 @@
       (is (= ["good " "orning!"] (func "good morning!" \m)))))
   
     (testing "split-str-on-ws"
-    (let [{::c/keys [ast type]} (:ast (c/push->ast {:push      [{:gene :local :idx 1}
-                                                                {:gene :local :idx 0}
-                                                                {:gene :var :name `lib/split-str}
+    (let [{::c/keys [ast type]} (:ast (c/push->ast {:push      [{:gene :local :idx 0}
+                                                                {:gene :var :name `lib/split-str-on-ws}
                                                                 {:gene :apply}]
-                                                    :locals    ['in1 'in2]
+                                                    :locals    ['in1]
                                                     :ret-type  {:type :vector :child {:type 'string?}}
                                                     :type-env  (assoc lib/type-env
-                                                                      'in1 {:type 'string?}
-                                                                      'in2 {:type :s-var :sym 't :typeclasses #{:stringable}})
+                                                                      'in1 {:type 'string?})
                                                     :dealiases lib/dealiases}))
           _ (is (= {:type :vector :child {:type 'string?}} type))
           form (a/ast->form ast)
           _ (println "FORM: " form)
-          func (eval `(fn [~'in1 ~'in2] ~form))]
+          func (eval `(fn [~'in1] ~form))]
       (is (= ["good" "morning!"] (func "good morning!")))))
   )
 

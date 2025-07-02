@@ -208,20 +208,13 @@
 ;;   [s]
 ;;   (str/join (sort s)))
 
-;; (defn split-str
-;;   [s on]
-;;   (str/split s (str-to-pattern on)))
-
-;; (defn split-str-on-ws
-;;   [s]
-;;   (str/split (str/trim s) #"\s+"))
-
 (defn split-str
   [s on]
-  (if (nil? on)
-    (str/split (str/trim s) #"\s+") 
-    (str/split s (str-to-pattern on))
-    ))
+  (str/split s (str-to-pattern on)))
+
+(defn split-str-on-ws
+  [s]
+  (str/split (str/trim s) #"\s+"))
 
 ;; (defn replace-char
 ;;   [s c1 c2]
@@ -686,11 +679,10 @@
   ;;  'string->chars      (fn-of [STRING] (vector-of CHAR)) ; see 'vec
   ;;  `split-str          (fn-of [STRING STRING] (vector-of STRING))
   ;;  'split-str-on-char  (fn-of [STRING CHAR] (vector-of STRING))
-  ;;  `split-str-on-ws    (fn-of [STRING] (vector-of STRING))
+   `split-str-on-ws    (fn-of [STRING] (vector-of STRING))
    `split-str          {:type :overloaded
                               :alternatives [(fn-of [STRING CHAR] (vector-of STRING))
                                              (fn-of [STRING STRING] (vector-of STRING))
-                                             (fn-of [STRING] (vector-of STRING))
                                              ]}
   ;;  'empty-str?         (unary-pred STRING)
   ;;  `str/includes?      (binary-pred STRING)
