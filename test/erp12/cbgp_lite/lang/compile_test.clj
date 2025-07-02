@@ -847,35 +847,16 @@
         form (a/ast->form ast)
         _ (is (= form '(do (println "Hello world!") 0)))
         func (eval `(fn [] ~form))
-        s (new StringWriter)]
+        s (new StringWriter)
+        newl (new StringWriter)]
     (binding [*out* s]
       (is (= (func) 0))
-      #_(is (= (str s) "Hello world!\n")))))
+      (is (= (str s) 
+             (binding [*out* newl]
+               (println)
+               (str "Hello world!" newl)))))))
 
-
-(deftest first-test
-  (let [{::c/keys [ast type]} (:ast (c/push->ast
-                                     {:push      [{:gene :lit :val 5555 :type {:type 'int?}}
-                                                  {:gene :lit :val 2999 :type {:type 'int?}}
-                                                  {:gene :local :idx 0}
-                                                  {:gene :var :name 'first}
-                                                  {:gene :apply}]
-                                      :locals    ['in1]
-                                      :ret-type  {:type 'int?}
-                                      :type-env  (assoc lib/type-env
-                                                        'in1 {:type :vector :child {:type 'int?}})
-                                      :dealiases lib/dealiases}))
-        _ (is (= {:type 'int?} type))
-        _ (println "REAL-AST: " ast)
-        form (a/ast->form ast)
-        _ (println "FORM: " form)
-        func (eval `(fn [~'in1] ~form))]
-    (is (= 72 (func [72 38 39 99 0 2 923212])))
-    (is (= 1 (func [1 3 4 5 10])))
-    (is (= 888 (func [888])))
-    (is (= nil (func [])))))
-
-#_(deftest replace-space-with-newline-test
+(deftest replace-space-with-newline-test
   (let [{::c/keys [ast type]} (:ast (c/push->ast {:push      [{:gene :lit :val \newline :type {:type 'char?}}
                                                               {:gene :lit :val \space :type {:type 'char?}}
                                                               {:gene :local :idx 0}
@@ -914,7 +895,7 @@
         s (new StringWriter)]
     (binding [*out* s]
       (is (= (func "a bat CANDLE") 10))
-      #_(is (= (str s) "a\nbat\nCANDLE\n")))))
+      (is (= (str s) "a\nbat\nCANDLE\n")))))
 
 (deftest polymorphic-output-test
   (let [{::c/keys [ast type]} (:ast
