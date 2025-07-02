@@ -246,8 +246,8 @@
    a map containing the function ast as well as the state with that function popped is added to a list.
    At the end, a list containing the maps of the functions and states with the function popped is returned."
   [state]
-  ;(println "-------pop-all-func-asts------------")
-  ;(println "State:" state)
+  ;; (println "-------pop-all-func-asts------------")
+  ;; (println "State:" state)
   (loop [remaining (:asts state)
          acc []
          funclist (list)]
@@ -273,13 +273,13 @@
                  (let [
                       ;;  _ (println "AST:" ast)
                       ;;  _ (println "Alts: " (get-in ast [::type :alternatives]))
-                       mapped-alts (map (fn [alternative-schema]
+                       mapped-alts (reverse (map (fn [alternative-schema]
                                           {:ast {::ast (get ast ::ast) ::type alternative-schema}
                                            :state (assoc state :asts (concat acc (rest remaining)))}) 
-                                        (get-in ast [::type :alternatives]))
-                       ;_ (println "mapped-alts:" mapped-alts)
+                                        (get-in ast [::type :alternatives])))
+                      ;;  _ (println "mapped-alts:" mapped-alts)
                        output (concat funclist mapped-alts)
-                       ;_ (println "Output:" output)
+                      ;;  _ (println "Output:" output)
                        ]
                    output)
                  :else funclist))))))
