@@ -559,20 +559,20 @@
   {;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; FP
    'comp                  {:type :overloaded
-                             :alternatives [(scheme (fn-of [(fn-of [(s-var 'b)] (s-var 'c))
-                                                            (fn-of [(s-var 'a)] (s-var 'b))]
-                                                           (fn-of [(s-var 'a)] (s-var 'c))))
+                             :alternatives [(scheme (fn-of [(fn-of [(s-var 'd)] (s-var 'e))
+                                                            (fn-of [(s-var 'c)] (s-var 'd))
+                                                            (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
+                                                           (fn-of [(s-var 'a) (s-var 'b)] (s-var 'e))))
+                                            (scheme (fn-of [(fn-of [(s-var 'c)] (s-var 'd))
+                                                            (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
+                                                           (fn-of [(s-var 'a) (s-var 'b)] (s-var 'd))))
                                             (scheme (fn-of [(fn-of [(s-var 'c)] (s-var 'd))
                                                             (fn-of [(s-var 'b)] (s-var 'c))
                                                             (fn-of [(s-var 'a)] (s-var 'b))]
                                                            (fn-of [(s-var 'a)] (s-var 'd))))
-                                            (scheme (fn-of [(fn-of [(s-var 'c)] (s-var 'd))
-                                                            (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
-                                                           (fn-of [(s-var 'a) (s-var 'b)] (s-var 'd))))
-                                            (scheme (fn-of [(fn-of [(s-var 'd)] (s-var 'e))
-                                                            (fn-of [(s-var 'c)] (s-var 'd))
-                                                            (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
-                                                           (fn-of [(s-var 'a) (s-var 'b)] (s-var 'e))))]}
+                                            (scheme (fn-of [(fn-of [(s-var 'b)] (s-var 'c))
+                                                           (fn-of [(s-var 'a)] (s-var 'b))]
+                                                          (fn-of [(s-var 'a)] (s-var 'c))))]}
   ;;  'comp2-fn1          (scheme (fn-of [(fn-of [(s-var 'b)] (s-var 'c))
   ;;                                      (fn-of [(s-var 'a)] (s-var 'b))]
   ;;                                     (fn-of [(s-var 'a)] (s-var 'c))))
@@ -588,16 +588,16 @@
   ;;                                      (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
   ;;                                     (fn-of [(s-var 'a) (s-var 'b)] (s-var 'e))))
    'partial                  {:type :overloaded
-                              :alternatives [(scheme (fn-of [(fn-of [(s-var 'a) (s-var 'b) (s-var 'c)] (s-var 'd))
-                                                             (s-var 'a)
-                                                             (s-var 'b)]
-                                                            (fn-of [(s-var 'c)] (s-var 'd))))
+                              :alternatives [(scheme (fn-of [(fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))
+                                                             (s-var 'a)]
+                                                            (fn-of [(s-var 'b)] (s-var 'c))))
                                              (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'b) (s-var 'c)] (s-var 'd))
                                                              (s-var 'a)]
                                                             (fn-of [(s-var 'b) (s-var 'c)] (s-var 'd))))
-                                             (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))
-                                                             (s-var 'a)]
-                                                            (fn-of [(s-var 'b)] (s-var 'c))))]}
+                                             (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'b) (s-var 'c)] (s-var 'd))
+                                                             (s-var 'a)
+                                                             (s-var 'b)]
+                                                            (fn-of [(s-var 'c)] (s-var 'd))))]}
   ;;  'partial1-fn2       (scheme (fn-of [(fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))
   ;;                                      (s-var 'a)]
   ;;                                     (fn-of [(s-var 'b)] (s-var 'c))))
@@ -688,9 +688,10 @@
   ;;  'split-str-on-char  (fn-of [STRING CHAR] (vector-of STRING))
   ;;  `split-str-on-ws    (fn-of [STRING] (vector-of STRING))
    `split-str          {:type :overloaded
-                              :alternatives [(fn-of [STRING] (vector-of STRING))
+                              :alternatives [(fn-of [STRING CHAR] (vector-of STRING))
                                              (fn-of [STRING STRING] (vector-of STRING))
-                                             (fn-of [STRING CHAR] (vector-of STRING))]}
+                                             (fn-of [STRING] (vector-of STRING))
+                                             ]}
   ;;  'empty-str?         (unary-pred STRING)
   ;;  `str/includes?      (binary-pred STRING)
   ;;  `char-in?           (fn-of [STRING CHAR] BOOLEAN)

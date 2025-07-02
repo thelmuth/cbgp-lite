@@ -13,8 +13,6 @@
 ;; comp (comp2-fn1, comp3-fn1, comp2-fn2, comp3-fn2), partial
 (deftest comp-test
   (testing "comp2-fn1-test"
-    (println)
-    (println "---STARTING COMP TEST---")
     (let [{::c/keys [ast type]} (:ast (c/push->ast
                                        {:push      [{:gene :local :idx 0}
                                                     {:gene :var :name 'inc}
@@ -35,8 +33,6 @@
       (is (= 25 (func 4)))))
   
   (testing "comp3-fn1-test"
-    (println)
-    (println "---STARTING COMP TEST 2---")
     (let [{::c/keys [ast type]} (:ast (c/push->ast
                                        {:push      [{:gene :local :idx 0}
                                                     {:gene :var :name `lib/square}
@@ -58,8 +54,6 @@
       (is (= 18 (func 4)))))
   
   (testing "comp2-fn2-test"
-    (println)
-    (println "---STARTING COMP TEST 3---")
     (let [{::c/keys [ast type]} (:ast (c/push->ast
                                        {:push      [{:gene :local :idx 1}
                                                     {:gene :local :idx 0}
@@ -82,8 +76,6 @@
       (is (= 14 (func 10 5)))))
 
   (testing "comp3-fn2-test"
-    (println)
-    (println "---STARTING COMP TEST 4---")
     (let [{::c/keys [ast type]} (:ast (c/push->ast
                                        {:push      [{:gene :local :idx 2}
                                                     {:gene :local :idx 1}
@@ -113,8 +105,6 @@
   ; partial (partial1-fn2, partial1-fn3, partial2-fn3)
   ; target form: ((partial * 100) 5)
   (testing "partial1-fn2-test"
-    (println)
-    (println "---STARTING PARTIAL 1 TEST---")
     (let [{::c/keys [ast type]} (:ast (c/push->ast
                                        {:push      [{:gene :local :idx 0}
                                                     {:gene :lit :val 100 :type {:type 'int?}}
@@ -136,8 +126,6 @@
 
   ; target form: ((partial assoc {:a 1 :b 2 :c 3} :z) 42)
   (testing "partial1-fn3-test"
-    (println)
-    (println "---STARTING PARTIAL 2 TEST---")
     (let [{::c/keys [ast type]} (:ast (c/push->ast
                                        {:push      [{:gene :local :idx 0}
                                                     {:gene :lit :val \z :type {:type 'char?}}
@@ -161,8 +149,6 @@
   ; target form: ((partial test3 param1 param2) param3)
   ;          eg. ((partial assoc {:a 1 :b 2 :c 3} :z) 42)
   (testing "partial2-fn3-test"
-    (println)
-    (println "---STARTING PARTIAL 3 TEST---")
     (let [{::c/keys [ast type]} (:ast (c/push->ast
                                        {:push      [{:gene :local :idx 1}
                                                     {:gene :local :idx 0}
