@@ -100,7 +100,7 @@
                                     {:gene :local
                                      :idx 1}
                                     {:gene :var
-                                     :name 'int-mod}
+                                     :name 'mod}
                                     {:gene :apply}
                                     {:gene :lit
                                      :val 1
@@ -110,10 +110,10 @@
                                     {:gene :apply}
                                     {:gene :close}
                                     {:gene :var
-                                     :name 'filterv}
+                                     :name `lib/filter'}
                                     {:gene :apply}
                                     {:gene :var
-                                     :name 'count-vec}
+                                     :name 'count}
                                     {:gene :apply})}
 
       "digits" {:input->type {'input1 {:type 'int?}}
@@ -300,7 +300,7 @@
                                       {:gene :local
                                        :idx 1}
                                       {:gene :var
-                                       :name `lib/reversev}
+                                       :name `lib/reverse'}
                                       {:gene :apply}
                                       {:gene :var
                                        :name '=}
@@ -344,7 +344,7 @@
                                     :name 'double}
                                    {:gene :apply}
                                    {:gene :var
-                                    :name 'double-add}
+                                    :name '+}
                                    {:gene :apply}
                                    {:gene :var
                                     :name 'str}
@@ -426,7 +426,7 @@
                                                     {:gene :local
                                                      :idx 0}
                                                     {:gene :var
-                                                     :name `lib/replace-char}
+                                                     :name `lib/replace'}
                                                     {:gene :apply}
                                                     {:gene :let}
                                                     ;; Return
@@ -436,10 +436,10 @@
                                                     {:gene :local
                                                      :idx 1}
                                                     {:gene :var
-                                                     :name `lib/remove-char}
+                                                     :name `lib/remove-element}
                                                     {:gene :apply}
                                                     {:gene :var
-                                                     :name 'length}
+                                                     :name 'count}
                                                     {:gene :apply}
                                                     ;; Print
                                                     {:gene :local
@@ -674,9 +674,9 @@
                                         {:gene :local
                                          :idx 1}
                                         {:gene :var
-                                         :name 'int-add}
+                                         :name '+}
                                         {:gene :var
-                                         :name 'map2-vec}
+                                         :name `lib/map2v}
                                         {:gene :apply})}
 
    ; "wallis-pi"
@@ -943,21 +943,21 @@
                                    {:gene :local
                                     :idx 1}
                                    {:gene :var
-                                    :name 'int-quot}
+                                    :name 'quot}
                                    {:gene :apply}
                                    {:gene :var
-                                    :name 'int-sub}
+                                    :name '-}
                                    {:gene :apply}
                                    {:gene :close}
                                    ;; Map fn over input vector
                                    {:gene :var
-                                    :name 'map-vec}
+                                    :name 'mapv}
                                    {:gene :apply}
                                    ;; Sum the vector
                                    {:gene :var
-                                    :name 'int-add}
+                                    :name '+}
                                    {:gene :var
-                                    :name 'reduce-vec}
+                                    :name 'reduce}
                                    {:gene :apply})}
 
       "gcd" {:input->type {'input1 {:type 'int?}
@@ -1249,7 +1249,7 @@
   [{:keys [data-dir num-cases]}]
   (let [suite (problems {:penalty 1000})]
     (doseq [[problem-name task] (filter (fn [[_ task]] (contains? task :solution)) suite)]
-      (println "Starting" problem-name)
+      (println "\nStarting" problem-name)
       (let [factory    (i/make-evaluator (-> task
                                              task/enhance-task
                                              (assoc :evaluate-fn i/evaluate-full-behavior
@@ -1309,6 +1309,7 @@
   ;;      {:inputs [347099 142029], :output 1}
   ;;      {:inputs [902215 966305], :output 5}),
   ;;     :test ()}
+  
 
 
   )
