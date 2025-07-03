@@ -1,7 +1,7 @@
 (ns erp12.cbgp-lite.lang.schema-test
   (:require [clojure.test :refer [deftest is testing]]
-            [erp12.cbgp-lite.lang.schema :as sch]
-            [erp12.cbgp-lite.lang.lib :as lib]))
+            [erp12.cbgp-lite.lang.lib :as lib]
+            [erp12.cbgp-lite.lang.schema :as sch]))
 
 (deftest occurs?-test
   (is (sch/occurs? 'a {:op :local :name 'a}))
@@ -19,8 +19,8 @@
 
 (deftest schema-terms-test
   (testing "No Typeclasses"
-    (is (= #{:scheme :cat :=> :map-of :s-var} (sch/schema-terms (get lib/type-env 'get)))))
-  
+    (is (= #{:scheme :cat :=> :map-of :s-var} (sch/schema-terms (get lib/type-env 'get))))
+    (is (= #{:cat :=> 'char? 'boolean?} (sch/schema-terms (get lib/type-env `lib/digit?)))))
   (testing "Typeclasses")
-  
+
   (testing "Overloaded"))
