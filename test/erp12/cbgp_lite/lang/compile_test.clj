@@ -706,6 +706,49 @@
     (is (= 100.0 (func 0.0)))
     (is (= 101.0 (func 1.0)))))
 
+(deftest cant-add-int-and-double-test
+  (let [{::c/keys [ast type]} (:ast (c/push->ast {:push      [{:gene :lit :val 100.0 :type {:type 'double?}}
+                                                              {:gene :lit :val 26 :type {:type 'int?}}
+                                                              {:gene :var :name '+}
+                                                              {:gene :apply}]
+                                                  :locals    []
+                                                  :ret-type  {:type 'double?}
+                                                  :type-env  lib/type-env
+                                                  :dealiases lib/dealiases}))
+        _ (is (= type {:type 'double?}))
+        form (a/ast->form ast)
+        _ (is (= form 100.0))
+        func (eval `(fn [] ~form))]
+    (is (= 100.0 (func))))
+  (let [{::c/keys [ast type]} (:ast (c/push->ast {:push      [{:gene :lit :val 2.0 :type {:type 'double?}}
+                                                              {:gene :lit :val 26 :type {:type 'int?}}
+                                                              {:gene :lit :val 100.0 :type {:type 'double?}}
+                                                              {:gene :var :name '+}
+                                                              {:gene :apply}]
+                                                  :locals    []
+                                                  :ret-type  {:type 'double?}
+                                                  :type-env  lib/type-env
+                                                  :dealiases lib/dealiases}))
+        _ (is (= type {:type 'double? :typeclasses #{:number}}))
+        form (a/ast->form ast)
+        _ (is (= form '(+ 100.0 2.0)))
+        func (eval `(fn [] ~form))]
+    (is (= 102.0 (func))))
+  (let [{::c/keys [ast type]} (:ast (c/push->ast {:push      [{:gene :lit :val 2.0 :type {:type 'double?}}
+                                                              {:gene :lit :val 100.0 :type {:type 'double?}}
+                                                              {:gene :lit :val 26 :type {:type 'int?}}
+                                                              {:gene :var :name '+}
+                                                              {:gene :apply}]
+                                                  :locals    []
+                                                  :ret-type  {:type 'double?}
+                                                  :type-env  lib/type-env
+                                                  :dealiases lib/dealiases}))
+        _ (is (= type {:type 'double? :typeclasses #{:number}}))
+        form (a/ast->form ast)
+        _ (is (= form '(+ 100.0 2.0)))
+        func (eval `(fn [] ~form))]
+    (is (= 102.0 (func)))))
+
 (deftest conditional-logic-test
   ;; If input < 1000, return "small" else "large".
   (let [{::c/keys [ast type]} (:ast (c/push->ast {:push      [{:gene :lit :val "large" :type {:type 'string?}}
