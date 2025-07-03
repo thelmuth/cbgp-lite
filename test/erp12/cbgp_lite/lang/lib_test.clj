@@ -133,9 +133,9 @@
 
 (deftest lib-for-type-ctors-test
   (is (empty? (keys (l/lib-for-type-ctors #{'boolean?}))))
-  (is (= #{`l/max' `l/min' '* '+ '- 'abs 'dec 'inc 'mod 'quot `l/neg `l/pow `l/square}
+  (is (= #{'comp 'partial}
          (set (keys (l/lib-for-type-ctors #{:=>})))))
-  (is (= #{'= `l/and 'not= `l/>' `l/or 'if `l/>=' `l/<=' 'not `l/<' 'zero? 'contains? 'empty?}
+  (is (= #{'= `l/and 'not= `l/>' `l/or 'if `l/>=' `l/<=' 'not `l/<' `l/min' `l/max'}
          (set/difference (set (keys (l/lib-for-type-ctors #{:=> 'boolean?})))
                          (set (keys (l/lib-for-type-ctors #{:=>}))))))
 
@@ -188,7 +188,7 @@
              erp12.cbgp-lite.lang.lib/take')
          (sort
           (keys
-           (lib/lib-for-type-ctors #{'int? :vector :=>})))))
+           (l/lib-for-type-ctors #{'int? :vector :=>})))))
 
   (is (= '(->vector1 ->vector2
                      ->vector3
@@ -230,7 +230,7 @@
                      erp12.cbgp-lite.lang.lib/sortv-by)
          (sort
           (keys
-           (lib/lib-for-type-ctors #{:vector 'boolean? :=>})))))
+           (l/lib-for-type-ctors #{:vector 'boolean? :=>})))))
 
   (is (= '(= comp
              if
@@ -247,4 +247,4 @@
              erp12.cbgp-lite.lang.lib/or)
          (sort
           (keys
-           (lib/lib-for-type-ctors #{'boolean? :=>}))))))
+           (l/lib-for-type-ctors #{'boolean? :=>}))))))
