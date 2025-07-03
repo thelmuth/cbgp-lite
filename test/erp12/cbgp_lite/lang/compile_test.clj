@@ -901,6 +901,24 @@
         (println)
         (is (= (str s) (str "a\nbat\nCANDLE" newl)))))))
 
+(deftest vectors-summed-test
+  (let [{::c/keys [ast type]}
+        (:ast (c/push->ast {:push      (list {:gene :local :idx 0}
+                                             {:gene :local :idx 1}
+                                             {:gene :var :name '+}
+                                             {:gene :var :name `lib/map2v}
+                                             {:gene :apply})
+                            :locals    ['in1 'in2]
+                            :ret-type  {:type :vector :child {:type 'int?}}
+                            :type-env  (assoc lib/type-env
+                                              'in1 {:type :vector :child {:type 'int?}}
+                                              'in2 {:type :vector :child {:type 'int?}})
+                            :dealiases lib/dealiases}))
+        _ (is (= type {:type :vector :child {:type 'int? :typeclasses #{:number}}}))
+        form (a/ast->form ast)
+        func (eval `(fn [~'in1 ~'in2] ~form))] 
+    (is (= [5 3 300] (func [4 7 100] [1 -4 200])))))
+
 (deftest polymorphic-output-test
   (let [{::c/keys [ast type]} (:ast
                                (c/push->ast {:push      [{:gene :local :idx 0}

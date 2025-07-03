@@ -3,8 +3,8 @@
   (:require [clojure.core :as core]
             [clojure.set :as set]
             [clojure.string :as str]
-            [erp12.cbgp-lite.lang.schema :as schema]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [erp12.cbgp-lite.lang.schema :as schema]))
 
 ;; @todo What do do about nil?
 ;; first, last, etc. return nil on empty collections.
@@ -80,7 +80,6 @@
   [x]
   (Math/tan x))
 
-
 ;; We've decided to make safe-pow => pow, and have it test arguments
 ;; to see if they're integers (if so, cast to long) or not (return double)
 ;; We could instead just leave int-pow and double-pow as monomorphized and,
@@ -92,10 +91,10 @@
     (cond
       (or (NaN? result) (infinite? result))
       (throw (ex-info "Pow resulting in undefined value." {:base x :exponent y}))
-      
+
       (and (integer? x) (integer? y))
       (long result)
-      
+
       :else
       result)))
 
@@ -281,7 +280,6 @@
   [pred coll]
   (vec (mapcat pred coll)))
 
-
 ; [!] may not work
 (defn conj'
   [coll target]
@@ -412,16 +410,16 @@
   [coll target replacement]
   (if (string? coll)
     (str/replace coll target replacement)
-    (replace {target replacement} coll))) 
+    (replace {target replacement} coll)))
 
 (defn replace-first'
   [coll target replacement]
-    (if (string? coll)
-      (str/replace-first coll target replacement)
-      (let [idx (.indexOf coll target)]
-        (if (< idx 0)
-          coll
-          (assoc coll idx replacement)))))
+  (if (string? coll)
+    (str/replace-first coll target replacement)
+    (let [idx (.indexOf coll target)]
+      (if (< idx 0)
+        coll
+        (assoc coll idx replacement)))))
 
 (defn take'
   [num coll]
@@ -552,20 +550,20 @@
   {;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; FP
    'comp                  {:type :overloaded
-                             :alternatives [(scheme (fn-of [(fn-of [(s-var 'd)] (s-var 'e))
-                                                            (fn-of [(s-var 'c)] (s-var 'd))
-                                                            (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
-                                                           (fn-of [(s-var 'a) (s-var 'b)] (s-var 'e))))
-                                            (scheme (fn-of [(fn-of [(s-var 'c)] (s-var 'd))
-                                                            (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
-                                                           (fn-of [(s-var 'a) (s-var 'b)] (s-var 'd))))
-                                            (scheme (fn-of [(fn-of [(s-var 'c)] (s-var 'd))
-                                                            (fn-of [(s-var 'b)] (s-var 'c))
-                                                            (fn-of [(s-var 'a)] (s-var 'b))]
-                                                           (fn-of [(s-var 'a)] (s-var 'd))))
-                                            (scheme (fn-of [(fn-of [(s-var 'b)] (s-var 'c))
-                                                           (fn-of [(s-var 'a)] (s-var 'b))]
-                                                          (fn-of [(s-var 'a)] (s-var 'c))))]}
+                           :alternatives [(scheme (fn-of [(fn-of [(s-var 'd)] (s-var 'e))
+                                                          (fn-of [(s-var 'c)] (s-var 'd))
+                                                          (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
+                                                         (fn-of [(s-var 'a) (s-var 'b)] (s-var 'e))))
+                                          (scheme (fn-of [(fn-of [(s-var 'c)] (s-var 'd))
+                                                          (fn-of [(s-var 'a) (s-var 'b)] (s-var 'c))]
+                                                         (fn-of [(s-var 'a) (s-var 'b)] (s-var 'd))))
+                                          (scheme (fn-of [(fn-of [(s-var 'c)] (s-var 'd))
+                                                          (fn-of [(s-var 'b)] (s-var 'c))
+                                                          (fn-of [(s-var 'a)] (s-var 'b))]
+                                                         (fn-of [(s-var 'a)] (s-var 'd))))
+                                          (scheme (fn-of [(fn-of [(s-var 'b)] (s-var 'c))
+                                                          (fn-of [(s-var 'a)] (s-var 'b))]
+                                                         (fn-of [(s-var 'a)] (s-var 'c))))]}
   ;;  'comp2-fn1          (scheme (fn-of [(fn-of [(s-var 'b)] (s-var 'c))
   ;;                                      (fn-of [(s-var 'a)] (s-var 'b))]
   ;;                                     (fn-of [(s-var 'a)] (s-var 'c))))
@@ -681,9 +679,8 @@
   ;;  'split-str-on-char  (fn-of [STRING CHAR] (vector-of STRING))
    `split-str-on-ws    (fn-of [STRING] (vector-of STRING))
    `split-str          {:type :overloaded
-                              :alternatives [(fn-of [STRING CHAR] (vector-of STRING))
-                                             (fn-of [STRING STRING] (vector-of STRING))
-                                             ]}
+                        :alternatives [(fn-of [STRING CHAR] (vector-of STRING))
+                                       (fn-of [STRING STRING] (vector-of STRING))]}
   ;;  'empty-str?         (unary-pred STRING)
   ;;  `str/includes?      (binary-pred STRING)
   ;;  `char-in?           (fn-of [STRING CHAR] BOOLEAN)
@@ -731,15 +728,14 @@
                                        ]}
    ; [!] above, possibly make typeclassed?   
    `map2v              {:type :overloaded
-                        :alternatives [(scheme (fn-of [(fn-of [CHAR CHAR] (s-var 'a))
+                        :alternatives [(scheme (fn-of [(fn-of [CHAR CHAR] (s-var 'a)) ; str 
                                                        STRING
                                                        STRING]
-                                                      (vector-of (s-var 'a)))) ; str 
-                                       (scheme (fn-of [(fn-of [(s-var 'a1) (s-var 'a2)] (s-var 'b))
+                                                      (vector-of (s-var 'a))))
+                                       (scheme (fn-of [(fn-of [(s-var 'a1) (s-var 'a2)] (s-var 'b)) ; vec
                                                        (vector-of (s-var 'a1))
                                                        (vector-of (s-var 'a2))]
-                                                      (vector-of (s-var 'b)))) ; vec
-                                       ]}
+                                                      (vector-of (s-var 'b))))]}
    'vec                {:type :overloaded
                         :alternatives [(scheme (fn-of [(map-of (s-var 'k) (s-var 'v))] (vector-of (tuple-of (s-var 'k) (s-var 'v)))))
                                        (scheme (fn-of [(set-of (s-var 'e))] (vector-of (s-var 'e))))
@@ -891,7 +887,7 @@
                                       (scheme (fn-of [(vector-of (s-var 'a)) INT INT]
                                                      (vector-of (s-var 'a)))) ; safe-sub-vec
 ]} ; [!] to-do - make func                           
-   
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Vector
    '->vector1          (scheme (fn-of [(s-var 'a)]
@@ -995,7 +991,7 @@
   ;;                                       (s-var 'b)
   ;;                                       (vector-of (s-var 'a))]
   ;;                                      (s-var 'b))}
-   
+
   ;;  `removev            {:type   :scheme
   ;;                       :s-vars ['a]
   ;;                       :body   (fn-of [(fn-of [(s-var 'a)] BOOLEAN)
@@ -1006,7 +1002,7 @@
   ;;                       :body   (fn-of [(fn-of [(s-var 'a)] (vector-of (s-var 'b)))
   ;;                                       (vector-of (s-var 'a))]
   ;;                                      (vector-of (s-var 'b)))}
-   
+
    `distinctv          (scheme (fn-of [(vector-of (s-var 'e))]
                                       (vector-of (s-var 'e))))
   ;;  `sortv              (scheme (fn-of [(vector-of (s-var 'e))]
@@ -1136,7 +1132,7 @@
   ;;                                      (s-var 'r)
   ;;                                      (map-of (s-var 'k) (s-var 'v))]
   ;;                                     (s-var 'r)))
-   
+
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Printing & Side Effects
    'do2                (scheme (fn-of [NIL (s-var 'a)] (s-var 'a)))
@@ -1228,20 +1224,38 @@
     ;; string->chars     vec
     ;; vec->map          erp12.cbgp-lite.lang.lib/->map
     ;; vec->set          set
-    
+
     ;; zero-double?      zero?
     ;; zero-int?         zero?
-    
 
 (def macros
   #{'if 'do2 'do3})
 
+(defn check-type-for-type-ctors
+  "Checks if all of typ's :types are in type-ctors"
+  [typ type-ctors]
+  (let [schema-types (->> (schema/schema-terms typ)
+                          (remove #{:cat :s-var :scheme})
+                          #_(set)
+                          #_(set/superset? type-ctors))
+        schema-typeclass-types (filter set? schema-types)
+        all-typeclass-types-valid (empty?
+                                   (remove #(not (empty? (set/intersection type-ctors %)))
+                                           schema-typeclass-types))
+        schema-static-types (set (remove set? schema-types))
+        schema-static-types-valid (set/superset? type-ctors schema-static-types)]
+    (and schema-static-types-valid all-typeclass-types-valid)))
+
 (defn lib-for-type-ctors
-  [type-ctors] 
+  "Filters type-env to include all functions that have all of their types in type-ctors.
+   This does ??? on overloaded types"
+  [type-ctors]
   (->> type-env
        (filter (fn [[_ typ]]
-                 (->> (schema/schema-terms typ) 
-                      (remove #{:cat :s-var :scheme})
-                      (set)
-                      (set/superset? type-ctors)))) 
+                 (if (not= :overloaded (:type typ))
+                   (check-type-for-type-ctors typ type-ctors)
+                   ;; Run on each alternative if overloaded; if any return true,
+                   ;; include this instruction
+                   (not (empty? (filter #(check-type-for-type-ctors % type-ctors)
+                                        (:alternatives typ)))))))
        (into {})))
