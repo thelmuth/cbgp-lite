@@ -848,36 +848,32 @@
                                       ;;                (vector-of (s-var 'a))))
                                        ]}
 
-;;;;;;; string-vec functions; organize later
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   ;; Text/Vec
    `safe-nth          {:type :overloaded
                        :alternatives [(scheme (fn-of [(vector-of (s-var 'a)) INT] (s-var 'a))) ; safe-nth
-                                      (fn-of [STRING INT] CHAR) ; nth-str 
-                                      ]}
+                                      (fn-of [STRING INT] CHAR)]} ; nth-str  
    `replace'          {:type :overloaded
                        :alternatives [(scheme (fn-of [(vector-of (s-var 'a))
                                                       (s-var 'a)
                                                       (s-var 'a)]
                                                      (vector-of (s-var 'a)))) ; vec
                                       (fn-of [STRING CHAR CHAR] STRING) ; char
-                                      (fn-of [STRING STRING STRING] STRING) ; str
-]} ; [!] to-do - test
+                                      (fn-of [STRING STRING STRING] STRING)]} ; str
    `replace-first'    {:type :overloaded
                        :alternatives [(scheme (fn-of [(vector-of (s-var 'a))
                                                       (s-var 'a)
                                                       (s-var 'a)]
                                                      (vector-of (s-var 'a))))
                                       (fn-of [STRING CHAR CHAR] STRING) ; char
-                                      (fn-of [STRING STRING STRING] STRING) ; str
-]} ; [!] to-do - test
+                                      (fn-of [STRING STRING STRING] STRING)]} ; str
    `take'             {:type :overloaded
                        :alternatives [(fn-of [INT STRING] STRING) ; take-str
                                       (scheme (fn-of [INT (vector-of (s-var 'a))]
-                                                     (vector-of (s-var 'a)))) ; take-vec
-]} ; [!] to-do - make func
+                                                     (vector-of (s-var 'a))))]} ; take-vec
    `reverse'          {:type :overloaded
                        :alternatives [(scheme (fn-of [(vector-of (s-var 'a))] (vector-of (s-var 'a)))) ; reversev
-                                      (unary-transform STRING) ; str/reverse
-]} ; [!] to-do - make func
+                                      (unary-transform STRING)]} ; str/reverse
    `sort'             {:type :overloaded
                        :alternatives [(scheme (fn-of [(vector-of (s-var 'e))]
                                                      (vector-of (s-var 'e)))) ; sortv
@@ -885,9 +881,8 @@
    `safe-sub          {:type :overloaded
                        :alternatives [(fn-of [STRING INT INT] STRING) ; safe-subs
                                       (scheme (fn-of [(vector-of (s-var 'a)) INT INT]
-                                                     (vector-of (s-var 'a)))) ; safe-sub-vec
-]} ; [!] to-do - make func                           
-
+                                                     (vector-of (s-var 'a))))]} ; safe-sub-vec
+                         
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Vector
    '->vector1          (scheme (fn-of [(s-var 'a)]
