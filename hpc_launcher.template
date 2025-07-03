@@ -29,10 +29,10 @@ DIRECTORY="#dir#"
 
 CLOJURECMD="/usr/local/bin/clojure -X:benchmarks erp12.cbgp-lite.benchmark.ga/run \
    :suite-ns erp12.cbgp-lite.benchmark.suite.#suite# \
-   :data-dir "\""#data-dir#"\"" \
+   :data-dir \"#data-dir#\" \
    :problem $PROBLEM \
    #cmd-line-params# \
-   :type-counts-file "\""$DIRECTORY/$PROBLEM/run${PBS_ARRAYID}_types.edn"\"
+   :type-counts-file \"$DIRECTORY/$PROBLEM/run${PBS_ARRAYID}_types.edn\""
 
 
 echo "Running on node(s):"
