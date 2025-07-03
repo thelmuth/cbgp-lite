@@ -282,9 +282,6 @@
    'group-by 'group-by
    'zipmap 'zipmap
 
-   (comment
-     (decompile-ast (ana.jvm/analyze '(clojure.set/union #{0 1} #{2 3}))))
-
    ;; Set
    ; ->set (arity)
    'union `set/union

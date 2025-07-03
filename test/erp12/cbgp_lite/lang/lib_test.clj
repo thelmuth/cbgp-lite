@@ -56,7 +56,7 @@
   (is (l/in? "abc" \b)))
 
 (deftest char-occurrences-test
-  (is (= 1 (l/char-occurrences "abc" \b))))
+  (is (= 1 (l/occurrences-of "abc" \b))))
 
 (deftest replace-char-test
   (is (= "zzz" (l/replace' "aaa" \a \z))))
@@ -107,17 +107,17 @@
   (is (= [:a :_ :c :b]
          (l/replace-first' [:a :b :c :b] :b :_))))
 
-;; (deftest remove-element-test
-;;   (is (= [:a :c]
-;;          (l/remove-element [:a :b :c] :b))))
+(deftest remove-element-test
+  (is (= [:a :c]
+         (l/remove-element [:a :b :c] :b)))
+  (is (= [:a :b :c]
+         (l/remove-element [:a :b :c] :d))))
 
 (deftest safe-subs-test
-  (is (= "abc" (l/safe-sub "abc" -1 1000)))
-  (is (= "" (l/safe-sub "abc" 10 1))))
-
-(deftest safe-subvec-test
-  (is (= [:a] (l/safe-sub [:a] -1 10)))
-  (is (= [] (l/safe-sub [:a] 10 1))))
+  (is (= "abc" (l/safe-sub-coll "abc" -1 1000)))
+  (is (= "" (l/safe-sub-coll "abc" 10 1)))
+  (is (= [:a] (l/safe-sub-coll [:a] -1 10)))
+  (is (= [] (l/safe-sub-coll [:a] 10 1))))
 
 (deftest safe-assoc-test
   (is (= [:_ :b] (l/safe-assoc-nth [:a :b] 2 :_))))
@@ -181,7 +181,7 @@
              erp12.cbgp-lite.lang.lib/reverse'
              erp12.cbgp-lite.lang.lib/safe-assoc-nth
              erp12.cbgp-lite.lang.lib/safe-nth
-             erp12.cbgp-lite.lang.lib/safe-sub
+             erp12.cbgp-lite.lang.lib/safe-sub-coll
              erp12.cbgp-lite.lang.lib/sort'
              erp12.cbgp-lite.lang.lib/sortv-by
              erp12.cbgp-lite.lang.lib/square
