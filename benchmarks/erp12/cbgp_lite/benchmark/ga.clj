@@ -63,6 +63,8 @@
                  task/enhance-task
                  (assoc :evaluate-fn i/evaluate-full-behavior))
         opts (merge config task)
+        _ (log/info "Type Constructors: " (:type-ctors opts))
+        _ (log/info "Vars:" (:vars opts))
         evaluator (i/make-evaluator (-> opts
                                         (assoc :cases (:train task))
                                         (dissoc :train :test)))
@@ -114,8 +116,7 @@
                                                                 ;; no individual can become the new best and the run will fail.
                                                                 ;; @todo Fix this in ga-clj somehow?
                                                                 (log/info "Best individual solved a batch but not all training cases.")))))
-                                       :mapper          pmap
-                                       })
+                                       :mapper          pmap})
         _ (log/info "PRE-SIMPLIFICATION" best)
         ;; Simplify the best individual seen during evolution.
         best (i/simplify {:individual           best
