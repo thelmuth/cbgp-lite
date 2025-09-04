@@ -614,6 +614,18 @@
   (clojure.string/includes?
    (-> (ana.jvm/analyze '(or true true)) :bindings first :name str)
    "or")
+  
+  (ana.jvm/analyze '(defn find-min-key [m] (first (reduce (fn [[k v] [new-k new-v]] (if (< new-v v) [new-k new-v] [k v])) [nil Long/MAX_VALUE] m))))
+  (ana.jvm/analyze '(first [3 4 1 2]))
+
+  (ana.jvm/analyze
+  '(defn find-min-key [m] 
+    (reduce (fn [[k v] [new-k new-v]] (if (< new-v v) [new-k new-v] [k v])) [nil Long/MAX_VALUE] m)))
+  
+  (ana.jvm/analyze '(reduce + [1 2 3 4 5]))
+
+  (ana.jvm/analyze '((defn find-min-key [m] (reduce (fn [[k v]] (if (< 5 v) [5 5] [k v])) [nil Long/MAX_VALUE] m))))
+
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; LET/FN TESTING
