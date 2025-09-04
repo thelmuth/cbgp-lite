@@ -526,9 +526,9 @@
    `safe-mod           (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
    'inc                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
    'dec                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
-    `neg                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
+   `neg                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
    'abs                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
-    `pow                (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
+   `pow                (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
    `square             (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
    `int-ceil           (fn-of [DOUBLE] INT)
    `int-floor          (fn-of [DOUBLE] INT)
@@ -643,7 +643,7 @@
                                        (fn-of [(fn-of [CHAR] BOOLEAN) STRING] STRING) ; filter-str 
                                        (scheme (fn-of [(fn-of [(s-var 'a)] BOOLEAN) ; filter-vec
                                                        (vector-of (s-var 'a))]
-                                                      (vector-of (s-var 'a))))]} 
+                                                      (vector-of (s-var 'a))))]}
    `remove'           {:type :overloaded
                        :alternatives [(scheme (fn-of [(fn-of [(tuple-of (s-var 'k) (s-var 'v))] BOOLEAN)
                                                       (map-of (s-var 'k) (s-var 'v))]
@@ -658,7 +658,7 @@
    `remove-element    {:type :overloaded
                        :alternatives [(fn-of [STRING CHAR] STRING) ; remove-char 
                                       (scheme (fn-of [(vector-of (s-var 'a)) (s-var 'a)]
-                                                     (vector-of (s-var 'a))))]} 
+                                                     (vector-of (s-var 'a))))]}
    'reduce             {:type :overloaded
                         :alternatives [(scheme (fn-of [(fn-of [(tuple-of (s-var 'k) (s-var 'v)) ; reduce-map
                                                                (tuple-of (s-var 'k) (s-var 'v))]
@@ -696,7 +696,7 @@
                                                       (vector-of (s-var 'a))))
                                        (scheme (fn-of [(fn-of [(s-var 'a)] (vector-of (s-var 'b))) ; mapcat-vec
                                                        (vector-of (s-var 'a))]
-                                                      (vector-of (s-var 'b))))]} 
+                                                      (vector-of (s-var 'b))))]}
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Text/Vec
@@ -709,14 +709,14 @@
                                       (scheme (fn-of [(vector-of (s-var 'a)) ; vec
                                                       (s-var 'a)
                                                       (s-var 'a)]
-                                                     (vector-of (s-var 'a))))]} 
+                                                     (vector-of (s-var 'a))))]}
    `replace-first'    {:type :overloaded
                        :alternatives [(fn-of [STRING STRING STRING] STRING) ; str
                                       (fn-of [STRING CHAR CHAR] STRING) ; char 
                                       (scheme (fn-of [(vector-of (s-var 'a)) ; vec
                                                       (s-var 'a)
                                                       (s-var 'a)]
-                                                     (vector-of (s-var 'a))))]} 
+                                                     (vector-of (s-var 'a))))]}
    `take'             {:type :overloaded
                        :alternatives [(fn-of [INT STRING] STRING) ; take-str
                                       (scheme (fn-of [INT (vector-of (s-var 'a))]
@@ -727,7 +727,7 @@
    `sort'             {:type :overloaded
                        :alternatives [(unary-transform STRING) ; sort-str
                                       (scheme (fn-of [(vector-of (s-var 'e))] ; sortv
-                                                     (vector-of (s-var 'e))))]} 
+                                                     (vector-of (s-var 'e))))]}
    `safe-sub-coll     {:type :overloaded
                        :alternatives [(fn-of [STRING INT INT] STRING) ; safe-subs
                                       (scheme (fn-of [(vector-of (s-var 'a)) INT INT] ; safe-sub-vec
@@ -776,6 +776,13 @@
                                       (tuple-of (s-var 'c) (s-var 'b))))
    `assoc-right        (scheme (fn-of [(tuple-of (s-var 'a) (s-var 'b)) (s-var 'c)]
                                       (tuple-of (s-var 'a) (s-var 'c))))
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   ;;; Tuple3 of doubles for RGB/HSV components
+   '->tuple3-doubles   (fn-of [DOUBLE DOUBLE DOUBLE]
+                              (tuple-of DOUBLE DOUBLE DOUBLE))
+   ;; TODO: I could add assoc3-left, assoc3-middle, and assoc3-right,
+   ;;       but I don't think I need them?
+
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Set
    '->set1             (scheme (fn-of [(s-var 'e)]
@@ -842,8 +849,7 @@
    'do2                (scheme (fn-of [NIL (s-var 'a)] (s-var 'a)))
    'do3                (scheme (fn-of [NIL NIL (s-var 'a)] (s-var 'a)))
    'print              (scheme (fn-of [(s-var 'a)] NIL))
-   'println            (scheme (fn-of [(s-var 'a)] NIL))
-   })
+   'println            (scheme (fn-of [(s-var 'a)] NIL))})
 
 (def dealiases
   '{->map1            hash-map
@@ -853,6 +859,7 @@
     ->set2            hash-set
     ->set3            hash-set
     ->tuple2          vector
+    ->tuple3-doubles  vector
     ->vector1         vector
     ->vector2         vector
     ->vector3         vector

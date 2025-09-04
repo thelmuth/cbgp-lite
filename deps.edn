@@ -14,5 +14,7 @@
             :benchmarks {:extra-paths ["benchmarks"]
                          :extra-deps  {org.clojure/tools.cli    {:mvn/version "1.0.206"}
                                        net.clojars.schneau/psb2 {:mvn/version "1.1.1"}
-                                       io.github.erp12/ga-clj   {:git/sha "a6ef20b104875369a4266bd7fd4ff6cc0e7fa786"}}
+                                       io.github.erp12/ga-clj   {:git/sha "a6ef20b104875369a4266bd7fd4ff6cc0e7fa786"}
+                                       net.mikera/imagez {:mvn/version "0.12.0"}
+                                       io.github.thelmuth/image-grid {:git/sha "b8ad1512946c6bc49d59d487b77a07105b1dd199"}}
                          :jvm-opts ["-XX:CompressedClassSpaceSize=2g"]}}}
