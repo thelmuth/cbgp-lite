@@ -4,13 +4,13 @@ import os
 suite = "composite"
 
 # Used to identify runs in qstat. Change to make easy to identify
-qstat_suffix = "-ad-hoc"
+qstat_suffix = "-ad-hoc-baseline"
 
 # Your email address for receiving alerts
-email = "odennen@hamilton.edu"
+email = "schen2@hamilton.edu"
 
 # Directory to hold results for each problem. Change for each set of runs
-basedir = "/usr/local/research/compsci/helmuth/odennen/Results/ad-hoc-polymorphism/"
+basedir = "/usr/local/research/compsci/helmuth/schen2/Results/ad-hoc-polymorphism-baseline/"
 
 # Directory where input data either can be found or will be downloaded.
 # Can either be local (default) or global (will use less HDD if multiple projects use it)
