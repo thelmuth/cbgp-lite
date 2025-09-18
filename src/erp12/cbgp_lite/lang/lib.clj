@@ -820,7 +820,15 @@
    'println            (scheme (fn-of [(s-var 'a)] NIL))})
 
 (def dealiases
-  '{->map1            hash-map
+  '{comp2-fn1         comp
+    comp2-fn2         comp
+    comp3-fn1         comp
+    comp3-fn2         comp 
+    partial1-fn2      partial
+    partial1-fn3      partial
+    partial2-fn3      partial
+    
+    ->map1            hash-map
     ->map2            hash-map
     ->map3            hash-map
     ->set1            hash-set
