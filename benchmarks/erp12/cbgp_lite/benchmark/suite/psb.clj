@@ -7,7 +7,8 @@
             [erp12.cbgp-lite.task :as task]
             [psb2.core :as psb2]))
 
-(def psb-problems
+(defn psb-problems
+  [penalty]
   {"checksum" {:input->type {'input1 {:type 'string?}}
                :ret-type {:type 'string?}
                :other-type-ctors #{'int? 'boolean? 'char?}
@@ -1216,7 +1217,7 @@
 (defn problems
   [{:keys [penalty]}]
   (update-vals
-   psb-problems
+   (psb-problems penalty)
    
    ;; This adds nil penalties to all loss functions
    (fn [problem-map]
