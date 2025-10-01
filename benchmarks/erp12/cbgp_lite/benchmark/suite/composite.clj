@@ -21,8 +21,22 @@
   (apply str
          (repeatedly (rand-int-range low high)
                      #(rand-nth (concat [\newline \tab]
-                                        (map char (range 32 127)))))))
+                                        (map char (range 32 127))))))) 
 
+ 
+  ((fn area-of-rectangle-gen
+    []
+    (let [xs [(rand-float-range -100 100) (rand-float-range -100 100)]
+          ys [(rand-float-range -100 100) (rand-float-range -100 100)]
+          x1 (reduce max xs)
+          x2 (reduce min xs)
+          y1 (reduce max ys)
+          y2 (reduce min ys)
+          output (* (- x1 x2)
+                    (- y1 y2))]
+      {:inputs [[x1 y1] [x2 y2]]
+       :output output})))
+  
 (defn rand-vector
   [min-size max-size element-gen]
   (vec (repeatedly (rand-int-range min-size max-size)
@@ -175,9 +189,9 @@
    {:description    (str "Given a map from 'T to ints and two 'T that are "
                          "keys of the map, look up the values associated with those keys "
                          "in the map and return their sum.")
-    :input->type    {'input1 {:type :map-of, :key {:type :t-var :sym 'T}, :value {:type 'int?}}
-                     'input2 {:type :t-var :sym 'T}
-                     'input3 {:type :t-var :sym 'T}}
+    :input->type    {'input1 {:type :map-of, :key {:type 'T}, :value {:type 'int?}}
+                     'input2 {:type 'T}
+                     'input3 {:type 'T}}
     :ret-type       {:type 'int?}
     :other-type-ctors    #{'boolean? 'string? 'char? 'double?}
     :extra-genes    [{:gene :lit, :val 0, :type {:type 'int?}}]
@@ -268,8 +282,8 @@
    "count-true"
    {:description    (str "Given a vector of T and a predicate T => bool, return the "
                          "count of the number of elements in T that make the predicate true.")
-    :input->type    {'input1 {:type :vector :child {:type :t-var :sym 'T}}
-                     'input2 (lib/unary-pred {:type :t-var :sym 'T})}
+    :input->type    {'input1 {:type :vector :child {:type 'T}} 
+                     'input2 (lib/unary-pred {:type 'T})}
     :ret-type       {:type 'int?}
     :other-type-ctors    #{'boolean?}
     :extra-genes    [{:gene :lit, :val 0, :type {:type 'int?}}
@@ -286,8 +300,8 @@
    "first-index-of-true"
    {:description    (str "Given a vector of T and a predicate T => bool, return the "
                          "first index in the vector where the predicate is true.")
-    :input->type    {'input1 {:type :vector :child {:type :t-var :sym 'T}}
-                     'input2 (lib/unary-pred {:type :t-var :sym 'T})}
+    :input->type    {'input1 {:type :vector :child {:type 'T}}
+                     'input2 (lib/unary-pred {:type 'T})}
     :ret-type       {:type 'int?}
     :other-type-ctors    #{'boolean?}
     :extra-genes    [{:gene :lit, :val -1, :type {:type 'int?}}
@@ -450,7 +464,7 @@
 
    "min-key"
    {:description    "Given map of {key => int}, return the key with the min value."
-    :input->type    {'input1 {:type :map-of, :key {:type :t-var :sym 'T}, :value {:type 'int?}}}
+    :input->type    {'input1 {:type :map-of, :key {:type 'T}, :value {:type 'int?}}}
     :ret-type       {:type :s-var :sym 'T}
     :other-type-ctors    #{'boolean? 'int?}
 
