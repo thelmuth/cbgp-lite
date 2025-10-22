@@ -614,38 +614,41 @@
   (clojure.string/includes?
    (-> (ana.jvm/analyze '(or true true)) :bindings first :name str)
    "or")
-  
+
   (ana.jvm/analyze '(defn find-min-key [m] (first (reduce (fn [[k v] [new-k new-v]] (if (< new-v v) [new-k new-v] [k v])) [nil Long/MAX_VALUE] m))))
   (ana.jvm/analyze '(first [3 4 1 2]))
 
   (ana.jvm/analyze
-  '(defn find-min-key [m] 
-    (reduce (fn [[k v] [new-k new-v]] (if (< new-v v) [new-k new-v] [k v])) [nil Long/MAX_VALUE] m)))
-  
+   '(defn find-min-key [m]
+      (reduce (fn [[k v] [new-k new-v]] (if (< new-v v) [new-k new-v] [k v])) [nil Long/MAX_VALUE] m)))
+
   (ana.jvm/analyze '(reduce + [1 2 3 4 5]))
 
   (ana.jvm/analyze '((defn find-min-key [m] (reduce (fn [[k v]] (if (< 5 v) [5 5] [k v])) [nil Long/MAX_VALUE] m))))
 
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; LET/FN TESTING
-  (log/set-min-level! :trace) 
+  (log/set-min-level! :trace)
 
   ;; testing llm code
   ; niche defn issue:
   ; analyzing a called defn breaks b/c no condition in handle methods for :op :invoke -> :op :def
   (decompile-ast (ana.jvm/analyze '((defn combine-fns [a b c]
-                                        (let [x 3]
-                                          (+ x b c))) -1 10 9)))
+                                      (let [x 3]
+                                        (+ x b c))) -1 10 9)))
   (-> (ana.jvm/analyze '((defn combine-fns [a b c]
                            (let [x 3]
-                             (+ x b c))) -1 10 9)) 
+                             (+ x b c))) -1 10 9))
       :fn
-      keys
-      )
-  
+      keys)
+
   (compile-debugging (decompile-ast (ana.jvm/analyze '(let [x [3 0 2 0 1 0]
                                                             y (fn [z] (mapv inc ((fn [z3] (conj z3 4)) ((fn [z2] (remove zero? z2)) z))))]
                                                         (y x))))
                      {:type :vector :child {:type 'int?}} true)
+
+  (compile-debugging (decompile-ast (ana.jvm/analyze '(defn area-of-rectangle
+                                                        [input1 input2]
+                                                        (- (* (:test (second input1) (first input2)) (:- (second input1) (first input2))))))) {:type 'int?} true)
+
   )
