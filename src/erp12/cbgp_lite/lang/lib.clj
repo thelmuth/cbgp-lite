@@ -108,9 +108,32 @@
       :else
       result)))
 
+(defn safe-pow
+  [x y]
+  (let [result (Math/pow x y)]
+    (if (or (NaN? result) (infinite? result))
+      (throw (ex-info "Pow resulting in undefined value." {:base x :exponent y}))
+      result)))
+
+(defn int-pow
+  [x y]
+  (long (safe-pow x y)))
+
 (defn square
   [x]
   (pow x 2))
+
+(defn double-pow
+  [x y]
+  (safe-pow x y))
+
+(defn int-square
+  [x]
+  (long (safe-pow x 2)))
+
+(defn double-square
+  [x]
+  (safe-pow x 2))
 
 (defn safe-sqrt
   [x]
@@ -173,6 +196,11 @@
   (char (mod i 128)))
 
 (def concat-str (comp str/join concat))
+(def take-str (comp str/join take))
+(def rest-str (comp str/join rest))
+(def butlast-str (comp str/join butlast))
+(def filter-str (comp str/join filter))
+(defn char-in? [s c] (str/includes? s (str c)))
 
 (def ^:private regex-char-esc-smap
   (let [esc-chars "()*&^%$#!"]
@@ -187,6 +215,10 @@
        str/join
        re-pattern))
 
+(defn str-sort
+  [s]
+  (str/join (sort s)))
+
 (defn split-str
   [s on]
   (str/split s (str-to-pattern on)))
@@ -195,12 +227,30 @@
   [s]
   (str/split (str/trim s) #"\s+"))
 
+(defn replace-char
+  [s c1 c2]
+  (str/replace s (str c1) (str c2)))
+
+(defn replace-first-char
+  [s c1 c2]
+  (str/replace-first s (str c1) (str c2)))
+
+(defn remove-char
+  [s c]
+  (apply str (remove #{c} s)))
+
 (defn set-char
   [s idx c]
   (if (empty? s)
     s
     (let [safe-idx (mod idx (count s))]
       (apply str (assoc (vec s) safe-idx c)))))
+
+(defn safe-subs
+  [s start end]
+  (let [start (min (count s) (max 0 start))
+        end (min (count s) (max start end))]
+    (subs s start end)))
 
 (defn whitespace?
   [^Character c]
@@ -262,8 +312,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Vector
 
+(def conj-vec (comp vec conj))
 (def distinctv (comp vec distinct))
+(def mapcatv (comp vec mapcat))
 (def mapv-indexed (comp vec map-indexed))
+(def removev (comp vec remove))
+(def concatv (comp vec concat))
+(def takev (comp vec take))
+(def restv (comp vec rest))
+(def butlastv (comp vec butlast))
+(def reversev (comp vec reverse))
+(def sortv (comp vec sort))
 (def sortv-by (comp vec sort-by))
 
 (def rangev
@@ -286,12 +345,29 @@
     (str/includes? coll (str el))
     (<= 0 (.indexOf coll el))))
 
+(defn replacev
+  [vtr to-replace replace-with]
+  (replace {to-replace replace-with} vtr))
+
+(defn replacev-first
+  [vtr to-replace replace-with]
+  (let [idx (.indexOf vtr to-replace)]
+    (if (< idx 0)
+      vtr
+      (assoc vtr idx replace-with))))
+
 (defn remove-element
   [coll element]
   (let [removed (remove #{element} coll)]
     (if (string? coll)
       (apply str removed)
       (vec removed))))
+
+(defn safe-subvec
+  [vtr start end]
+  (let [start (min (count vtr) (max 0 start))
+        end (min (count vtr) (max start end))]
+    (subvec vtr start end)))
 
 (defn safe-assoc-nth
   [vtr idx el]
@@ -318,6 +394,13 @@
 (defn map2v
   [expr coll1 coll2]
   (mapv expr coll1 coll2))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Set
+
+(def conj-set (comp set conj))
+(defn map-set [f s] (into #{} (map f s)))
+(defn filter-set [pred s] (into #{} (filter pred s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fixing LazySeqs
@@ -542,21 +625,6 @@
    'double-abs         (unary-transform DOUBLE)
    `double-pow         (binary-transform DOUBLE)
    `double-square      (unary-transform DOUBLE)
-
-  ;;  '+                  (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
-  ;;  '-                  (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
-  ;;  '*                  (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
-  ;;  `safe-quot          (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
-  ;;  `safe-div           (scheme (fn-of [(s-var 'a) (s-var 'a)] DOUBLE) {'a #{:number}})
-  ;;  `safe-mod           (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
-  ;;  'inc                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
-  ;;  'dec                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
-  ;;  `neg                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
-  ;;  'abs                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
-  ;;  `pow                (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
-  ;;  `square             (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
-   `int-ceil           (fn-of [DOUBLE] INT)
-   `int-floor          (fn-of [DOUBLE] INT)
 
    'int                (fn-of [DOUBLE] INT)
    'char->int          (fn-of [CHAR] INT)
@@ -846,6 +914,10 @@
                                        (s-var 'k) (s-var 'v)
                                        (s-var 'k) (s-var 'v)]
                                       (map-of (s-var 'k) (s-var 'v))))
+   'set->map           (scheme (fn-of [(set-of (tuple-of (s-var 'k) (s-var 'v)))]
+                                      (map-of (s-var 'k) (s-var 'v))))
+   'vec->map           (scheme (fn-of [(vector-of (tuple-of (s-var 'k) (s-var 'v)))]
+                                      (map-of (s-var 'k) (s-var 'v))))
    'get                (scheme (fn-of [(map-of (s-var 'k) (s-var 'v)) (s-var 'k)]
                                       (s-var 'v)))
    'get-or-else        (scheme (fn-of [(map-of (s-var 'k) (s-var 'v)) (s-var 'k) (s-var 'v)]
@@ -866,7 +938,25 @@
                                       (vector-of (s-var 'v))))
    'merge              (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))
                                        (map-of (s-var 'k) (s-var 'v))]
+                                      (map-of (s-var 'k) (s-var 'v)))) 
+   'count-map          (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
+                                      INT))
+   'map-map            (scheme (fn-of [(fn-of [(tuple-of (s-var 'k) (s-var 'v))] (s-var 'e))
+                                       (map-of (s-var 'k) (s-var 'v))]
+                                      (vector-of (s-var 'e))))
+   `filter-map         (scheme (fn-of [(fn-of [(tuple-of (s-var 'k) (s-var 'v))] BOOLEAN)
+                                       (map-of (s-var 'k) (s-var 'v))]
                                       (map-of (s-var 'k) (s-var 'v))))
+   'reduce-map         (let [entry (tuple-of (s-var 'k) (s-var 'v))]
+                         (scheme (fn-of [(fn-of [entry entry] entry)
+                                         (map-of (s-var 'k) (s-var 'v))]
+                                        entry)))
+   'fold-map           (scheme (fn-of [(fn-of [(s-var 'r)
+                                               (tuple-of (s-var 'k) (s-var 'v))]
+                                              (s-var 'r))
+                                       (s-var 'r)
+                                       (map-of (s-var 'k) (s-var 'v))]
+                                      (s-var 'r)))
 
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Printing & Side Effects
