@@ -451,17 +451,13 @@
     ((comp vec sort) coll)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Set
-
-(defn map-set [f s] (into #{} (map f s)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Map
 
 (defn ->map
   [coll]
   (into {} coll))
 
+(defn filter-map [pred m] (into {} (filter pred m)))
 (def keys-vec (comp vec keys))
 (def keys-set (comp set keys))
 (def vals-vec (comp vec vals))
@@ -800,6 +796,10 @@
                                         (vector-of (s-var 'a1))
                                         (vector-of (s-var 'a2))]
                                        (vector-of (s-var 'b)))}
+   'map2v-str           (scheme (fn-of [(fn-of [CHAR CHAR] (s-var 'a))
+                                        STRING
+                                        STRING]
+                                       (vector-of (s-var 'a))))
    `mapv-indexed       (scheme (fn-of [(fn-of [INT (s-var 'a)] (s-var 'b))
                                        (vector-of (s-var 'a))]
                                       (vector-of (s-var 'b))))
@@ -930,6 +930,8 @@
                                        (s-var 'k)
                                        (fn-of [(s-var 'v)] (s-var 'v))]
                                       (map-of (s-var 'k) (s-var 'v))))
+   'map-contains?      (scheme (fn-of [(map-of (s-var 'k) (s-var 'v)) (s-var 'k)]
+                                      BOOLEAN))
    `keys-vec           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
                                       (vector-of (s-var 'k))))
    `keys-set           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
@@ -938,7 +940,7 @@
                                       (vector-of (s-var 'v))))
    'merge              (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))
                                        (map-of (s-var 'k) (s-var 'v))]
-                                      (map-of (s-var 'k) (s-var 'v)))) 
+                                      (map-of (s-var 'k) (s-var 'v))))
    'count-map          (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
                                       INT))
    'map-map            (scheme (fn-of [(fn-of [(tuple-of (s-var 'k) (s-var 'v))] (s-var 'e))
@@ -1027,10 +1029,11 @@
     map-str           mapv
     map-vec           mapv
     map2-vec          mapv
+    map2-str          mapv
     mapcat-str        erp12.cbgp-lite.lang.lib/mapcatv
-    nth-or-else       nth
-
+    nth-or-else       nth 
     nth-str           erp12.cbgp-lite.lang.lib/safe-nth
+
     partial1-fn2      partial
     partial1-fn3      partial
     partial2-fn3      partial
