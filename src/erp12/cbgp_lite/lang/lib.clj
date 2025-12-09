@@ -796,7 +796,7 @@
                                         (vector-of (s-var 'a1))
                                         (vector-of (s-var 'a2))]
                                        (vector-of (s-var 'b)))}
-   'map2v-str           (scheme (fn-of [(fn-of [CHAR CHAR] (s-var 'a))
+   'map2-str           (scheme (fn-of [(fn-of [CHAR CHAR] (s-var 'a))
                                         STRING
                                         STRING]
                                        (vector-of (s-var 'a))))
