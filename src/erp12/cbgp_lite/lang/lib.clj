@@ -529,6 +529,7 @@
 
    ;;;;; TMH: Commenting out instructions that didn't appear in earlier runs where
    ;;;;; area-of-rectangle found many solutions
+   ;;;;; see: https://discord.com/channels/978135348460810240/1394606872648220754/1439719810996113470
   ;;  `neg                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
   ;;  'abs                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
   ;;  `pow                (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
