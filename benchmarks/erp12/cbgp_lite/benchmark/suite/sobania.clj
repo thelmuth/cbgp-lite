@@ -22,10 +22,10 @@
 (defn get-input->type
   [inputs]
   (into {}
-        (map (fn [input-string]
-               (let [[input-str raw-type] (str/split input-string #":")]
-                 [(symbol input-str) (string-to-cbgp-type raw-type)]))
-             inputs)))
+        (map-indexed (fn [index input-string]
+                       (let [raw-type (second (str/split input-string #":"))]
+                         [(symbol (str "input" (inc index))) (string-to-cbgp-type raw-type)]))
+                     inputs)))
 
 (defn get-inputs-and-outputs
   "Given problem name (i.e. folder name in sobania_data), get the input->type
@@ -66,13 +66,14 @@
    problem's info that is being used.
    
    Assumes problem is name of the folder in sobania_data"
-  [{:keys [penalty problem]}]
-  (let [{:keys [input->type output-type]} (get-inputs-and-outputs problem)]
+  [{:keys [penalty problem]}] 
+  (let [problem (name problem)
+        {:keys [input->type output-type]} (get-inputs-and-outputs problem)]
     {problem
      {:description    "Generated problem"
-      :input->type    input->type ;; TMH PROBLEM: inputs start with 0, where CBGP expects them to start with 1
+      :input->type    input->type
       :ret-type       output-type
-      :other-type-ctors    #{'double? 'int?}
+      :other-type-ctors    #{'double? 'int? 'boolean?}
       :extra-genes    (get-vector-of-literals problem)
       :loss-fns       (map (partial bu/penalize-nil-and-exception penalty) ;; This adds nil penalties to all loss functions
                            (case output-type
@@ -83,7 +84,8 @@
 (defn read-cases
   "Needs to take config map and return map of train and test cases."
   [{:keys [problem]}]
-  (let [[train-header & train-data] (read-csv-from-filename
+  (let [problem (name problem)
+        [train-header & train-data] (read-csv-from-filename
                                      (str (io/file "sobania_data" problem "train.csv")))
         [_ & test-data]             (read-csv-from-filename
                                      (str (io/file "sobania_data" problem "test.csv")))
@@ -105,19 +107,19 @@
 
 
 (comment
-  
 
   (get-inputs-and-outputs "instance2_loc7_cc1_any")
-  
+
   (get-vector-of-literals "instance2_loc7_cc1_any")
-  
+
   lib/STRING
-  
+
   (problems {:problem "instance2_loc7_cc1_any"
              :penalty 500})
-  
+
   (read-cases {:problem "instance2_loc7_cc1_any"})
-  
+
+  "instance1_loc5_cc1_any"
   
   )
 
@@ -126,4 +128,5 @@
 
 ;; TODO:
 ;; x - get read-cases working
-;; - see TMH PROBLEM
+;; x - see TMH PROBLEM
+;; - trim instruction set to have approx parity with Martin's grammar
