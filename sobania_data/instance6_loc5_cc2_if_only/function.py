@@ -6,12 +6,12 @@
 # - LineRelevance: 1.00
 # - InputRelevance: 1.00
 # - LineCoverage: 1.00
-# - OutputVariability: 0.53
-# - Seed: 20
+# - OutputVariability: 0.58
+# - Seed: 17
 
 def generated_func(arg0: int, arg1: int, arg2: int) -> int:
-    var0 = arg2
-    if arg0 < -2:
-        var0 //= abs(arg1 + 9) % 2 + 3
-        var0 = abs(var0)
-    return var0 * 2
+    var0 = abs(arg1)
+    if arg2 <= 10:
+        var0 *= (arg0 * arg0) % 5 + 3
+    var0 = var0 * arg0
+    return var0 * 5

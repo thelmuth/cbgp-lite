@@ -6,17 +6,17 @@
 # - LineRelevance: 1.00
 # - InputRelevance: 1.00
 # - LineCoverage: 1.00
-# - OutputVariability: 0.59
-# - Seed: 56
+# - OutputVariability: 0.57
+# - Seed: 159
 
 def generated_func(arg0: int, arg1: int, arg2: int) -> int:
-    var0 = 2
-    if arg2 < 2:
-        var0 -= arg0 + 7
-        var0 = var0 + arg2
-    var0 = var0 + arg1
-    if arg0 > 9:
-        var0 = abs(arg1)
+    var0 = abs(arg0)
+    if arg1 == 6:
+        var0 *= (arg2 * arg2) % 3 + 3
     else:
-        var0 = var0 * arg2
-    return max(var0, arg1)
+        var0 = abs(arg2)
+    var2 = 1
+    if arg1 >= -6:
+        var0 += abs(var2)
+        var0 += arg0 * 5
+    return var0
