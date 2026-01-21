@@ -524,53 +524,53 @@
    `safe-quot          (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
    `safe-div           (scheme (fn-of [(s-var 'a) (s-var 'a)] DOUBLE) {'a #{:number}})
    `safe-mod           (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
-   'inc                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
-   'dec                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
+  ;;  'inc                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
+  ;;  'dec                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
    `neg                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
    'abs                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
-   `pow                (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
-   `square             (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
-   `int-ceil           (fn-of [DOUBLE] INT)
-   `int-floor          (fn-of [DOUBLE] INT)
+  ;;  `pow                (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
+  ;;  `square             (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})
+  ;;  `int-ceil           (fn-of [DOUBLE] INT)
+  ;;  `int-floor          (fn-of [DOUBLE] INT)
    'int                (scheme (fn-of [(s-var 'a)] INT) {'a #{:intable}})
    'double             (fn-of [INT] DOUBLE)
-   `safe-sqrt          (scheme (fn-of [(s-var 'a)] DOUBLE) {'a #{:number}})
-   `sin                (unary-transform DOUBLE)
-   `cos                (unary-transform DOUBLE)
-   `tan                (unary-transform DOUBLE)
-   `safe-asin          (unary-transform DOUBLE)
-   `safe-acos          (unary-transform DOUBLE)
-   `atan               (unary-transform DOUBLE)
-   `safe-log2          (scheme (fn-of [(s-var 'a)] DOUBLE) {'a #{:number}})
-   `safe-log10         (scheme (fn-of [(s-var 'a)] DOUBLE) {'a #{:number}})
-   `ceil               (unary-transform DOUBLE)
-   `floor              (unary-transform DOUBLE)
-   'zero?              (scheme (fn-of [(s-var 'a)] BOOLEAN) {'a #{:number}})
+  ;;  `safe-sqrt          (scheme (fn-of [(s-var 'a)] DOUBLE) {'a #{:number}})
+  ;;  `sin                (unary-transform DOUBLE)
+  ;;  `cos                (unary-transform DOUBLE)
+  ;;  `tan                (unary-transform DOUBLE)
+  ;;  `safe-asin          (unary-transform DOUBLE)
+  ;;  `safe-acos          (unary-transform DOUBLE)
+  ;;  `atan               (unary-transform DOUBLE)
+  ;;  `safe-log2          (scheme (fn-of [(s-var 'a)] DOUBLE) {'a #{:number}})
+  ;;  `safe-log10         (scheme (fn-of [(s-var 'a)] DOUBLE) {'a #{:number}})
+  ;;  `ceil               (unary-transform DOUBLE)
+  ;;  `floor              (unary-transform DOUBLE)
+  ;;  'zero?              (scheme (fn-of [(s-var 'a)] BOOLEAN) {'a #{:number}})
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Text
-   `str/join           (scheme (fn-of [(vector-of (s-var 'c))] STRING) {'c #{:stringable}})
-   'str                (scheme (fn-of [(s-var 't)] STRING))
-   `int->char          (fn-of [INT] CHAR)
-   `whitespace?        (unary-pred CHAR)
-   `digit?             (unary-pred CHAR)
-   `letter?            (unary-pred CHAR)
-   'append-str         (fn-of [STRING CHAR] STRING)
-   `split-str-on-ws    (fn-of [STRING] (vector-of STRING))
-   `split-str          {:type :overloaded
-                        :alternatives [(fn-of [STRING CHAR] (vector-of STRING)) ; split-str-on-char
-                                       (fn-of [STRING STRING] (vector-of STRING))]} ; split-str
-   `set-char           (fn-of [STRING INT CHAR] STRING)
-   'str-join-sep       (fn-of [STRING (vector-of STRING)] STRING)
-   `str/capitalize     (unary-transform STRING)
-   `str/upper-case     (unary-transform STRING)
-   `str/lower-case     (unary-transform STRING)
-   `char-upper         (unary-transform CHAR)
-   `char-lower         (unary-transform CHAR)
+  ;;  `str/join           (scheme (fn-of [(vector-of (s-var 'c))] STRING) {'c #{:stringable}})
+  ;;  'str                (scheme (fn-of [(s-var 't)] STRING))
+  ;;  `int->char          (fn-of [INT] CHAR)
+  ;;  `whitespace?        (unary-pred CHAR)
+  ;;  `digit?             (unary-pred CHAR)
+  ;;  `letter?            (unary-pred CHAR)
+  ;;  'append-str         (fn-of [STRING CHAR] STRING)
+  ;;  `split-str-on-ws    (fn-of [STRING] (vector-of STRING))
+  ;;  `split-str          {:type :overloaded
+  ;;                       :alternatives [(fn-of [STRING CHAR] (vector-of STRING)) ; split-str-on-char
+  ;;                                      (fn-of [STRING STRING] (vector-of STRING))]} ; split-str
+  ;;  `set-char           (fn-of [STRING INT CHAR] STRING)
+  ;;  'str-join-sep       (fn-of [STRING (vector-of STRING)] STRING)
+  ;;  `str/capitalize     (unary-transform STRING)
+  ;;  `str/upper-case     (unary-transform STRING)
+  ;;  `str/lower-case     (unary-transform STRING)
+  ;;  `char-upper         (unary-transform CHAR)
+  ;;  `char-lower         (unary-transform CHAR)
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Boolean
-   `and                (binary-transform BOOLEAN)
-   `or                 (binary-transform BOOLEAN)
-   'not                (unary-transform BOOLEAN)
+  ;;  `and                (binary-transform BOOLEAN)
+  ;;  `or                 (binary-transform BOOLEAN)
+  ;;  'not                (unary-transform BOOLEAN)
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Polymorphic collection functions  
    'count              (scheme (fn-of [{:type (s-var 'c)}] INT)
@@ -770,83 +770,84 @@
                                       (map-of (s-var 'k) (s-var 'v))))
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;;; Tuple
-   '->tuple2           (scheme (fn-of [(s-var 'a) (s-var 'b)]
-                                      (tuple-of (s-var 'a) (s-var 'b))))
-   'left               (scheme (fn-of [(tuple-of (s-var 'a) (s-var 'b))]
-                                      (s-var 'a)))
-   'right              (scheme (fn-of [(tuple-of (s-var 'a) (s-var 'b))]
-                                      (s-var 'b)))
-   `assoc-left         (scheme (fn-of [(tuple-of (s-var 'a) (s-var 'b)) (s-var 'c)]
-                                      (tuple-of (s-var 'c) (s-var 'b))))
-   `assoc-right        (scheme (fn-of [(tuple-of (s-var 'a) (s-var 'b)) (s-var 'c)]
-                                      (tuple-of (s-var 'a) (s-var 'c))))
+  ;;  '->tuple2           (scheme (fn-of [(s-var 'a) (s-var 'b)]
+  ;;                                     (tuple-of (s-var 'a) (s-var 'b))))
+  ;;  'left               (scheme (fn-of [(tuple-of (s-var 'a) (s-var 'b))]
+  ;;                                     (s-var 'a)))
+  ;;  'right              (scheme (fn-of [(tuple-of (s-var 'a) (s-var 'b))]
+  ;;                                     (s-var 'b)))
+  ;;  `assoc-left         (scheme (fn-of [(tuple-of (s-var 'a) (s-var 'b)) (s-var 'c)]
+  ;;                                     (tuple-of (s-var 'c) (s-var 'b))))
+  ;;  `assoc-right        (scheme (fn-of [(tuple-of (s-var 'a) (s-var 'b)) (s-var 'c)]
+  ;;                                     (tuple-of (s-var 'a) (s-var 'c))))
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Set
-   '->set1             (scheme (fn-of [(s-var 'e)]
-                                      (set-of (s-var 'e))))
-   '->set2             (scheme (fn-of [(s-var 'e) (s-var 'e)]
-                                      (set-of (s-var 'e))))
-   '->set3             (scheme (fn-of [(s-var 'e) (s-var 'e) (s-var 'e)]
-                                      (set-of (s-var 'e))))
-   `set/union          (scheme (fn-of [(set-of (s-var 'e))
-                                       (set-of (s-var 'e))]
-                                      (set-of (s-var 'e))))
-   `set/difference     (scheme (fn-of [(set-of (s-var 'e))
-                                       (set-of (s-var 'e))]
-                                      (set-of (s-var 'e))))
-   `set/intersection   (scheme (fn-of [(set-of (s-var 'e))
-                                       (set-of (s-var 'e))]
-                                      (set-of (s-var 'e))))
-   `set/subset?        (scheme (fn-of [(set-of (s-var 'e))
-                                       (set-of (s-var 'e))]
-                                      BOOLEAN))
-   `set/superset?      (scheme (fn-of [(set-of (s-var 'e))
-                                       (set-of (s-var 'e))]
-                                      BOOLEAN))
-   'disj               (scheme (fn-of [(set-of (s-var 'e)) (s-var 'e)]
-                                      (set-of (s-var 'e))))
-   `map-set            (scheme (fn-of [(fn-of [(s-var 'a)] (s-var 'b))
-                                       (set-of (s-var 'a))]
-                                      (set-of (s-var 'b))))
+  ;;  '->set1             (scheme (fn-of [(s-var 'e)]
+  ;;                                     (set-of (s-var 'e))))
+  ;;  '->set2             (scheme (fn-of [(s-var 'e) (s-var 'e)]
+  ;;                                     (set-of (s-var 'e))))
+  ;;  '->set3             (scheme (fn-of [(s-var 'e) (s-var 'e) (s-var 'e)]
+  ;;                                     (set-of (s-var 'e))))
+  ;;  `set/union          (scheme (fn-of [(set-of (s-var 'e))
+  ;;                                      (set-of (s-var 'e))]
+  ;;                                     (set-of (s-var 'e))))
+  ;;  `set/difference     (scheme (fn-of [(set-of (s-var 'e))
+  ;;                                      (set-of (s-var 'e))]
+  ;;                                     (set-of (s-var 'e))))
+  ;;  `set/intersection   (scheme (fn-of [(set-of (s-var 'e))
+  ;;                                      (set-of (s-var 'e))]
+  ;;                                     (set-of (s-var 'e))))
+  ;;  `set/subset?        (scheme (fn-of [(set-of (s-var 'e))
+  ;;                                      (set-of (s-var 'e))]
+  ;;                                     BOOLEAN))
+  ;;  `set/superset?      (scheme (fn-of [(set-of (s-var 'e))
+  ;;                                      (set-of (s-var 'e))]
+  ;;                                     BOOLEAN))
+  ;;  'disj               (scheme (fn-of [(set-of (s-var 'e)) (s-var 'e)]
+  ;;                                     (set-of (s-var 'e))))
+  ;;  `map-set            (scheme (fn-of [(fn-of [(s-var 'a)] (s-var 'b))
+  ;;                                      (set-of (s-var 'a))]
+  ;;                                     (set-of (s-var 'b))))
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;;; Map
-   '->map1             (scheme (fn-of [(s-var 'k) (s-var 'v)]
-                                      (map-of (s-var 'k) (s-var 'v))))
-   '->map2             (scheme (fn-of [(s-var 'k) (s-var 'v)
-                                       (s-var 'k) (s-var 'v)]
-                                      (map-of (s-var 'k) (s-var 'v))))
-   '->map3             (scheme (fn-of [(s-var 'k) (s-var 'v)
-                                       (s-var 'k) (s-var 'v)
-                                       (s-var 'k) (s-var 'v)]
-                                      (map-of (s-var 'k) (s-var 'v))))
-   'get                (scheme (fn-of [(map-of (s-var 'k) (s-var 'v)) (s-var 'k)]
-                                      (s-var 'v)))
-   'get-or-else        (scheme (fn-of [(map-of (s-var 'k) (s-var 'v)) (s-var 'k) (s-var 'v)]
-                                      (s-var 'v)))
-   'assoc              (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))
-                                       (s-var 'k)
-                                       (s-var 'v)]
-                                      (map-of (s-var 'k) (s-var 'v))))
-   'update             (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))
-                                       (s-var 'k)
-                                       (fn-of [(s-var 'v)] (s-var 'v))]
-                                      (map-of (s-var 'k) (s-var 'v))))
-   `keys-vec           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
-                                      (vector-of (s-var 'k))))
-   `keys-set           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
-                                      (set-of (s-var 'k))))
-   `vals-vec           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
-                                      (vector-of (s-var 'v))))
-   'merge              (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))
-                                       (map-of (s-var 'k) (s-var 'v))]
-                                      (map-of (s-var 'k) (s-var 'v))))
+  ;;  '->map1             (scheme (fn-of [(s-var 'k) (s-var 'v)]
+  ;;                                     (map-of (s-var 'k) (s-var 'v))))
+  ;;  '->map2             (scheme (fn-of [(s-var 'k) (s-var 'v)
+  ;;                                      (s-var 'k) (s-var 'v)]
+  ;;                                     (map-of (s-var 'k) (s-var 'v))))
+  ;;  '->map3             (scheme (fn-of [(s-var 'k) (s-var 'v)
+  ;;                                      (s-var 'k) (s-var 'v)
+  ;;                                      (s-var 'k) (s-var 'v)]
+  ;;                                     (map-of (s-var 'k) (s-var 'v))))
+  ;;  'get                (scheme (fn-of [(map-of (s-var 'k) (s-var 'v)) (s-var 'k)]
+  ;;                                     (s-var 'v)))
+  ;;  'get-or-else        (scheme (fn-of [(map-of (s-var 'k) (s-var 'v)) (s-var 'k) (s-var 'v)]
+  ;;                                     (s-var 'v)))
+  ;;  'assoc              (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))
+  ;;                                      (s-var 'k)
+  ;;                                      (s-var 'v)]
+  ;;                                     (map-of (s-var 'k) (s-var 'v))))
+  ;;  'update             (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))
+  ;;                                      (s-var 'k)
+  ;;                                      (fn-of [(s-var 'v)] (s-var 'v))]
+  ;;                                     (map-of (s-var 'k) (s-var 'v))))
+  ;;  `keys-vec           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
+  ;;                                     (vector-of (s-var 'k))))
+  ;;  `keys-set           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
+  ;;                                     (set-of (s-var 'k))))
+  ;;  `vals-vec           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
+  ;;                                     (vector-of (s-var 'v))))
+  ;;  'merge              (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))
+  ;;                                      (map-of (s-var 'k) (s-var 'v))]
+  ;;                                     (map-of (s-var 'k) (s-var 'v))))
 
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Printing & Side Effects
-   'do2                (scheme (fn-of [NIL (s-var 'a)] (s-var 'a)))
-   'do3                (scheme (fn-of [NIL NIL (s-var 'a)] (s-var 'a)))
-   'print              (scheme (fn-of [(s-var 'a)] NIL))
-   'println            (scheme (fn-of [(s-var 'a)] NIL))})
+  ;;  'do2                (scheme (fn-of [NIL (s-var 'a)] (s-var 'a)))
+  ;;  'do3                (scheme (fn-of [NIL NIL (s-var 'a)] (s-var 'a)))
+  ;;  'print              (scheme (fn-of [(s-var 'a)] NIL))
+  ;;  'println            (scheme (fn-of [(s-var 'a)] NIL))
+   })
 
 (def dealiases
   '{->map1            hash-map
