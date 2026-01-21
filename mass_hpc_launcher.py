@@ -1,16 +1,16 @@
 import os
 
-# Which benchmark suite. Options: "psb", "composite"
-suite = "composite"
+# Which benchmark suite. Options: "psb", "composite", "sobania"
+suite = "sobania"
 
 # Used to identify runs in qstat. Change to make easy to identify
-qstat_suffix = "-ad-hoc"
+qstat_suffix = "-sobania"
 
 # Your email address for receiving alerts
-email = "odennen@hamilton.edu"
+email = "thelmuth@hamilton.edu"
 
 # Directory to hold results for each problem. Change for each set of runs
-basedir = "/usr/local/research/compsci/helmuth/odennen/Results/ad-hoc-polymorphism/"
+basedir = "/usr/local/research/compsci/helmuth/thelmuth/Results/sobania-try-1/"
 
 # Directory where input data either can be found or will be downloaded.
 # Can either be local (default) or global (will use less HDD if multiple projects use it)
@@ -100,6 +100,25 @@ elif suite == "composite":
                 "sum-vector-vals",
                 "time-sheet"
                 ]
+elif suite == "sobania":
+    problems = [
+                ### Sobania
+                "instance1_loc5_cc1_any",
+                "instance2_loc7_cc1_any",
+                "instance3_loc9_cc1_any",
+                "instance4_loc11_cc1_any",
+                "instance5_loc13_cc1_any",
+                "instance6_loc5_cc2_if_only",
+                "instance7_loc9_cc2_if_only",
+                "instance8_loc11_cc2_if_only",
+                "instance9_loc7_cc2_for_only",
+                "instance10_loc13_cc2_for_only",
+                "instance11_loc10_cc3_two_ifs_not_nested",
+                "instance12_loc10_cc3_nested_if",
+                "instance13_loc10_cc3_if_in_for",
+                "instance14_loc10_cc3_two_fors_not_nested",
+                "instance15_loc10_cc3_nested_for"
+    ]
 
 ### You shouldn't need to change anything below here, unless you add another
 ### token to replace in template_replacements
