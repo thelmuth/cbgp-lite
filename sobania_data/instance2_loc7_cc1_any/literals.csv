@@ -1,6 +1,5 @@
 value,type
+8,int
 9,int
-2.23,float
--10,int
-3,int
-0.64,float
+4.16,float
+10,int

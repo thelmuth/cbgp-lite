@@ -6,18 +6,18 @@
 # - LineRelevance: 1.00
 # - InputRelevance: 1.00
 # - LineCoverage: 1.00
-# - OutputVariability: 0.60
-# - Seed: 33
+# - OutputVariability: 0.67
+# - Seed: 15
 
 def generated_func(arg0: int, arg1: int, arg2: int) -> int:
-    var0 = arg2
-    var0 *= 4 - abs(arg2) % 5
-    var0 //= 4
-    var0 -= arg0 * 2
-    var0 *= abs(arg1 + 3) % 2 + 1
-    var1 = var0 * 1.11
-    var0 *= max(1, int(abs(var1)) % 4)
-    var0 *= 4 - abs(arg0) % 3
-    var0 *= 4 - abs(arg1) % 4
-    var0 *= 3
+    var0 = arg0
+    var0 += arg0 * -5
+    var0 *= min(abs(arg1), 3) + 2
+    var0 *= abs(arg1 + 5) % 5 + 1
+    var1 = arg2 * 1.09
+    var0 -= int(var1)
+    var0 *= min(abs(arg1), 4) + 2
+    var2 = arg0 * 1.76
+    var0 -= int(var2)
+    var0 //= 5
     return var0
