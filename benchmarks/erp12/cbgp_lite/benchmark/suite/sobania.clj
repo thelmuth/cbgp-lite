@@ -71,6 +71,8 @@
         {:keys [input->type output-type]} (get-inputs-and-outputs problem)]
     {problem
      {:description    "Generated problem"
+      :n-train        200
+      :n-test         1000
       :input->type    input->type
       :ret-type       output-type
       :other-type-ctors    #{'double? 'int? 'boolean?}
