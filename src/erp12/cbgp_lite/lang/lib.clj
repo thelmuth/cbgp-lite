@@ -65,6 +65,15 @@
   [n d]
   (if (zero? d) 0 (quot n d)))
 
+(defn safe-python-quot
+  [n d]
+  (if (zero? d)
+    0
+    (let [q (quot n d)]
+      (if (neg? q)
+        (dec q)
+        q))))
+
 ;; @todo Switch to clojure.math (in v1.11 and above)
 
 (defn sin
@@ -522,6 +531,7 @@
    '-                  (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
    '*                  (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
    `safe-quot          (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
+  ;;  `safe-python-quot   (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
    `safe-div           (scheme (fn-of [(s-var 'a) (s-var 'a)] DOUBLE) {'a #{:number}})
    `safe-mod           (scheme (fn-of [(s-var 'a) (s-var 'a)] (s-var 'a)) {'a #{:number}})
   ;;  'inc                (scheme (fn-of [(s-var 'a)] (s-var 'a)) {'a #{:number}})

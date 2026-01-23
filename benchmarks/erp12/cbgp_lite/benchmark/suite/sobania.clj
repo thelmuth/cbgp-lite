@@ -4,7 +4,9 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [erp12.cbgp-lite.benchmark.utils :as bu]
-            [erp12.cbgp-lite.lang.lib :as lib]))
+            [erp12.cbgp-lite.lang.lib :as lib]
+            [erp12.cbgp-lite.search.individual :as i]
+            [erp12.cbgp-lite.task :as task]))
 
 (defn read-csv-from-filename
   [filename]
@@ -60,6 +62,142 @@
         literals (rest csv-vec)]
     (mapv process-literal-pair literals)))
 
+(defn get-solution
+  "Stores CBGP genome solutions to problems for easier access."
+  [problem]
+  (case problem
+    "instance1_loc5_cc1_any" (list {:gene :local :idx 0}
+                                   {:gene :lit :type {:type 'int?} :val -5}
+                                   {:gene :var :name '*}
+                                   {:gene :apply} ;; input0 * -5 ;; line 3 besides subtraction
+
+                                   {:gene :local :idx 0}
+                                   {:gene :local :idx 2}
+                                   {:gene :var :name '+}
+                                   {:gene :apply} ;; input0 + input2 ;; line 2
+
+                                   {:gene :var :name '-}
+                                   {:gene :apply} ;; (input0 + input2) - (input0 * -5) ;; line 3
+
+                                   {:gene :local :idx 1}
+                                   {:gene :var :name 'abs}
+                                   {:gene :apply} ;; line 4 besides addition
+
+                                   {:gene :var :name '+}
+                                   {:gene :apply} ;; line 4, which is returned
+                                   )
+
+    "instance6_loc5_cc2_if_only" (list {:gene :local :idx 1}
+                                       {:gene :var :name 'abs}
+                                       {:gene :apply} ;; line 1 to make var0. This is for else clause
+
+                                       {:gene :lit :type {:type 'int?} :val 5}
+                                       {:gene :local :idx 0}
+                                       {:gene :local :idx 0}
+                                       {:gene :var :name '*}
+                                       {:gene :apply}
+                                       {:gene :var :name `lib/safe-mod}
+                                       {:gene :apply}
+                                       {:gene :lit :type {:type 'int?} :val 3}
+                                       {:gene :var :name '+}
+                                       {:gene :apply} ;; all of line 3 except for var0 *=
+
+                                       {:gene :local :idx 1}
+                                       {:gene :var :name 'abs}
+                                       {:gene :apply} ;; line 1 to make var0. This is for *= in then clause
+
+                                       {:gene :var :name '*}
+                                       {:gene :apply} ;; full line 3
+
+                                       {:gene :lit :type {:type 'int?} :val 10}
+                                       {:gene :local :idx 2}
+                                       {:gene :var :name `lib/<='}
+                                       {:gene :apply} ;; condition to if
+                                       {:gene :var :name 'if}
+                                       {:gene :apply} ;; if statement line 14
+
+                                       {:gene :local :idx 0}
+                                       {:gene :var :name '*}
+                                       {:gene :apply} ;; line 4
+
+                                       {:gene :lit :type {:type 'int?} :val 5}
+                                       {:gene :var :name '*}
+                                       {:gene :apply} ;; line 5, which is returned
+                                       )
+
+    #_(reduce (fn [var0 i0]
+                (+ var0
+                   (* i0 2)))
+              input0
+              (range (+ 1 (abs input2))))
+
+    "solution" '(min' (* input1 input2)
+                      (safe-quot (reduce (fn [a-18590 a-18591] 
+                                           (+ a-18590 (* 2 a-18591)))
+                                         input1
+                                         (rangev (+ 1 (abs input3))))
+                                 (+ 2 (safe-mod (abs input3) 2))))
+
+    "instance9_loc7_cc2_for_only" (list {:gene :lit :type {:type 'int?} :val 2} ;; 2 for the mod
+                                        {:gene :local :idx 2}
+                                        {:gene :var :name 'abs}
+                                        {:gene :apply} ;; abs(var2), which is the same as abs(arg2)
+
+                                        {:gene :var :name `lib/safe-mod}
+                                        {:gene :apply} ;; abs(var2) % 2
+
+                                        {:gene :lit :type {:type 'int?} :val 2}
+                                        {:gene :var :name '+}
+                                        {:gene :apply} ;; abs(var2) % 2 + 2
+
+                                        ;; the above calculates abs(var2) % 2 + 2 for line 6 first, since it's the denom for division, it must be on the AST stack first
+
+                                        {:gene :local :idx 2}
+                                        {:gene :var :name 'abs}
+                                        {:gene :apply} ;; (abs input2)
+
+                                        {:gene :lit :type {:type 'int?} :val 1}
+                                        {:gene :var :name '+}
+                                        {:gene :apply} ;; (+ 1 (abs input2))
+
+                                        {:gene :var :name 'range1}
+                                        {:gene :apply} ;; (range (+ 1 (abs input2)))
+
+                                        {:gene :local :idx 0} ;; input0, as initial value for reduce/fold
+
+                                        {:gene :fn :arg-types [lib/INT lib/INT] :ret-type lib/INT} ;; start fn
+                                        {:gene :local :idx 4} ;; i0
+                                        {:gene :lit :type {:type 'int?} :val 2}
+                                        {:gene :var :name '*}
+                                        {:gene :apply} ;; (* i0 2)
+                                        {:gene :local :idx 3} ;; var0
+                                        {:gene :var :name '+}
+                                        {:gene :apply} ;; (+ var0 (* i0 2)) 
+                                        {:gene :close} ;; (fn [var0 i0] (+ var0 (* i0 2)))
+
+                                        {:gene :var :name 'fold}
+                                        {:gene :apply}
+
+                                        ;; so far, this compiles to the following, which looks correct
+                                        #_(reduce (fn [a-18554 a-18555] (+ a-18554 (* 2 a-18555)))
+                                                  input0
+                                                  (erp12.cbgp-lite.lang.lib/rangev (+ 1 (abs input2))))
+
+                                        ;; this is var0 from line 18, so we're now ready for the //=
+                                        {:gene :var :name `lib/safe-python-quot}
+                                        {:gene :apply}
+
+                                        ;; now calculate var1
+                                        {:gene :local :idx 1}
+                                        {:gene :local :idx 0}
+                                        {:gene :var :name '*}
+                                        {:gene :apply}
+
+                                        ;; finally return min of top two ASTs
+                                        {:gene :var :name `lib/min'}
+                                        {:gene :apply} ;; returned
+                                        )))
+
 (defn problems
   "Needs to take config map and return a map of problem names (strings)
    to maps (info about the problem). Probably fine to just return the one
@@ -81,7 +219,8 @@
                            (case output-type
                              {:type int?} [bu/absolute-distance]
                              {:type double?} [#(bu/round 4 (bu/absolute-distance %1 %2))]
-                             {:type string?} [lev/distance]))}}))
+                             {:type string?} [lev/distance]))
+      :solution (get-solution problem)}}))
 
 (defn read-cases
   "Needs to take config map and return map of train and test cases."
@@ -106,6 +245,72 @@
         test  (parse-set test-data)]
     {:train train
      :test  test}))
+
+(defn validate-solutions
+  [{:keys [num-cases problem]}]
+  (let [suite (problems {:problem problem
+                         :penalty 1000})]
+    (doseq [[problem-name task] (filter (fn [[_ task]] (contains? task :solution)) suite)]
+      (println "\nStarting" problem-name)
+      (let [factory    (i/make-evaluator (-> task
+                                             task/enhance-task
+                                             (assoc :evaluate-fn i/evaluate-full-behavior
+                                                    :cases (:test (read-cases {:problem  problem-name
+                                                                               :n-test   num-cases
+                                                                               :n-train  0})))))
+            start-time (System/currentTimeMillis)
+            evaluation (factory (:solution task) nil)
+            duration   (/ (- (System/currentTimeMillis) start-time) 1000.0)]
+        (cond
+          (> (:total-error evaluation) 0)
+          (throw (ex-info (str problem-name " solution has non-zero error.") {:eval evaluation}))
+
+          (some? (:exception evaluation))
+          (throw (ex-info (str problem-name " solution threw an error.") {:eval evaluation} (:exception evaluation)))
+
+          :else
+          (println problem-name "passed in" duration "seconds."))))))
+
+(comment
+
+  (validate-solutions {:num-cases 100
+                       :problem "instance1_loc5_cc1_any"})
+
+  (validate-solutions {:num-cases 100
+                       :problem "instance6_loc5_cc2_if_only"})
+
+  (count (get-solution "instance6_loc5_cc2_if_only"))
+
+  (validate-solutions {:num-cases 100
+                       :problem "instance9_loc7_cc2_for_only"})
+
+  '(min' (* input1 input2)
+         (safe-quot (reduce (fn [a-18590 a-18591]
+                              (+ a-18590 (* 2 a-18591)))
+                            input1
+                            (rangev (+ 1 (abs input3))))
+                    (+ 2 (safe-mod (abs input3) 2))))
+
+  (reduce (fn [a-18590 a-18591]
+            (+ a-18590 (* 2 a-18591)))
+          -100
+          (range (+ 1 (abs 5))))
+
+  (lib/safe-quot -100 3)
+  ;;=> -33 ;;; lol, python's -100 // 3 gives -34, so they round opposite directions
+
+  (int -33.8)
+
+  (count
+   (remove zero? [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 100 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]))
+
+  
+  (lib/safe-python-quot 100 3)
+  ;;=> 33
+  (lib/safe-python-quot -100 3)
+  ;;=> -34
+
+  )
 
 
 (comment
@@ -135,10 +340,3 @@
   
   )
 
-
-
-
-;; TODO:
-;; x - get read-cases working
-;; x - see TMH PROBLEM
-;; - trim instruction set to have approx parity with Martin's grammar
