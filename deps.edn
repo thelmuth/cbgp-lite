@@ -1,18 +1,24 @@
 {:path     ["src"]
  :deps     {com.taoensso/timbre              {:mvn/version "6.0.4"}
-            io.github.erp12/schema-inference {:local/root "../schema-inference"} ;; referencing local schema-inference for testing. Used to be {:git/sha "9c52bef1a8235f11071f6ed8a44fa6d492a4949e"}
+            io.github.thelmuth/schema-inference {:git/sha "2587e5e05b7e90ab55332b8973a05c22a0d1f1bb"} ;; this is from Owen's most recent changes, which add t-vars
             clj-fuzzy/clj-fuzzy              {:mvn/version "0.4.1"}
             org.clojure/tools.analyzer.jvm {:mvn/version "1.3.2"}
             com.clojure-goes-fast/clj-async-profiler {:mvn/version "1.0.4"}
             hellonico/pyjama {:git/url "https://github.com/hellonico/pyjama.git"
                               :sha "ec753eebffd422fd2d02eb1c93957a9f8adb0016"}
-            }
+            ;; clj-memeory-meter requires -Djdk.attach.allowAttachSelf on alias.
+            com.clojure-goes-fast/clj-memory-meter {:mvn/version "0.4.0"}}
  :aliases  {:test       {:extra-paths ["test"]
+                         :jvm-opts    ["-Djdk.attach.allowAttachSelf"]
                          :extra-deps  {io.github.metabase/hawk   {:sha "9c97bcb6d4de116325e651b40973fd0a75b7ae21"}
                                        meander/epsilon           {:mvn/version "0.0.650"}}
                          :exec-fn     mb.hawk.core/find-and-run-tests-cli}
             :benchmarks {:extra-paths ["benchmarks"]
+                         :jvm-opts    ["-Xms2G" "-Xmx4G"
+                                       "-XX:CompressedClassSpaceSize=2g"
+                                       "-Dclojure.main.report=stderr"
+                                       "-Djdk.attach.allowAttachSelf"]
                          :extra-deps  {org.clojure/tools.cli    {:mvn/version "1.0.206"}
                                        net.clojars.schneau/psb2 {:mvn/version "1.1.1"}
                                        io.github.erp12/ga-clj   {:git/sha "a6ef20b104875369a4266bd7fd4ff6cc0e7fa786"}} ;; {:local/root "../ga-clj"}}  
-                         :jvm-opts ["-XX:CompressedClassSpaceSize=2g" "-Dclojure.main.report=stderr"]}}}
+                         }}}
