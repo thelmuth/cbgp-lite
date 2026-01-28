@@ -1,28 +1,32 @@
 (ns erp12.cbgp-lite.lang.lib
   (:refer-clojure :exclude [and or vector-of])
-  (:require [clojure.core :as core]
+  (:require [clj-memory-meter.core :as mm]
+            [clojure.core :as core]
             [clojure.set :as set]
             [clojure.string :as str]
-            [clj-memory-meter.core :as mm]
-            [erp12.cbgp-lite.lang.schema :as schema]))
+            [erp12.cbgp-lite.lang.schema :as schema]
+            [taoensso.timbre :as log]))
 
 (def VALUE-MAX-BYTES 50000) ;; 50 KiB
 
 (defn guard
-  [x]
+  [name x]
   (let [num-bytes (mm/measure x :bytes true)]
     (if (> num-bytes VALUE-MAX-BYTES)
-      (throw (ex-info "Value too large."
+      (do
+        (log/info "Memory guarded for function: " name)
+        (throw (ex-info "Value too large."
                       ;; Don't put the full value in error data because it will OOM later.
-                      {:class (type x)
-                       :bytes num-bytes}))
+                        {:class (type x)
+                         :fn-name name
+                         :bytes num-bytes})))
       x)))
 
 (defn guarded-reduce
   ([f coll]
-   (reduce (comp guard f) coll))
+   (reduce (comp (partial guard (str "reduce on" f)) f) coll))
   ([f init coll]
-   (reduce (comp guard f) init coll)))
+   (reduce (comp (partial guard (str "reduce on" f)) f) init coll)))
 
 
 ;; @todo What do do about nil?
@@ -215,14 +219,14 @@
   [i]
   (char (mod i 128)))
 
-(def concat-str (comp guard str))
-(def append-str (comp guard str))
+(def concat-str (comp (partial guard "concat-str") str))
+(def append-str (comp (partial guard "append-str") str))
 (def take-str (comp str/join take))
 (def rest-str (comp str/join rest))
 (def butlast-str (comp str/join butlast))
 (def filter-str (comp str/join filter))
-(def str-replace (comp guard str/replace))
-(def str-replace-first (comp guard str/replace-first))
+(def str-replace (comp (partial guard "str-replace") str/replace))
+(def str-replace-first (comp (partial guard "str-replace-first") str/replace-first))
 
 (defn char-in? [s c] (str/includes? s (str c)))
 
@@ -300,8 +304,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Collections
 
-(def safe-mapv (comp guard mapv))
-(def safe-mapcatv (comp guard vec mapcat))
+(def safe-mapv (comp (partial guard "safe-mapv") mapv))
+(def safe-mapcatv (comp (partial guard "safe-mapcatv") vec mapcat))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Collections
@@ -343,12 +347,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Vector
 
-(def conj-vec (comp guard vec conj))
+(def conj-vec (comp (partial guard "conj-vec") vec conj))
 (def distinctv (comp vec distinct))
 (def mapcatv (comp vec mapcat))
-(def mapv-indexed (comp guard vec map-indexed))
+(def mapv-indexed (comp (partial guard "mapv-indexed") vec map-indexed))
 (def removev (comp vec remove))
-(def concatv (comp guard vec concat))
+(def concatv (comp (partial guard "concatv") vec concat))
 (def takev (comp vec take))
 (def restv (comp vec rest))
 (def butlastv (comp vec butlast))
@@ -429,9 +433,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Set
 
-(def conj-set (comp guard set conj))
-(def map-set (comp guard set map))
+(def conj-set (comp (partial guard "conj-set") set conj))
+(def map-set (comp (partial guard "map-set") set map))
 (defn filter-set [pred s] (into #{} (filter pred s)))
+(def safe-union (comp (partial guard "safe-union") set/union))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fixing LazySeqs
@@ -492,7 +497,8 @@
 (def keys-vec (comp vec keys))
 (def keys-set (comp set keys))
 (def vals-vec (comp vec vals))
-(def safe-assoc (comp guard assoc))
+(def safe-assoc (comp (partial guard "safe-assoc") assoc))
+(def safe-merge (comp (partial guard "safe-merge") merge))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Tuple
@@ -900,7 +906,7 @@
                                       (set-of (s-var 'e))))
    'map->set           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
                                       (set-of (tuple-of (s-var 'k) (s-var 'v)))))
-   `set/union          (scheme (fn-of [(set-of (s-var 'e))
+   `safe-union         (scheme (fn-of [(set-of (s-var 'e))
                                        (set-of (s-var 'e))]
                                       (set-of (s-var 'e))))
    `set/difference     (scheme (fn-of [(set-of (s-var 'e))
@@ -970,7 +976,7 @@
                                       (set-of (s-var 'k))))
    `vals-vec           (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
                                       (vector-of (s-var 'v))))
-   'merge              (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))
+   `safe-merge         (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))
                                        (map-of (s-var 'k) (s-var 'v))]
                                       (map-of (s-var 'k) (s-var 'v))))
    'count-map          (scheme (fn-of [(map-of (s-var 'k) (s-var 'v))]
