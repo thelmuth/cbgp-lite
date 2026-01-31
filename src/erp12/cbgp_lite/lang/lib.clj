@@ -4,17 +4,18 @@
             [clojure.core :as core]
             [clojure.set :as set]
             [clojure.string :as str]
-            [erp12.cbgp-lite.lang.schema :as schema]
-            [taoensso.timbre :as log]))
+            [erp12.cbgp-lite.lang.schema :as schema]))
 
 (def VALUE-MAX-BYTES 50000) ;; 50 KiB
+
+(def memory-guarded-fns (atom '()))
 
 (defn guard
   [name x]
   (let [num-bytes (mm/measure x :bytes true)]
     (if (> num-bytes VALUE-MAX-BYTES)
       (do
-        (log/info "Memory guarded for function: " name)
+        (swap! memory-guarded-fns conj name)
         (throw (ex-info "Value too large."
                       ;; Don't put the full value in error data because it will OOM later.
                         {:class (type x)

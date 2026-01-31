@@ -23,7 +23,7 @@
 (defmacro guarded-fn
   "Creates an anonymous function (using fn) that throws if the returned value exceeds the memory guard."
   [params body]
-  (list 'fn params `(guard ~body)))
+  (list 'fn params `(guard (str "(fn " ~params " " ~body ")") ~body)))
 
 (defmethod ast->form :fn
   [{:keys [methods]}]

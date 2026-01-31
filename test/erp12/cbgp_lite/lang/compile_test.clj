@@ -936,6 +936,84 @@ _ (is (matches? (erp12.cbgp-lite.lang.lib/safe-mapv (erp12.cbgp-lite.lang.ast/gu
         func (eval `(fn [~'in1 ~'in2] ~form))] 
     (is (= [5 3 300] (func [4 7 100] [1 -4 200])))))
 
+(comment
+  (require '[taoensso.timbre :as log])
+  (log/set-level! :trace)
+  (log/set-level! :debug) ;; default 
+
+  ;; This overflows. Note: the anon fn needs to reference both arguments, or it
+  ;; automatically is converted into a 1-argument fn and this doesn't work
+  (let [{::c/keys [ast type]}
+        (:ast (c/push->ast {:push      (list {:gene :lit :val "hi" :type {:type 'string?}}
+                                           ;{:gene :lit :val [5 6 7 8 9 -5 -6 -7 -8 -9] :type {:type :vector :child {:type 'int?}}}
+                                             {:gene :lit :val 100 :type {:type 'int?}}
+                                             {:gene :var :name 'range1}
+                                             {:gene :apply} ;; the vector of 100 ints to reduce over
+
+                                             {:gene :lit :val 75 :type {:type 'int?}}
+                                             {:gene :var :name 'range1}
+                                             {:gene :apply} ;; the vector of 100 ints to be the starting value
+
+                                             {:gene :fn
+                                              :arg-types [{:type :vector :child {:type 'int?}}
+                                                          lib/INT]
+                                              :ret-type {:type :vector :child {:type 'int?}}}
+                                             [{:gene :local :idx 0}
+                                              {:gene :local :idx 0}
+                                              {:gene :var :name `lib/concatv}
+                                              {:gene :apply}
+                                              {:gene :local :idx 1}
+                                              {:gene :var :name `lib/conj-vec}
+                                              {:gene :apply}] ;; the fn
+
+                                             {:gene :var :name 'fold-vec}
+                                             {:gene :apply})
+                            :locals    []
+                            :ret-type  {:type :vector :child {:type 'int?}}
+                            :type-env  lib/type-env
+                            :dealiases lib/dealiases}))
+        _ (println "AST:" ast)
+        form (a/ast->form ast)
+        _ (println "FORM:" form)
+        func (eval `(fn [] ~form))]
+    (func))
+
+;; try something simpler, concat with str -- this overflows 
+
+  ;; try something simpler - this works to reduce a custom fn
+  (let [{::c/keys [ast type]}
+        (:ast (c/push->ast {:push      (list {:gene :lit :val "hi" :type {:type 'string?}}
+
+                                             {:gene :lit :val 1000 :type lib/INT}
+
+                                             {:gene :lit :val [5 6 7 8 9 10] :type {:type :vector :child {:type 'int?}}}
+
+                                             {:gene :fn
+                                              :arg-types [lib/INT
+                                                          lib/INT]
+                                              :ret-type lib/INT}
+                                             [{:gene :local :idx 0}
+                                              {:gene :local :idx 1}
+                                              {:gene :var :name 'int-add}
+                                              {:gene :apply}
+                                              {:gene :lit :val 1000000 :type lib/INT}
+                                              {:gene :var :name 'int-add}
+                                              {:gene :apply}] ;; the fn
+
+                                             {:gene :var :name 'fold-vec}
+                                             {:gene :apply})
+                            :locals    []
+                            :ret-type  lib/INT
+                            :type-env  lib/type-env
+                            :dealiases lib/dealiases}))
+        _ (println "AST:" ast)
+        form (a/ast->form ast)
+        _ (println "FORM:" form)
+        func (eval `(fn [] ~form))]
+    (func))
+
+  )
+
 (deftest polymorphic-output-test
   (let [{::c/keys [ast type]} (:ast
                                (c/push->ast {:push      [{:gene :local :idx 0}

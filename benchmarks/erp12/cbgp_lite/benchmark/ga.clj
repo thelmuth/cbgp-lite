@@ -6,6 +6,7 @@
             [erp12.cbgp-lite.lang.compile :as c]
             [erp12.cbgp-lite.search.individual :as i]
             [erp12.cbgp-lite.search.plushy :as pl]
+            [erp12.cbgp-lite.lang.lib :as lib]
             [erp12.cbgp-lite.task :as task]
             [erp12.ga-clj.search.ga :as ga]
             [erp12.ga-clj.toolbox :as tb]
@@ -122,6 +123,8 @@
                                                           (fn [{:keys [step step-start best new-best?]}]
                                                             (log/info :best-individual-errors (:errors best))
                                                             (log/info :best-genome (:genome best))
+                                                            (log/info ":list-of-fns-that-triggered-memory-guard" @lib/memory-guarded-fns)
+                                                            (reset! lib/memory-guarded-fns '())
                                                             (log/info "REPORT"
                                                                       {:step       step
                                                                        :duration   (- (System/currentTimeMillis) step-start)
