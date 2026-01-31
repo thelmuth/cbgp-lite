@@ -118,6 +118,9 @@
                                                               "ExceptionInfo: Value too large")
                                            behavior)))})))
 
+
+(def memory-guarded-forms (atom []))
+
 (defn make-evaluator
   "Makes AST, then turns it into an AST, and then turns that into a clojure function 
    that gets passed to the func above to test its correctness."
@@ -155,6 +158,8 @@
                          (throw (ex-info "Failed to evaluate Clojure form."
                                          {:code form}
                                          e))))]
+      (when (:exceeded-mem evaluation)
+        (swap! memory-guarded-forms conj form))
       #_(when (:exception evaluation)
         (println "BUG Exception in following program:" (.getMessage (:exception evaluation)))
         (println form)

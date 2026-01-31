@@ -125,6 +125,8 @@
                                                             (log/info :best-genome (:genome best))
                                                             (log/info ":list-of-fns-that-triggered-memory-guard" @lib/memory-guarded-fns)
                                                             (reset! lib/memory-guarded-fns '())
+                                                            (log/info ":vector-of-forms-that-triggered-memory-guard" @i/memory-guarded-forms)
+                                                            (reset! i/memory-guarded-forms [])
                                                             (log/info "REPORT"
                                                                       {:step       step
                                                                        :duration   (- (System/currentTimeMillis) step-start)
