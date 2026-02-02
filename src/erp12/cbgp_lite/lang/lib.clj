@@ -228,6 +228,7 @@
 (def filter-str (comp str/join filter))
 (def str-replace (comp (partial guard "str-replace") str/replace))
 (def str-replace-first (comp (partial guard "str-replace-first") str/replace-first))
+(def str-join (comp (partial guard "str-join") str/join))
 
 (defn char-in? [s c] (str/includes? s (str c)))
 
@@ -714,12 +715,12 @@
    'index-of-str       (fn-of [STRING STRING] INT)
    'char-occurrences   (fn-of [STRING CHAR] INT)
    `str-replace        (fn-of [STRING STRING STRING] STRING)
-`str-replace-first  (fn-of [STRING STRING STRING] STRING)
+   `str-replace-first  (fn-of [STRING STRING STRING] STRING)
    `replace-char       (fn-of [STRING CHAR CHAR] STRING)
    `replace-first-char (fn-of [STRING CHAR CHAR] STRING)
    `remove-char        (fn-of [STRING CHAR] STRING)
    `set-char           (fn-of [STRING INT CHAR] STRING)
-   `str/join           (fn-of [(vector-of STRING)] STRING)
+   `str-join           (fn-of [(vector-of STRING)] STRING)
    'str-join-sep       (fn-of [STRING (vector-of STRING)] STRING)
    'join-chars         (fn-of [(vector-of CHAR)] STRING)
    `str/capitalize     (unary-transform STRING)
@@ -1029,7 +1030,7 @@
     set->vec          vec
     set-contains?     contains?
     split-str-on-char erp12.cbgp-lite.lang.lib/split-str
-    str-join-sep      clojure.string/join
+    str-join-sep      erp12.cbgp-lite.lang.lib/str-join
     string->chars     vec
     vec->map          erp12.cbgp-lite.lang.lib/->map
     vec->set          set

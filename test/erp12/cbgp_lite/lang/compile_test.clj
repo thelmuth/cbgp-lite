@@ -977,8 +977,85 @@ _ (is (matches? (erp12.cbgp-lite.lang.lib/safe-mapv (erp12.cbgp-lite.lang.ast/gu
         _ (println "FORM:" form)
         func (eval `(fn [] ~form))]
     (func))
+  
+  (let [{::c/keys [ast type]}
+        (:ast (c/push->ast {:push (list {:gene :lit :val [2 6 7 8 9 10] :type {:type :vector :child {:type 'int?}}}
 
-;; try something simpler, concat with str -- this overflows 
+                                        {:gene :fn
+                                         :arg-types [{:type 'int?}
+                                                     {:type 'int?}]
+                                         :ret-type {:type 'int?}}
+                                        [
+                                         {:gene :local :idx 1}
+                                         {:gene :local :idx 0}
+                                         {:gene :var :name 'int-add}
+                                         {:gene :apply}
+                                         
+                                         {:gene :local :idx 0}
+                                         {:gene :local :idx 0}
+                                         {:gene :var :name 'int-add}
+                                         {:gene :apply}
+                                        ;;  {:gene :local :idx 1}
+                                        ;;  {:gene :var :name 'int-add}
+                                        ;;  {:gene :apply}
+                                         ]
+
+                                        {:gene :var :name 'reduce-vec}
+                                        {:gene :apply})
+                            :locals    []
+                            :ret-type  lib/INT
+                            :type-env  lib/type-env
+                            :dealiases lib/dealiases}))
+        _ (println "AST:" ast)
+        form (a/ast->form ast)
+        _ (println "FORM:" form)
+        func (eval `(fn [] ~form))]
+    (func))
+
+  (reduce (fn [x y] (+ x x))
+          [5 6 7 8 9 10])
+  
+  (* 5 32)
+
+  (list {:gene :lit :val [5 6 7 8 9 10] :type {:type :vector :child {:type 'int?}}}
+        ;; above, a vector containing 6 integers
+
+        ;; fn that takes 2 integers and returns an integer
+        {:gene :fn
+         :arg-types [{:type 'int?}
+                     {:type 'int?}]
+         :ret-type {:type 'int?}}
+
+        ;; fn body: get local at index 0 twice, add them together
+        {:gene :local :idx 0}
+        {:gene :local :idx 0}
+        {:gene :var :name 'int-add}
+        {:gene :apply}
+
+        {:gene :close} ;; end of fn
+
+        ;; reduce this anon fn over the vector
+        {:gene :var :name 'reduce-vec}
+        {:gene :apply})
+
+  (list {:gene :lit :val [5 6 7 8 9 10] :type {:type :vector :child {:type 'int?}}}
+
+        {:gene :fn
+         :arg-types [{:type 'int?}
+                     {:type 'int?}]
+         :ret-type {:type 'int?}}
+        {:gene :local :idx 0}
+        {:gene :local :idx 0}
+        {:gene :var :name 'int-add}
+        {:gene :apply}
+        {:gene :local :idx 1} 
+        {:gene :var :name 'int-add}
+        {:gene :apply}
+
+        {:gene :close}
+
+        {:gene :var :name 'reduce-vec}
+        {:gene :apply})
 
   ;; try something simpler - this works to reduce a custom fn
   (let [{::c/keys [ast type]}
