@@ -40,8 +40,8 @@
                     :all 0
                     :baked-in 0.025
                     (throw (Exception. (str "Unrecognized Application Type of " @compile/app-type))))
-   :fn            0.025
-   :let           0.025
+   :fn            0.05 ; 0.025
+   :let           0 ; 0.025
    :close         0.05
    :dna           (case @compile/app-type
                     :original 0

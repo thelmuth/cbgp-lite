@@ -20,6 +20,7 @@
   {:n-train              200
    :n-test               2000
    :population-size      1000
+   :tournament-size      5
    :max-generations      300
    :umad-rate            0.1
    :min-genome-size      50
@@ -34,16 +35,24 @@
    ;; `nil` will search the stack for the top AST of a valid type.
    :state-output-fn      nil})
 
+(defn tournament-bigger-size
+  [size]
+  (fn [state] ;; state contains population amongst other things
+    (let [pop (vec (:individuals state))
+          participants (repeatedly size #(rand-nth pop))
+          result (apply max-key :tree-size participants)]
+      ;; (println "participants:" participants)
+      ;; (println "result:" result)
+      result)))
+
 (defn make-breed
   [opts]
-  (let [select (tb/make-lexicase-selection opts)
+  (let [select (tournament-bigger-size (:tournament-size opts))
         mutate (tb/make-size-neutral-umad (assoc opts :rate (:umad-rate opts)))]
     (fn breed [state]
       (-> state
-          ;; Take 1 individual per error vector.
-          (->> :grouped vals (map rand-nth))
           ;; Select a parent and mutate to child
-          (select state)
+          select 
           :genome
           mutate))))
 
@@ -101,44 +110,38 @@
                                                                                                 :code-depth            bu/code-depth-stat
                                                                                                 :code-depth-over-size  bu/code-depth-over-size-stat
                                                                                                 :code-size             bu/code-size-stat
-                                                                                                :exceptions            bu/exception-messages-stat
+                                                                                                ;; :exceptions            bu/exception-messages-stat
                                                                                                 :genome-size           bu/genome-size-stat
-                                                                                                :lowest-error-per-case bu/lowest-error-per-case
-                                                                                                :applied-amount        bu/applied-stat
-                                                                                                :not-applied-amount    bu/not-applied-stat
-                                                                                                :not-func-not-apply    bu/not-func-so-not-apply-stat
+                                                                                                ;;:lowest-error-per-case bu/lowest-error-per-case
+                                                                                                ;;:applied-amount        bu/applied-stat
+                                                                                                ;;:not-applied-amount    bu/not-applied-stat
+                                                                                                ;;:not-func-not-apply    bu/not-func-so-not-apply-stat
                                                                                                 :num-no-ast            bu/num-no-ast-stat
-                                                                                                :num-penalties         (bu/make-num-penalty-stat (:penalty opts))
-                                                                                                :num-throwing          bu/num-throwing-stat
-                                                                                                :final-dna-counter     bu/dna-counter-stat
-                                                                                                :num-exceed-mem-guard  bu/exceed-mem-guard-stat
-                                                                                                :total-error           bu/total-error-stat
-                                                                                                :unique-behaviors      bu/unique-behaviors-stat}
+                                                                                                ;;:num-penalties         (bu/make-num-penalty-stat (:penalty opts))
+                                                                                                ;;:num-throwing          bu/num-throwing-stat
+                                                                                                ;;:final-dna-counter     bu/dna-counter-stat
+                                                                                                ;;:num-exceed-mem-guard  bu/exceed-mem-guard-stat
+                                                                                                ;;:total-error           bu/total-error-stat
+                                                                                                ;;:unique-behaviors      bu/unique-behaviors-stat
+                                                                                                }
                                                                                                individuals))]
                                                             (log/info stat-name stat-val))
                                                           {:grouped (group-by :errors individuals)})
                                        :breed           (make-breed opts)
-                                       :individual-cmp  (comparator #(< (:total-error %1) (:total-error %2)))
+                                       :individual-cmp  (comparator #(> (:tree-size %1) (:tree-size %2)))
                                        :stop-fn         (let [{:keys [max-generations cases]} opts]
                                                           (fn [{:keys [step step-start best new-best?]}]
-                                                            (log/info :best-individual-errors (:errors best))
                                                             (log/info :best-genome (:genome best))
                                                             (log/info "REPORT"
                                                                       {:step       step
-                                                                       :duration   (- (System/currentTimeMillis) step-start)
-                                                                       :best-error (:total-error best)
+                                                                       :code-size  (:tree-size best)
+                                                                       :duration   (- (System/currentTimeMillis) step-start) 
                                                                        :best-code  (:code best)})
                                                             (cond
                                                               (= step max-generations) :max-generation-reached
                                                               ;; If the "best" individual has solved the subset of cases
                                                               ;; Test if on the full training set.
-                                                              (zero? (:total-error best))
-                                                              (if (and new-best? (zero? (:total-error (evaluator (:genome best) {:cases cases}))))
-                                                                :solution-found
-                                                                ;; If an individual solves a batch but not all training cases,
-                                                                ;; no individual can become the new best and the run will fail.
-                                                                ;; @todo Fix this in ga-clj somehow?
-                                                                (log/info "Best individual solved a batch but not all training cases.")))))
+                                                              :else nil)))
                                        :mapper          pmap})
         _ (log/info "PRE-SIMPLIFICATION" best)
         ;; Simplify the best individual seen during evolution.

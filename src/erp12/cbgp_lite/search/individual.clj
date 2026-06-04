@@ -1,9 +1,10 @@
 (ns erp12.cbgp-lite.search.individual
-  (:require [clojure.string :as str]
-          [clj-fuzzy.levenshtein :as lev]
+  (:require [clj-fuzzy.levenshtein :as lev]
+            [clojure.string :as str]
             [erp12.cbgp-lite.lang.ast :as a]
             [erp12.cbgp-lite.lang.compile :as c]
             [erp12.cbgp-lite.search.plushy :as pl]
+            [erp12.ga-clj.toolbox :as tb]
             [taoensso.timbre :as log])
   (:import (java.io StringWriter)))
 
@@ -149,22 +150,22 @@
           func (when form
                  (a/form->fn (vec arg-symbols) form))
           _ (log/debug "Function compiled" func)
-          evaluation (try
-                       (evaluate-fn (merge {:func func :cases cases} opts))
-                       (catch Exception e
-                         (throw (ex-info "Failed to evaluate Clojure form."
-                                         {:code form}
-                                         e))))]
+          tree-size (try
+                      (tb/tree-size form)
+                      (catch Exception e
+                        (throw (ex-info "Failed to evaluate Clojure form."
+                                        {:code form}
+                                        e))))]
       #_(when (:exception evaluation)
-        (println "BUG Exception in following program:" (.getMessage (:exception evaluation)))
-        (println form)
-        (println))
-      (merge {:push push
-              :code form
-              :func func
-              :state state
-              :ret-type (:ret-type opts)}
-             evaluation))))
+          (println "BUG Exception in following program:" (.getMessage (:exception evaluation)))
+          (println form)
+          (println))
+      {:push push
+       :code form
+       :func func
+       :state state
+       :tree-size tree-size
+       :ret-type (:ret-type opts)})))
 
 (defn simplify
   [{:keys [individual simplification-steps evaluator context]}]
