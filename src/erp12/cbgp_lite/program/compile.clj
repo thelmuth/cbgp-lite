@@ -218,7 +218,8 @@
                                   (t/fn-type (mapv :typ arg-asts) ret-type))]
               (if (t/fail? substitutions)
                 ;; Unification should never fail if incremental type checking of args was successful.
-                (throw (ex-info "Unreachable." {}))
+                (throw (ex-info "Unreachable." {:fn-ast fn-ast
+                                                :arg-asts arg-asts}))
                 ;; Push the composite AST to the stack.
                 (let [state' (push-ast (->Ast (e/->App (:expr fn-ast)
                                                        (mapv :expr arg-asts))
