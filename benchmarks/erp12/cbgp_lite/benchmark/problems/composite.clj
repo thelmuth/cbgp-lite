@@ -128,7 +128,56 @@
 ;; @TODO add :solution genomes to ensure all problems are solvable.
 
 (def problems
-  {"centimeters-to-meters"
+  {"area-of-rectangle"
+   {:description    (str "Given two tuples of floats representing the upper-right and "
+                         "lower-left coordinates of a rectangle in the cartesian plane, "
+                         "find the area of the rectangle.")
+    :input-symbols  (input-symbols 2)
+    :input-types    [(t/tuple-type [t/FLOAT t/FLOAT])
+                     (t/tuple-type [t/FLOAT t/FLOAT])]
+    :output-type    t/FLOAT
+    :type-ctors     #{t/FLOAT (t/tuple-ctor 2)}
+    :extra-genes    []
+    :dataset-reader (case-gen->dataset-reader
+                     (fn area-of-rectangle-gen
+                       []
+                       (let [xs [(rand-float-range -100 100) (rand-float-range -100 100)]
+                             ys [(rand-float-range -100 100) (rand-float-range -100 100)]
+                             x1 (reduce max xs)
+                             x2 (reduce min xs)
+                             y1 (reduce max ys)
+                             y2 (reduce min ys)
+                             output (* (- x1 x2)
+                                       (- y1 y2))]
+                         {:inputs [[x1 y1] [x2 y2]]
+                          :output output})))
+    :penalty        DEFAULT-PENALTY
+    :loss-fns       [#(u/round 4 (u/absolute-distance %1 %2))]
+    :solution       (list (g/->Var 'input2)
+                          (g/->Var `lib/left)
+                          (g/->App)
+                          (g/->Var 'input1)
+                          (g/->Var `lib/left)
+                          (g/->App)
+                          (g/->Var `lib/float-sub)
+                          (g/->App)
+
+                          (g/->Var 'input2)
+                          (g/->Var `lib/right)
+                          (g/->App)
+                          (g/->Var 'input1)
+                          (g/->Var `lib/right)
+                          (g/->App)
+                          (g/->Var `lib/float-sub)
+                          (g/->App)
+
+                          (g/->Var `lib/float-mult)
+                          (g/->App)
+
+                          ;
+                          )}
+
+   "centimeters-to-meters"
    {:description    (str "Given a length in centimeters, return a tuple of (meters, centimeters) "
                          "that corresponds to the same length.")
     :input-symbols  (input-symbols 1)
@@ -158,6 +207,202 @@
                           (g/->App)
 
                           (g/->Var `lib/->tuple2)
+                          (g/->App))}
+
+   "count-true"
+   {:description    (str "Given a vector of T and a predicate T => bool, return the "
+                         "count of the number of elements in T that make the predicate true.")
+    :input-symbols  (input-symbols 2)
+    :input-types    [(t/vec-type (t/rigid 'T))
+                     (t/fn-type [(t/rigid 'T)] t/BOOL)]
+    :output-type    t/INT
+    :type-ctors     #{t/INT t/BOOL t/VECTOR}
+    :extra-genes    [(g/->Lit 0 t/INT)
+                     (g/->Lit true t/BOOL)
+                     (g/->Lit false t/BOOL)]
+    :dataset-reader (case-gen->dataset-reader
+                     (fn count-true-gen []
+                       (let [{:keys [val-gen preds]} (rand-nth value-generators-and-predicates)
+                             vector (rand-vector 0 50 val-gen)
+                             pred (rand-nth preds)]
+                         {:inputs [vector pred]
+                          :output (count (filter pred vector))})))
+    :penalty        DEFAULT-PENALTY
+    :loss-fns       [u/absolute-distance]
+    ;; :solution-clojure '(count (filter input2 input1))
+    :solution       (list (g/->Var 'input1)
+                          (g/->Var 'input2)
+                          (g/->Var `filterv)
+                          (g/->App)
+
+                          (g/->Var `lib/count-vec)
+                          (g/->App))}
+
+   "filter-bounds"
+   {:description    (str "Given a set of elements that are all of the same comparable "
+                         "type, T , and two instance of type T representing a lower and "
+                         "upper bound, filter the set to the elements that fall "
+                         "between two bounds (inclusively)."
+                         "Note: This version of CBGP does not yet enforce that T is comparable.")
+    :input-symbols  (input-symbols 3)
+    :input-types    [(t/set-type (t/rigid 'T))
+                     (t/rigid 'T)
+                     (t/rigid 'T)]
+    :output-type    (t/set-type (t/rigid 'T))
+    :type-ctors     #{t/BOOL t/SET}
+    :extra-genes    [(g/->Abs [(t/rigid 'T)] t/BOOL)
+                     (g/->Abs [(t/rigid 'T) (t/rigid 'T)] t/BOOL)
+                     (g/->Abs [(t/set-type (t/rigid 'T))] (t/set-type (t/rigid 'T)))]
+    :dataset-reader (let [generators [(u/string-generator 10)
+                                      u/rand-char
+                                      (u/int-generator 1000)
+                                      (u/int-generator 20)
+                                      rand]]
+                      (case-gen->dataset-reader
+                       (fn filter-bounds-gen []
+                         (let [val-gen (rand-nth generators)
+                               the-set (set (rand-vector 20 50 val-gen))
+                               x (val-gen)
+                               y (val-gen)
+                               lower (lib/min' x y)
+                               upper (lib/max' x y)]
+                           {:inputs [the-set lower upper]
+                            :output (set (filter #(and (lib/<' lower %) (lib/<' % upper))
+                                                 the-set))}))))
+    :penalty        DEFAULT-PENALTY
+    :loss-fns       [u/jaccard-similarity-loss]
+    ;; :solution-clojure '(lib/filter-set (fn [local0] 
+    ;;                                      (and (lib/<' input2 local0)
+    ;;                                           (lib/<' local0 inpu3)))
+    ;;                                    input1)
+    :broken-solution       (list (g/->Var 'input1)
+                                 ;; TMH: I can't get this working. Am I doing anon fn right?
+
+                          ;; anon-fn
+                                 (g/->Abs [(t/rigid 'T)] t/BOOL)
+                          ;; TMH: Are arguments taken as top first or lower first? Push does lower first,
+                          ;; but if I'm reading things correctly, it's top first here
+                                 (g/->Var 'input2)
+                                 (g/->Local 0) ;; local0
+                                 (g/->Var `lib/<')
+                                 (g/->App)
+
+                          ;;;; TMH: commenting out to just see if it produces better code
+                          ;; (g/local-gene {:idx 0}) ;; local0
+                          ;; (g/->Var 'input3)
+                          ;; (g/->Var `lib/<')
+                          ;; (g/->App)
+
+                          ;; (g/->Var `lib/and')
+                          ;; (g/->App)
+                                 :close ;; end anon-fn
+
+                                 (g/->Var `lib/filter-set)
+                                 (g/->App)
+
+                          ;; todo: if I had the order wrong for set-cartesian-product, maybe I could fix it
+
+                          ;
+                                 )}
+
+   "filter-bounds-int"
+   {:description    (str "Given a set of elements that are all of the same comparable "
+                         "type, T , and two instance of type T representing a lower and "
+                         "upper bound, filter the set to the elements that fall "
+                         "between two bounds (inclusively)."
+                         "Note: This version of CBGP does not yet enforce that T is comparable.")
+    :input-symbols  (input-symbols 3)
+    :input-types    [(t/set-type t/INT)
+                     t/INT
+                     t/INT]
+    :output-type    (t/set-type t/INT)
+    :type-ctors     #{t/BOOL t/SET}
+    :extra-genes    []
+    :dataset-reader (let [generators [(u/int-generator 1000)
+                                      (u/int-generator 20)]]
+                      (case-gen->dataset-reader
+                       (fn filter-bounds-gen []
+                         (let [val-gen (rand-nth generators)
+                               the-set (set (rand-vector 20 50 val-gen))
+                               x (val-gen)
+                               y (val-gen)
+                               lower (lib/min' x y)
+                               upper (lib/max' x y)]
+                           {:inputs [the-set lower upper]
+                            :output (set (filter #(and (lib/<' lower %) (lib/<' % upper))
+                                                 the-set))}))))
+    :penalty        DEFAULT-PENALTY
+    :loss-fns       [u/jaccard-similarity-loss]
+       ;; :solution-clojure '(lib/filter-set (fn [local0] 
+       ;;                                      (and (lib/<' input2 local0)
+       ;;                                           (lib/<' local0 inpu3)))
+       ;;                                    input1)
+    :broken-solution       (list (g/->Var 'input1)
+
+                             ;; anon-fn
+                                 (g/->Abs [t/INT] t/BOOL)
+                             ;; TMH: Are arguments taken as top first or lower first? Push does lower first,
+                             ;; but if I'm reading things correctly, it's top first here
+                                 (g/->Local 0) ;; local0
+                                 (g/->Var 'input2)
+                                 (g/->Var `lib/<')
+                                 (g/->App)
+
+                                 (g/->Var 'input3)
+                                 (g/->Local 0) ;; local0
+                                 (g/->Var `lib/<')
+                                 (g/->App)
+
+                                 (g/->Var `lib/and')
+                                 (g/->App)
+                                 :close ;; end anon-fn
+
+                                 (g/->Var `lib/filter-set)
+                                 (g/->App)
+
+                             ;
+                                 )}
+
+   "first-index-of-true"
+   {:description    (str "Given a vector of T and a predicate T => bool, return the "
+                         "first index in the vector where the predicate is true.")
+    :input-symbols  (input-symbols 2)
+    :input-types    [(t/vec-type (t/rigid 'T))
+                     (t/fn-type [(t/rigid 'T)] t/BOOL)]
+    :output-type    t/INT
+    :type-ctors     #{t/INT t/BOOL t/VECTOR}
+    :extra-genes    [(g/->Lit -1 t/INT)
+                     (g/->Lit 0 t/INT)
+                     (g/->Lit true t/BOOL)
+                     (g/->Lit false t/BOOL)]
+    :dataset-reader (case-gen->dataset-reader
+                     (fn first-index-of-true-gen []
+                       (loop [attempt 0]
+                         (let [{:keys [val-gen preds]} (rand-nth value-generators-and-predicates)
+                               the-vector (rand-vector 0 50 val-gen)
+                               pred (rand-nth preds)
+                               output (->> the-vector
+                                           (map-indexed vector)
+                                           (filter #(pred (second %)))
+                                           ffirst)]
+                           (if (or (nil? output)
+                                   (< output (- 10 attempt)))
+                             (recur (inc attempt))
+                             {:inputs [the-vector pred]
+                              :output output})))))
+    :penalty        DEFAULT-PENALTY
+    :loss-fns       [u/absolute-distance]
+    ;; :solution-clojure '(index-of 'input1 (first (filter input2 input1)))
+    :solution       (list (g/->Var 'input1)
+                          (g/->Var 'input2)
+                          (g/->Var `filterv)
+                          (g/->App)
+
+                          (g/->Var `first)
+                          (g/->App)
+
+                          (g/->Var 'input1)
+                          (g/->Var `lib/index-of)
                           (g/->App))}
 
    "max-applied-fn"
@@ -192,13 +437,96 @@
                           (g/->App)
 
                           (g/->Var `last)
-                          (g/->App)
-                          )}
+                          (g/->App))}
+
+   "set-cartesian-product"
+   {:description    "Given two sets of ints, find their cartesian product, which will be a set of tuples of ints."
+    :input-symbols  (input-symbols 2)
+    :input-types    [(t/set-type t/INT)
+                     (t/set-type t/INT)]
+    :output-type    (t/set-type (t/tuple-type [t/INT t/INT]))
+    :type-ctors     #{t/SET t/INT t/BOOL (t/tuple-ctor 2)}
+    :extra-genes    [(g/->Lit 0 t/INT)
+                     (g/->Abs [t/INT] (t/tuple-type [t/INT t/INT]))
+                     (g/->Abs [t/INT] (t/set-type (t/tuple-type [t/INT t/INT])))]
+    :dataset-reader (case-gen->dataset-reader
+                     (let [set-generator (fn [] (set (rand-vector 0 21 #(rand-int 100))))]
+                       (fn cartesian-product-gen
+                         []
+                         (let [set1 (set-generator)
+                               set2 (set-generator)
+                               output (set (for [x set1
+                                                 y set2]
+                                             (vector x y)))]
+                           {:inputs [set1 set2]
+                            :output output}))))
+    :penalty        DEFAULT-PENALTY
+    :loss-fns       [u/jaccard-similarity-loss]
+    ;; :solution-clojure '(lib/reduce-vec lib/set-union
+    ;;                                    (mapv (fn [i1]
+    ;;                                            (lib/map-set (fn [i2] ;; fn-inner
+    ;;                                                           (lib/->tuple2 i1 i2))
+    ;;                                                         input2))
+    ;;                                          input1))
+
+    ;; TMH this isn't compiling correctly after first draft, I don't know why
+    :broken-solution       (list (g/->Var 'input1)
+
+                          ;; fn-outer
+                                 (g/->Abs [t/INT] (t/set-type (t/tuple-type [t/INT t/INT])))
+                                 (g/->Var 'input2)
+
+                          ;; fn-inner
+                                 (g/->Abs [t/INT] (t/tuple-type [t/INT t/INT]))
+                                 (g/local-gene {:idx 0}) ;; i1
+                                 (g/local-gene {:idx 1}) ;; i2
+                                 (g/->Var `lib/->tuple2)
+                                 (g/->App)
+                                 :close ;; fn-inner close
+
+                                 (g/->Var `lib/map-set)
+                                 (g/->App)
+                                 :close ;; fn-outer close
+
+                                 (g/->Var `mapv)
+                                 (g/->App) ;; mapv fn-outer over input1
+
+                                 (g/->Var `lib/set-union)
+                                 (g/->Var `lib/reduce-vec)
+                                 (g/->App) ;; reduce set-union over result of above
+                                 )
+    :broken-push '[{:sym input1}
+                   {:param-types [{:kind :*, :sym INT}],
+                    :push [{:sym input2}
+                           {:param-types [{:kind :*, :sym INT}],
+                            :push [{:idx 1}
+                                   {:idx 0}
+                                   {:sym erp12.cbgp-lite.program.lib/->tuple2}
+                                   {}],
+                            :ret-type {:args [{:kind :*, :sym INT}
+                                              {:kind :*, :sym INT}],
+                                       :con {:kind {:k-args [:* :*],
+                                                    :k-ret :*},
+                                             :sym TUPLE2}}}
+                           {:sym erp12.cbgp-lite.program.lib/map-set}
+                           {}],
+                    :ret-type {:args [{:args [{:kind :*, :sym INT}
+                                              {:kind :*, :sym INT}],
+                                       :con {:kind {:k-args [:* :*],
+                                                    :k-ret :*},
+                                             :sym TUPLE2}}],
+                               :con {:kind {:k-args [:*], :k-ret :*}, :sym SET}}}
+                   {:sym clojure.core/mapv}
+                   {}
+                   {:sym erp12.cbgp-lite.program.lib/set-union}
+                   {:sym erp12.cbgp-lite.program.lib/reduce-vec}
+                   {}]}
 
    "set-symmetric-difference"
    {:description    "Given two sets, find the symmetric difference."
     :input-symbols  (input-symbols 2)
-    :input-types    [(t/set-type t/INT) (t/set-type t/INT)]
+    :input-types    [(t/set-type t/INT)
+                     (t/set-type t/INT)]
     :output-type    (t/set-type t/INT)
     :type-ctors     #{t/SET t/INT t/BOOL}
     :extra-genes    [(g/->Lit #{} (t/set-type t/INT))]
@@ -225,6 +553,48 @@
                           (g/->Var `lib/set-union)
                           (g/->App))}
 
+   "sets-with-element"
+   {:description    (str "Given a set of sets of integers, filter to only contain sets that "
+                         "contain a certain element that is an integer.")
+    :input-symbols  (input-symbols 2)
+    :input-types    [(t/set-type (t/set-type t/INT))
+                     t/INT]
+    :output-type    (t/set-type (t/set-type t/INT))
+    :type-ctors     #{t/SET t/INT t/BOOL}
+    ;; TMH: should this have an anon fn extra gene, once they're working?
+    :extra-genes    [(g/->LitGenerator (u/int-generator 100) t/INT)
+                     (g/->Lit true t/BOOL)
+                     (g/->Lit false t/BOOL)
+                     (g/->Lit #{} (t/set-type t/INT))]
+    :dataset-reader (case-gen->dataset-reader
+                     (fn sets-with-element-gen []
+                       (let [max-int 100
+                             num-sets (rand-int 25)
+                             int-gen #(rand-int max-int)
+                             the-int (int-gen)
+                             prob (rand) ; prob of including the-int
+                             set-gen #(let [s (set (repeatedly (rand-int 25) int-gen))]
+                                        (if (< (rand) prob)
+                                          (conj s the-int)
+                                          (disj s the-int)))
+                             the-sets (set (repeatedly num-sets set-gen))
+                             output (set (filter #(contains? % the-int)
+                                                 the-sets))]
+                         {:inputs [the-sets the-int]
+                          :output output})))
+    :penalty        DEFAULT-PENALTY
+    :loss-fns       [u/jaccard-similarity-loss]
+
+    :solution-clojure '(lib/filter-set (fn [local0] (lib/set-contains? local0 input2))
+                                       input1)
+
+    ;; TMH: Not easy to do this without anon fn, so I haven't really tried. You can do
+    ;; it in a weird way with partial and subset, but not worth doing it that way
+    :broken-solution       (list (g/->Var 'input2)
+                                 (g/->Var 'input1)
+                                 (g/->App)
+                                 )} 
+
    "sum-2-vals"
    {:description    (str "Given a map from strings to ints and two strings that are "
                          "keys of the map, look up the values associated with those keys "
@@ -234,7 +604,7 @@
                      t/STRING
                      t/STRING]
     :output-type    t/INT
-    :type-ctors     #{t/MAP t/STRING t/INT t/BOOL}
+    :type-ctors     #{t/MAP t/STRING t/INT}
     :extra-genes    [(g/->Lit 0 t/INT)
                      (g/->LitGenerator (u/string-generator 21)
                                        t/STRING)]
@@ -265,7 +635,7 @@
                      (t/rigid 'T)
                      (t/rigid 'T)]
     :output-type    t/INT
-    :type-ctors     #{t/MAP t/INT t/BOOL t/STRING t/CHAR t/FLOAT}
+    :type-ctors     #{t/MAP t/INT}
     :extra-genes    [(g/->Lit 0 t/INT)]
     :dataset-reader (let [key-generators [(u/string-generator 10)
                                           (u/int-generator 1000)
@@ -320,7 +690,68 @@
                           (g/->Var `lib/reduce-vec)
                           (g/->App))}
 
-  ;
+   "sum-vector-vals"
+   {:description    (str "Given a map {string => int} and vector of strings that are "
+                         "keys of the map, look up the values associated with those "
+                         "keys in the map and return their sum.")
+    :input-symbols  (input-symbols 2)
+    :input-types    [(t/map-type t/STRING t/INT)
+                     (t/vec-type t/STRING)]
+    :output-type    t/INT
+    :type-ctors     #{t/MAP t/VECTOR t/INT t/STRING}
+    :extra-genes    [(g/->Lit 0 t/INT)
+                     (g/->Abs [t/STRING] t/INT)]
+    :dataset-reader (case-gen->dataset-reader
+                     (fn sum-vector-vals-gen []
+                       (let [the-map (first (:inputs (sum-2-vals-case-generator (u/string-generator 10))))
+                             prob (+ 0.1 (rand 0.8))
+                             the-vector (vec (random-sample prob (keys the-map)))]
+                         {:inputs [the-map the-vector]
+                          :output (apply + (map the-map the-vector))})))
+    :penalty        DEFAULT-PENALTY
+    :loss-fns       [u/absolute-distance]
+
+    :solution-clojure '(lib/reduce-vec lib/int-add
+                                       (mapv (lib/partial1-fn2 get input1)
+                                             input2))
+
+    :solution-clojure2 '(lib/reduce-vec lib/int-add
+                                        (mapv (fn [local0] (get input1 local0))
+                                              input2))
+
+    :solution       (list (g/->Var 'input2)
+
+                          (g/->Var 'input1)
+                          (g/->Var `get)
+                          (g/->Var `lib/partial1-fn2)
+                          (g/->App) ;; partial get over input1
+
+                          (g/->Var `mapv)
+                          (g/->App) ;; mapv partialled fn over input2
+
+                          (g/->Var `lib/int-add)
+                          (g/->Var `lib/reduce-vec)
+                          (g/->App) ;; sum results
+                          )
+
+    ;; TMH this one with anon fn also doesn't work. I think anon fns are just broken?
+    :broken-solution       (list (g/->Var 'input2)
+
+                                 (g/->Abs [t/STRING] t/INT)
+                                 (g/->Local 0)
+                                 (g/->Var 'input1)
+                                 (g/->Var `get)
+                                 (g/->App)
+                                 :close
+
+                                 (g/->Var `mapv)
+                                 (g/->App) ;; mapv anon fn over input2
+
+                                 (g/->Var `lib/int-add)
+                                 (g/->Var `lib/reduce-vec)
+                                 (g/->App) ;; sum results
+                                 )}
+;
    })
 
 
@@ -328,31 +759,34 @@
   [{:keys [num-cases penalty hooks]
     :or   {penalty 1000
            hooks   {}}}]
-  (doseq [[problem-name problem-metadata] (filter (fn [[_ md]] (contains? md :solution)) problems)]
-    (log/info "Starting" problem-name)
-    (let [evaluator  (i/make-genome-evaluator (assoc problem-metadata
-                                                     :cases (:test ((:dataset-reader problem-metadata) {:n-train 0 :n-test num-cases}))
-                                                     :penalty penalty
-                                                     :hooks hooks))
-          start-time (System/currentTimeMillis)
-          evaluation (evaluator (:solution problem-metadata) nil)
-          duration   (/ (- (System/currentTimeMillis) start-time) 1000.0)]
-      (cond
-        (> (:total-error evaluation) 0)
-        (throw (ex-info (str problem-name " solution has non-zero error.") {:eval evaluation}))
+  (let [problems-with-solutions (filter (fn [[_ md]] (contains? md :solution)) problems)]
+    (doseq [[problem-name problem-metadata] problems-with-solutions]
+      (log/info "Starting" problem-name)
+      (let [evaluator  (i/make-genome-evaluator (assoc problem-metadata
+                                                       :cases (:test ((:dataset-reader problem-metadata) {:n-train 0 :n-test num-cases}))
+                                                       :penalty penalty
+                                                       :hooks hooks))
+            start-time (System/currentTimeMillis)
+            evaluation (evaluator (:solution problem-metadata) nil)
+            duration   (/ (- (System/currentTimeMillis) start-time) 1000.0)]
+        (cond
+          (> (:total-error evaluation) 0)
+          (throw (ex-info (str problem-name " solution has non-zero error.") {:eval evaluation}))
 
-        (some? (:exception evaluation))
-        (throw (ex-info (str problem-name " solution threw an error.") {:eval evaluation} (:exception evaluation)))
+          (some? (:exception evaluation))
+          (throw (ex-info (str problem-name " solution threw an error.") {:eval evaluation} (:exception evaluation)))
 
-        :else
-        (log/info problem-name "passed in" duration "seconds.")))))
+          :else
+          (log/info problem-name "passed in" duration "seconds."))))
+    (log/info "Finished testing" (count problems-with-solutions) "solutions")))
 
 
 (comment
 
   (try
     (validate-solutions {:num-cases 200})
-    (catch Exception e (:eval (ex-data e))))
+    (catch Exception e (select-keys (:eval (ex-data e))
+                                    [:push :func :code])))
 
 
 
@@ -361,14 +795,31 @@
   
   
 
-  ;; Does Eddie's do this?
-  ;; 
-  ;; Same error in other runs? Always let?
-  ;; 
-  ;; Do any of my problems need anon fns
-  ;; 
-  ;; Do we have the type sig for partial (or let?) wrong?
+  (g/abs-gene {:param-types [t/INT]
+               :ret-type    t/BOOL})
+  ;;=> {:param-types [{:sym INT, :kind :*}], :ret-type {:sym BOOL, :kind :*}}
   
+
+  (g/->Abs [t/INT] t/BOOL)
+  ;;=> {:param-types [{:sym INT, :kind :*}], :ret-type {:sym BOOL, :kind :*}}
+  
+  
+  (prn
+   (list (g/->Var 'input2)
+         
+         (g/->Local 0)
+         (g/->Var 'input1)
+         (g/->Var `get)
+         (g/->App)
+         :close
+         
+         (g/->Var `mapv)
+         (g/->App) ;; mapv anon fn over input2
+         
+         (g/->Var `lib/int-add)
+         (g/->Var `lib/reduce-vec)
+         (g/->App) ;; sum results
+         ))
 
   (comment)
   )
