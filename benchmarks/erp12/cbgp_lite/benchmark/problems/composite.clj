@@ -405,6 +405,34 @@
                           (g/->Var `lib/index-of)
                           (g/->App))}
 
+   "get-vals-of-key"
+   {:description    (str "Given a vector of maps [{string => int} ...] and a key, "
+                         "make a list of the values of that key in all the maps.")
+    :input-symbols  (input-symbols 2)
+    :input-types    [(t/vec-type (t/map-type t/STRING t/INT))
+                     t/STRING]
+    :output-type    (t/vec-type t/INT)
+    :type-ctors     #{t/INT t/STRING t/MAP t/VECTOR t/BOOL}
+    :extra-genes    [(g/->Lit [] (t/vec-type t/INT))
+                     (g/->Abs [(t/map-type t/STRING t/INT)] t/INT)]
+    :dataset-reader (case-gen->dataset-reader
+                     (fn get-vals-of-key-gen
+                       []
+                       (let [num-keys-per-map (rand-int-range 1 8)
+                             keys (repeatedly num-keys-per-map (u/string-generator 10))
+                             map-gen #(zipmap keys (repeatedly (u/int-generator 1000)))
+                             the-maps (rand-vector 0 25 map-gen)
+                             the-key (rand-nth keys)
+                             output (mapv #(get % the-key) the-maps)]
+                         {:inputs [the-maps the-key]
+                          :output output})))
+    :penalty        DEFAULT-PENALTY
+    :loss-fns       [lev/distance]
+    :solution-clojure '(mapv #(get % input2)
+                             input1)
+    ;; TMH: Much easier with fn abstraction, not attempted yet
+    :broken-solution       (list (g/->Var 'input1))}
+   
    "max-applied-fn"
    {:description   (str "Given an integer X < 50 and a (int => int) function, return "
                         "the integer in [0, X) that results in the maximum value for "
@@ -438,6 +466,55 @@
 
                           (g/->Var `last)
                           (g/->App))}
+
+   "min-key"
+   {:description    "Given map of {key => int}, return the key with the min value."
+    :input-symbols  (input-symbols 1)
+    :input-types    [(t/map-type (t/rigid 'T) t/INT)]
+    :output-type    (t/rigid 'T)
+    :type-ctors     #{t/INT t/BOOL t/MAP}
+    :extra-genes    []
+    :dataset-reader (let [generators [(u/string-generator 10)
+                                      u/rand-char
+                                      (u/int-generator 1000)
+                                      rand
+                                      u/rand-bool
+                                      ;; vector of booleans
+                                      #(vec (repeatedly (inc (rand-int 16)) u/rand-bool))
+                                      ;; tuple containing a char and an integer
+                                      #(vector (u/rand-char) (rand-int-range -10 10))]]
+                      (case-gen->dataset-reader
+                       (fn min-key-gen []
+                         (let [val-gen (rand-nth generators)
+                               the-map (zipmap (rand-vector 1 50 val-gen)
+                                               (repeatedly (u/int-generator 1000)))
+                               output (first (apply min-key second the-map))]
+                               ;; Ensure the min is unique, i.e. there aren't two keys with same min
+                               ;; Just recur to try again if not.
+                           (if (< 1 (count (filter #(= (get the-map output) %)
+                                                   (vals the-map))))
+                             (recur)
+                             {:inputs [the-map]
+                              :output output})))))
+    :penalty        DEFAULT-PENALTY
+    :loss-fns       [#(if (= %1 %2) 0 1)]
+    :solution-clojure '(first (lib/sort-by-vec (lib/partial1-fn2 get input1)
+                                               (lib/keys-vec input1)))
+    :solution       (list (g/->Var 'input1)
+                          (g/->Var `lib/keys-vec)
+                          (g/->App) ;; get keys of input1
+
+                          (g/->Var 'input1)
+                          (g/->Var `get)
+                          (g/->Var `lib/partial1-fn2)
+                          (g/->App) ;; partial get over input1
+
+                          (g/->Var `lib/sort-by-vec)
+                          (g/->App) ;; sort keys by partialed fn
+
+                          (g/->Var `first)
+                          (g/->App) ;; get first key
+                          )}
 
    "set-cartesian-product"
    {:description    "Given two sets of ints, find their cartesian product, which will be a set of tuples of ints."
@@ -592,8 +669,51 @@
     ;; it in a weird way with partial and subset, but not worth doing it that way
     :broken-solution       (list (g/->Var 'input2)
                                  (g/->Var 'input1)
-                                 (g/->App)
-                                 )} 
+                                 (g/->App))}
+
+   "simple-encryption"
+   {:description    (str "Given a string and a function (char => char), use the "
+                         "function to encrypt the string.")
+    :input-symbols  (input-symbols 2)
+    :input-types    [t/STRING
+                     (g/->Abs [t/CHAR] t/CHAR)]
+    :output-type    t/STRING
+    :type-ctors     #{t/STRING t/CHAR}
+    :extra-genes    [(g/->Lit "" t/STRING)
+                     (g/->Abs [t/CHAR] t/CHAR)
+                     (g/->Abs [t/STRING] t/STRING)]
+    :dataset-reader (case-gen->dataset-reader
+                     (fn simple-encryption-gen []
+                       (let [available-chars (vec (concat [\newline \tab] (map char (range 32 127))))
+                                                         ;; These three need to be let here, so that they can be used inside
+                                                         ;; of functions without those functions being random when run
+                             char-map (zipmap available-chars (shuffle available-chars))
+                             offset (rand-int-range -20 20)
+                             char-map-with-limited-values (zipmap available-chars
+                                                                  (let [opts (take (rand-int-range 2 6)
+                                                                                   (shuffle available-chars))]
+                                                                    (repeatedly #(rand-nth opts))))
+
+                             the-string ((u/string-generator 20))
+                             the-fn (rand-nth [(fn encrypt-random-map [ch]
+                                                 (get char-map ch))
+                                               (fn encrypt-random-limited-map [ch]
+                                                 (get char-map-with-limited-values ch))
+                                               (fn encrypt-caesar [ch]
+                                                 (nth available-chars
+                                                      (mod (+ offset (.indexOf available-chars ch))
+                                                           (count available-chars))))])
+                             output (apply str (map the-fn the-string))]
+                         {:inputs [the-string the-fn]
+                          :output output})))
+    :penalty        DEFAULT-PENALTY
+    :loss-fns       [lev/distance]
+    :solution-clojure '(lib/map-str input2 input1)
+    ;; TMH broken because Abs is broken
+    :broken-solution       (list (g/->Var 'input2)
+                                 (g/->Var 'input1)
+                                 (g/->Var `lib/map-str)
+                                 (g/->App))}
 
    "sum-2-vals"
    {:description    (str "Given a map from strings to ints and two strings that are "
@@ -751,6 +871,61 @@
                                  (g/->Var `lib/reduce-vec)
                                  (g/->App) ;; sum results
                                  )}
+   "time-sheet"
+   {:description    (str "Given a list of tuples of the form: [(name, hours), ...], "
+                         "and a specific name, sum the hours associated with that name.")
+    :input-symbols  (input-symbols 2)
+    :input-types    [(t/vec-type (t/tuple-type [t/STRING t/INT]))
+                     t/STRING]
+    :output-type    t/INT
+    :type-ctors     #{t/VECTOR t/INT t/STRING t/BOOL (t/tuple-ctor 2)}
+    ;; TMH: Do I need a fn abs extra gene or two?
+    :extra-genes    [(g/->Lit true t/BOOL)
+                     (g/->Lit false t/BOOL)]
+    :dataset-reader (case-gen->dataset-reader
+                     (fn time-sheet-gen []
+                       (let [num-records (inc (rand-int 50))
+                             num-names (inc (rand-int 10))
+                             names (vec (take num-names (shuffle names-100)))
+                             records (vec (repeatedly num-records #(vector (rand-nth names)
+                                                                           (rand-int 50))))
+                             the-name (rand-nth names)
+                             output (apply + (map second (filter #(= the-name (first %))
+                                                                 records)))]
+                         {:inputs [records the-name]
+                          :output output})))
+    :penalty        DEFAULT-PENALTY
+    :loss-fns       [u/absolute-distance]
+    ;; TMH: This would be easier with anon fns. When working, update it and genome solution?
+    :solution-clojure '(lib/reduce-vec lib/int-add
+                                       (mapv lib/right
+                                             (filterv (lib/comp2-fn1 (lib/partial1-fn2 = input2)
+                                                                     lib/left)
+                                                      input1)))
+    :solution       (list (g/->Var `lib/right)
+
+                          (g/->Var 'input1)
+
+                          (g/->Var `lib/left)
+
+                          (g/->Var 'input2)
+                          (g/->Var `=)
+                          (g/->Var `lib/partial1-fn2)
+                          (g/->App) ;; partial = with input2
+
+                          (g/->Var `lib/comp2-fn1)
+                          (g/->App) ;; comp the partialled function with left
+
+                          (g/->Var `filterv)
+                          (g/->App) ;; filter input1 using comp'ed function
+
+                          (g/->Var `mapv)
+                          (g/->App) ;; map right over filtered vector
+
+                          (g/->Var `lib/int-add)
+                          (g/->Var `lib/reduce-vec)
+                          (g/->App) ;; sum results
+                          )}
 ;
    })
 
@@ -788,38 +963,37 @@
     (catch Exception e (select-keys (:eval (ex-data e))
                                     [:push :func :code])))
 
-
+    (try
+    (validate-solutions {:num-cases 200})
+    (catch Exception e e))
 
   (t/fn-type [t/INT] t/INT)
   ;;=> {:con {:sym FUNCTION1, :kind {:k-args [:* :*], :k-ret :*}}, :args [{:sym INT, :kind :*} {:sym INT, :kind :*}]}
-  
-  
 
   (g/abs-gene {:param-types [t/INT]
                :ret-type    t/BOOL})
   ;;=> {:param-types [{:sym INT, :kind :*}], :ret-type {:sym BOOL, :kind :*}}
-  
 
   (g/->Abs [t/INT] t/BOOL)
   ;;=> {:param-types [{:sym INT, :kind :*}], :ret-type {:sym BOOL, :kind :*}}
-  
-  
+
   (prn
    (list (g/->Var 'input2)
-         
+
          (g/->Local 0)
          (g/->Var 'input1)
          (g/->Var `get)
          (g/->App)
          :close
-         
+
          (g/->Var `mapv)
          (g/->App) ;; mapv anon fn over input2
-         
+
          (g/->Var `lib/int-add)
          (g/->Var `lib/reduce-vec)
          (g/->App) ;; sum results
          ))
+
 
   (comment)
   )
