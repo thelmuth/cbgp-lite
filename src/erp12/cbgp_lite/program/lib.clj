@@ -299,7 +299,7 @@
 (def reduce-map guarded-reduce)
 (def fold-map guarded-reduce)
 (defn vec-remove-el [s c] (vec (remove #{c} s)))
-(def range1 (comp vec #(take 100 %) range))
+(def range1 (comp vec #(take 100 %) range)) ;; TMH: I thought we fixed this, why is it still capped at 100?
 (def range2 range1)
 (def range3 range1)
 (def count-vec count)

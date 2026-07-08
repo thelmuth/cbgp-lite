@@ -127,6 +127,8 @@
 
 ;; @TODO add :solution genomes to ensure all problems are solvable.
 
+;; TMH: See range1 in lib -- why still capped at 100?
+
 (def problems
   {"area-of-rectangle"
    {:description    (str "Given two tuples of floats representing the upper-right and "
