@@ -503,11 +503,11 @@
    `map-str            (fn-scheme {:kinds [:*]
                                    :args  [(fn-type [CHAR] 0)
                                            STRING]
-                                   :ret   (vec-type 0)})
+                                   :ret   STRING})
    `mapcat-str         (fn-scheme {:kinds [:*]
                                    :args  [(fn-type [CHAR] (vec-type 0))
                                            STRING]
-                                   :ret   (vec-type 0)})
+                                   :ret   STRING})
    `str/reverse        (fn-scheme {:args [STRING]
                                    :ret  STRING})
    `str-chars          (fn-scheme {:args [STRING]

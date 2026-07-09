@@ -254,12 +254,17 @@
                 (hook this state state'))
               state')))
         ;; Compile n-ary function
-        (let [params+types  (mapv vector (:param-symbols this) (:param-types this))
+        (let [;; Genes sampled from a genetic source have :param-symbols assigned.
+              ;; Genes constructed manually (for example, hand-written solutions) may not,
+              ;; so generate fresh parameter symbols when they are missing.
+              param-symbols (or (:param-symbols this)
+                                (vec (repeatedly (count (:param-types this)) #(gensym "p-"))))
+              params+types  (mapv vector param-symbols (:param-types this))
               ;; Create a type environment and locals vector database with params added.
               type-env'     (->> params+types
                                  (mapv (fn [[sym typ]] [sym (t/->Scheme [] typ)]))
                                  (into type-env))
-              locals'       (vec (concat (:locals state) (:param-symbols this)))
+              locals'       (vec (concat (:locals state) param-symbols))
               ;; Compile a chunk where the arguments are "in-scope" and can appear in ASTs.
               ;; This is the function's body.
               body-ast      (push->ast {:push        (:push this)
@@ -287,6 +292,9 @@
     ;; A nested call to the cbgp compiler is then used to produce a the body.
     ;; The push code to compile is taken from the gene.
     (let [noop-hook #(when hook (hook this state :noop))
+          ;; Genes sampled from a genetic source have :sym assigned.
+          ;; Genes constructed manually may not, so generate a fresh symbol when missing.
+          sym        (or (:sym this) (gensym "l-"))
           ;; The AST for the definition of the local var.
           pop-result (pop-ast state hooks)
           def-ast    (:ast pop-result)
@@ -296,13 +304,13 @@
                        (let [;; Compile a chunk where the local variable is "in-scope" and can appear in ASTs.
                              body-ast (push->ast {:push        (:push this)
                                                   :output-type (t/->TypeVar (gensym "t-") :*)
-                                                  :locals      (vec (conj (:locals state) (:sym this)))
-                                                  :type-env    (assoc type-env (:sym this) (t/generalize (:typ def-ast) type-env))
+                                                  :locals      (vec (conj (:locals state) sym))
+                                                  :type-env    (assoc type-env sym (t/generalize (:typ def-ast) type-env))
                                                   :hooks       hooks})]
                          (if (= :none body-ast)
                            (do (noop-hook)
                                state)
-                           (push-ast (->Ast (e/->Let [{:sym (:sym this)
+                           (push-ast (->Ast (e/->Let [{:sym sym
                                                        :def (:expr def-ast)}]
                                                      (:expr body-ast))
                                             (:typ body-ast))

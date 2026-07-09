@@ -37,6 +37,9 @@ ga-clj.iml
 .calva/
 .vscode/
 
+# LLMs
+.claude/
+
 # OS
 *~
 .DS_Store

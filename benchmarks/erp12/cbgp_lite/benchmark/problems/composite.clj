@@ -269,43 +269,36 @@
                                lower (lib/min' x y)
                                upper (lib/max' x y)]
                            {:inputs [the-set lower upper]
-                            :output (set (filter #(and (lib/<' lower %) (lib/<' % upper))
+                            :output (set (filter #(and (lib/<' lower %) (lib/<' % upper)) ;; TMH should these be <= to be inclusive? Same in solution below if so
                                                  the-set))}))))
     :penalty        DEFAULT-PENALTY
     :loss-fns       [u/jaccard-similarity-loss]
-    ;; :solution-clojure '(lib/filter-set (fn [local0] 
+    ;; :solution-clojure '(lib/filter-set (fn [local0]
     ;;                                      (and (lib/<' input2 local0)
-    ;;                                           (lib/<' local0 inpu3)))
+    ;;                                           (lib/<' local0 input3)))
     ;;                                    input1)
-    :broken-solution       (list (g/->Var 'input1)
-                                 ;; TMH: I can't get this working. Am I doing anon fn right?
+    :solution       (list (g/->Var 'input1)
 
-                          ;; anon-fn
-                                 (g/->Abs [(t/rigid 'T)] t/BOOL)
-                          ;; TMH: Are arguments taken as top first or lower first? Push does lower first,
-                          ;; but if I'm reading things correctly, it's top first here
-                                 (g/->Var 'input2)
-                                 (g/->Local 0) ;; local0
-                                 (g/->Var `lib/<')
-                                 (g/->App)
+                          ;; Anonymous predicate: (fn [local0] (and (<' input2 local0) (<' local0 input3)))
+                          ;; Note: App takes arguments top-first, so the top of the stack
+                          ;; becomes the function's first argument.
+                          (g/->Abs [(t/rigid 'T)] t/BOOL)
+                          (g/->Local 0) ;; local0
+                          (g/->Var 'input2)
+                          (g/->Var `lib/<')
+                          (g/->App)
 
-                          ;;;; TMH: commenting out to just see if it produces better code
-                          ;; (g/local-gene {:idx 0}) ;; local0
-                          ;; (g/->Var 'input3)
-                          ;; (g/->Var `lib/<')
-                          ;; (g/->App)
+                          (g/->Var 'input3)
+                          (g/->Local 0) ;; local0
+                          (g/->Var `lib/<')
+                          (g/->App)
 
-                          ;; (g/->Var `lib/and')
-                          ;; (g/->App)
-                                 :close ;; end anon-fn
+                          (g/->Var `lib/and')
+                          (g/->App)
+                          :close ;; end anon-fn
 
-                                 (g/->Var `lib/filter-set)
-                                 (g/->App)
-
-                          ;; todo: if I had the order wrong for set-cartesian-product, maybe I could fix it
-
-                          ;
-                                 )}
+                          (g/->Var `lib/filter-set)
+                          (g/->App))}
 
    "filter-bounds-int"
    {:description    (str "Given a set of elements that are all of the same comparable "
@@ -335,35 +328,30 @@
                                                  the-set))}))))
     :penalty        DEFAULT-PENALTY
     :loss-fns       [u/jaccard-similarity-loss]
-       ;; :solution-clojure '(lib/filter-set (fn [local0] 
-       ;;                                      (and (lib/<' input2 local0)
-       ;;                                           (lib/<' local0 inpu3)))
-       ;;                                    input1)
-    :broken-solution       (list (g/->Var 'input1)
+    ;; :solution-clojure '(lib/filter-set (fn [local0]
+    ;;                                      (and (lib/<' input2 local0)
+    ;;                                           (lib/<' local0 input3)))
+    ;;                                    input1)
+    :solution       (list (g/->Var 'input1)
 
-                             ;; anon-fn
-                                 (g/->Abs [t/INT] t/BOOL)
-                             ;; TMH: Are arguments taken as top first or lower first? Push does lower first,
-                             ;; but if I'm reading things correctly, it's top first here
-                                 (g/->Local 0) ;; local0
-                                 (g/->Var 'input2)
-                                 (g/->Var `lib/<')
-                                 (g/->App)
+                          ;; Anonymous predicate: (fn [local0] (and (<' input2 local0) (<' local0 input3)))
+                          (g/->Abs [t/INT] t/BOOL)
+                          (g/->Local 0) ;; local0
+                          (g/->Var 'input2)
+                          (g/->Var `lib/<')
+                          (g/->App)
 
-                                 (g/->Var 'input3)
-                                 (g/->Local 0) ;; local0
-                                 (g/->Var `lib/<')
-                                 (g/->App)
+                          (g/->Var 'input3)
+                          (g/->Local 0) ;; local0
+                          (g/->Var `lib/<')
+                          (g/->App)
 
-                                 (g/->Var `lib/and')
-                                 (g/->App)
-                                 :close ;; end anon-fn
+                          (g/->Var `lib/and')
+                          (g/->App)
+                          :close ;; end anon-fn
 
-                                 (g/->Var `lib/filter-set)
-                                 (g/->App)
-
-                             ;
-                                 )}
+                          (g/->Var `lib/filter-set)
+                          (g/->App))}
 
    "first-index-of-true"
    {:description    (str "Given a vector of T and a predicate T => bool, return the "
@@ -434,7 +422,7 @@
                              input1)
     ;; TMH: Much easier with fn abstraction, not attempted yet
     :broken-solution       (list (g/->Var 'input1))}
-   
+
    "max-applied-fn"
    {:description   (str "Given an integer X < 50 and a (int => int) function, return "
                         "the integer in [0, X) that results in the maximum value for "
@@ -574,32 +562,33 @@
                                  (g/->Var `lib/reduce-vec)
                                  (g/->App) ;; reduce set-union over result of above
                                  )
-    :broken-push '[{:sym input1}
-                   {:param-types [{:kind :*, :sym INT}],
-                    :push [{:sym input2}
-                           {:param-types [{:kind :*, :sym INT}],
-                            :push [{:idx 1}
-                                   {:idx 0}
-                                   {:sym erp12.cbgp-lite.program.lib/->tuple2}
-                                   {}],
-                            :ret-type {:args [{:kind :*, :sym INT}
-                                              {:kind :*, :sym INT}],
-                                       :con {:kind {:k-args [:* :*],
-                                                    :k-ret :*},
-                                             :sym TUPLE2}}}
-                           {:sym erp12.cbgp-lite.program.lib/map-set}
-                           {}],
-                    :ret-type {:args [{:args [{:kind :*, :sym INT}
-                                              {:kind :*, :sym INT}],
-                                       :con {:kind {:k-args [:* :*],
-                                                    :k-ret :*},
-                                             :sym TUPLE2}}],
-                               :con {:kind {:k-args [:*], :k-ret :*}, :sym SET}}}
-                   {:sym clojure.core/mapv}
-                   {}
-                   {:sym erp12.cbgp-lite.program.lib/set-union}
-                   {:sym erp12.cbgp-lite.program.lib/reduce-vec}
-                   {}]}
+    ;; :broken-push '[{:sym input1}
+    ;;                {:param-types [{:kind :*, :sym INT}],
+    ;;                 :push [{:sym input2}
+    ;;                        {:param-types [{:kind :*, :sym INT}],
+    ;;                         :push [{:idx 1}
+    ;;                                {:idx 0}
+    ;;                                {:sym erp12.cbgp-lite.program.lib/->tuple2}
+    ;;                                {}],
+    ;;                         :ret-type {:args [{:kind :*, :sym INT}
+    ;;                                           {:kind :*, :sym INT}],
+    ;;                                    :con {:kind {:k-args [:* :*],
+    ;;                                                 :k-ret :*},
+    ;;                                          :sym TUPLE2}}}
+    ;;                        {:sym erp12.cbgp-lite.program.lib/map-set}
+    ;;                        {}],
+    ;;                 :ret-type {:args [{:args [{:kind :*, :sym INT}
+    ;;                                           {:kind :*, :sym INT}],
+    ;;                                    :con {:kind {:k-args [:* :*],
+    ;;                                                 :k-ret :*},
+    ;;                                          :sym TUPLE2}}],
+    ;;                            :con {:kind {:k-args [:*], :k-ret :*}, :sym SET}}}
+    ;;                {:sym clojure.core/mapv}
+    ;;                {}
+    ;;                {:sym erp12.cbgp-lite.program.lib/set-union}
+    ;;                {:sym erp12.cbgp-lite.program.lib/reduce-vec}
+    ;;                {}]
+    }
 
    "set-symmetric-difference"
    {:description    "Given two sets, find the symmetric difference."
@@ -640,11 +629,12 @@
                      t/INT]
     :output-type    (t/set-type (t/set-type t/INT))
     :type-ctors     #{t/SET t/INT t/BOOL}
-    ;; TMH: should this have an anon fn extra gene, once they're working?
     :extra-genes    [(g/->LitGenerator (u/int-generator 100) t/INT)
                      (g/->Lit true t/BOOL)
                      (g/->Lit false t/BOOL)
-                     (g/->Lit #{} (t/set-type t/INT))]
+                     (g/->Lit #{} (t/set-type t/INT))
+                     (g/->Abs [(t/set-type t/INT)] t/BOOL)
+                     (g/->Abs [t/INT] t/BOOL)]
     :dataset-reader (case-gen->dataset-reader
                      (fn sets-with-element-gen []
                        (let [max-int 100
@@ -666,19 +656,25 @@
 
     :solution-clojure '(lib/filter-set (fn [local0] (lib/set-contains? local0 input2))
                                        input1)
+    :solution       (list (g/->Var 'input1)
 
-    ;; TMH: Not easy to do this without anon fn, so I haven't really tried. You can do
-    ;; it in a weird way with partial and subset, but not worth doing it that way
-    :broken-solution       (list (g/->Var 'input2)
-                                 (g/->Var 'input1)
-                                 (g/->App))}
+                          ;; Anonymous predicate: (fn [local0] (set-contains? local0 input2))
+                          (g/->Abs [(t/set-type t/INT)] t/BOOL)
+                          (g/->Var 'input2)
+                          (g/->Local 0) ;; local0
+                          (g/->Var `lib/set-contains?)
+                          (g/->App)
+                          :close ;; end anon-fn
+
+                          (g/->Var `lib/filter-set)
+                          (g/->App))}
 
    "simple-encryption"
    {:description    (str "Given a string and a function (char => char), use the "
                          "function to encrypt the string.")
     :input-symbols  (input-symbols 2)
     :input-types    [t/STRING
-                     (g/->Abs [t/CHAR] t/CHAR)]
+                     (t/fn-type [t/CHAR] t/CHAR)]
     :output-type    t/STRING
     :type-ctors     #{t/STRING t/CHAR}
     :extra-genes    [(g/->Lit "" t/STRING)
@@ -711,11 +707,10 @@
     :penalty        DEFAULT-PENALTY
     :loss-fns       [lev/distance]
     :solution-clojure '(lib/map-str input2 input1)
-    ;; TMH broken because Abs is broken
-    :broken-solution       (list (g/->Var 'input2)
-                                 (g/->Var 'input1)
-                                 (g/->Var `lib/map-str)
-                                 (g/->App))}
+    :solution       (list (g/->Var 'input2)
+                          (g/->Var 'input1)
+                          (g/->Var `lib/map-str)
+                          (g/->App))}
 
    "sum-2-vals"
    {:description    (str "Given a map from strings to ints and two strings that are "
@@ -841,38 +836,38 @@
                                         (mapv (fn [local0] (get input1 local0))
                                               input2))
 
+    :solution-using-partial       (list (g/->Var 'input2)
+
+                                        (g/->Var 'input1)
+                                        (g/->Var `get)
+                                        (g/->Var `lib/partial1-fn2)
+                                        (g/->App) ;; partial get over input1
+
+                                        (g/->Var `mapv)
+                                        (g/->App) ;; mapv partialled fn over input2
+
+                                        (g/->Var `lib/int-add)
+                                        (g/->Var `lib/reduce-vec)
+                                        (g/->App) ;; sum results
+                                        )
+
+    ;; This solution uses fn abstraction. Above uses partial. Both now work.
     :solution       (list (g/->Var 'input2)
 
+                          (g/->Abs [t/STRING] t/INT)
+                          (g/->Local 0)
                           (g/->Var 'input1)
                           (g/->Var `get)
-                          (g/->Var `lib/partial1-fn2)
-                          (g/->App) ;; partial get over input1
+                          (g/->App)
+                          :close
 
                           (g/->Var `mapv)
-                          (g/->App) ;; mapv partialled fn over input2
+                          (g/->App) ;; mapv anon fn over input2
 
                           (g/->Var `lib/int-add)
                           (g/->Var `lib/reduce-vec)
                           (g/->App) ;; sum results
-                          )
-
-    ;; TMH this one with anon fn also doesn't work. I think anon fns are just broken?
-    :broken-solution       (list (g/->Var 'input2)
-
-                                 (g/->Abs [t/STRING] t/INT)
-                                 (g/->Local 0)
-                                 (g/->Var 'input1)
-                                 (g/->Var `get)
-                                 (g/->App)
-                                 :close
-
-                                 (g/->Var `mapv)
-                                 (g/->App) ;; mapv anon fn over input2
-
-                                 (g/->Var `lib/int-add)
-                                 (g/->Var `lib/reduce-vec)
-                                 (g/->App) ;; sum results
-                                 )}
+                          )}
    "time-sheet"
    {:description    (str "Given a list of tuples of the form: [(name, hours), ...], "
                          "and a specific name, sum the hours associated with that name.")
